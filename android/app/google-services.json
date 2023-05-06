@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "743489091314",
+    "project_id": "master-data-graha",
+    "storage_bucket": "master-data-graha.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:743489091314:android:14396ebd8bf346e556026b",
+        "android_client_info": {
+          "package_name": "com.central.maintenance_new"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "743489091314-tu1qp7c2t7oksefp57p5aou3ql680eum.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBvtfyVWHC5ukTXACmfYj0_7lQQPqXYdyo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "743489091314-tu1qp7c2t7oksefp57p5aou3ql680eum.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
