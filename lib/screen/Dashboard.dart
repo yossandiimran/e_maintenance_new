@@ -140,7 +140,9 @@ class DashboardState extends State<Dashboard> {
                                 children: [
                                   Spacer(),
                                   GestureDetector(
-                                    onTap: () {},
+                                    onTap: () {
+                                      openQrPage();
+                                    },
                                     child: Container(
                                       width: global.getWidth(context) / 1.2,
                                       padding: EdgeInsets.all(15),
@@ -167,7 +169,14 @@ class DashboardState extends State<Dashboard> {
                                 children: [
                                   Spacer(),
                                   GestureDetector(
-                                    onTap: () {},
+                                    onTap: () {
+                                      var ijs = preference.getData("id_jenis_user");
+                                      if (ijs != "4") {
+                                        Navigator.pushNamed(context, '/lap1');
+                                      } else {
+                                        alert.alertWarning(context: context, text: "Anda tidak memiliki akses");
+                                      }
+                                    },
                                     child: Container(
                                       width: global.getWidth(context) / 1.2,
                                       padding: EdgeInsets.all(15),
@@ -178,7 +187,7 @@ class DashboardState extends State<Dashboard> {
                                           Image.asset("assets/printer.png", width: 60),
                                           Spacer(),
                                           Text(
-                                            "Laporan",
+                                            "Laporan Transaksi",
                                             style: textStyling.customColorBold(16, defWhite),
                                           ),
                                           Spacer(),
@@ -194,7 +203,14 @@ class DashboardState extends State<Dashboard> {
                                 children: [
                                   Spacer(),
                                   GestureDetector(
-                                    onTap: () {},
+                                    onTap: () {
+                                      var ijs = preference.getData("id_jenis_user");
+                                      if (ijs != "4") {
+                                        Navigator.pushNamed(context, '/lap2');
+                                      } else {
+                                        alert.alertWarning(context: context, text: "Anda tidak memiliki akses");
+                                      }
+                                    },
                                     child: Container(
                                       width: global.getWidth(context) / 1.2,
                                       padding: EdgeInsets.all(15),
@@ -205,7 +221,7 @@ class DashboardState extends State<Dashboard> {
                                           Image.asset("assets/maintenance_planning.png", width: 60),
                                           Spacer(),
                                           Text(
-                                            "Rencana / Plan",
+                                            "Laporan User",
                                             style: textStyling.customColorBold(16, defWhite),
                                           ),
                                           Spacer(),
@@ -221,7 +237,14 @@ class DashboardState extends State<Dashboard> {
                                 children: [
                                   Spacer(),
                                   GestureDetector(
-                                    onTap: () {},
+                                    onTap: () {
+                                      var ijs = preference.getData("id_jenis_user");
+                                      if (ijs != "4") {
+                                        Navigator.pushNamed(context, '/user');
+                                      } else {
+                                        alert.alertWarning(context: context, text: "Anda tidak memiliki akses");
+                                      }
+                                    },
                                     child: Container(
                                       width: global.getWidth(context) / 1.2,
                                       padding: EdgeInsets.all(15),
@@ -229,10 +252,13 @@ class DashboardState extends State<Dashboard> {
                                       decoration: widget.decCont2(defGreen, 19, 19, 19, 19),
                                       child: Row(
                                         children: [
-                                          Image.asset("assets/manual.png", width: 60),
+                                          Image.asset(
+                                            "assets/external-driver-women-profession-sbts2018-lineal-color-sbts2018.png",
+                                            width: 60,
+                                          ),
                                           Spacer(),
                                           Text(
-                                            "User Manual",
+                                            "Setting User",
                                             style: textStyling.customColorBold(16, defWhite),
                                           ),
                                           Spacer(),
@@ -259,19 +285,22 @@ class DashboardState extends State<Dashboard> {
     );
   }
 
-  getStatPembayaran(stat) {
-    if (stat == "tl") {
-      return defRed;
-    } else {
-      return defGreen;
-    }
-  }
+  openQrPage() {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (BuildContext context) => Container(
+        height: global.getHeight(context),
+        color: Colors.white,
+        child: QrScanner(),
+      ),
+    ).then((value) async {
+      qrCode = "1C001C03TEST0001";
+      // qrCode = "1C001C03TEST0004";
 
-  getStatPembayaranIcon(stat) {
-    if (stat == "tl") {
-      return Icons.remove_circle_outline_rounded;
-    } else {
-      return Icons.check_circle_outline_rounded;
-    }
+      if (qrCode != "-") {
+        Navigator.pushNamed(context, '/insert', arguments: {"qrCode": qrCode});
+      }
+      setState(() {});
+    });
   }
 }

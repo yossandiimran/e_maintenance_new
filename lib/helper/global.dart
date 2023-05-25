@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:e_maintenance/header.dart';
+import 'package:flutter/services.dart';
 
 Global global = Global();
 Preference preference = Preference();
@@ -8,6 +9,7 @@ CustomWidget widget = CustomWidget();
 TextStyling textStyling = TextStyling();
 FirebaseMessagingHelper fbmessaging = FirebaseMessagingHelper();
 
+var qrCode = "-";
 var appVersion = '0.0.1';
 var isMenuActive = 0;
 
@@ -32,14 +34,17 @@ class Global {
   // var baseUrl = 'http://192.168.1.113:30/master-data/public/api/';
 
   var baseUrl = "http://192.168.1.128/cek_kendaraan/public/api/";
-  var bapiUrl = 'http://36.91.208.116:8000/user-center/getkend';
-  // var bapiUrl = 'http://36.91.208.116:8000/user-center/getkend';
+  var bapiUrl = '';
 
   //PRD PUBLIC
   // var baseUrl = 'http://210.210.165.197/geura/public/api/';
   // var bapiUrl = 'http://202.138.230.51:8080/ebbm/';
 
   getMainServiceUrl(String link) => Uri.parse(baseUrl + link);
+  getBapiManualServiceUrl(String link) async {
+    bapiUrl = preference.getData("url");
+    return Uri.parse(bapiUrl + link);
+  }
 
   getBapiServiceUrl(String link) {
     var url = Uri.parse(bapiUrl + link);
@@ -100,5 +105,45 @@ class Global {
     } else {
       return global.errorResponsePop(context, data["message"]);
     }
+  }
+
+  DateTime parseDate(String dateString, type) {
+    final dateParts = dateString.split("-");
+    final year = int.parse(dateParts[0]);
+    final month = int.parse(dateParts[1]);
+    final day = int.parse(dateParts[2]);
+    if (type == "view") {
+      return DateTime(day, month, year);
+    } else {
+      return DateTime(year, month, day);
+    }
+  }
+
+  String convertDate(String dateString) {
+    final dateParts = dateString.split("-");
+    final year = (dateParts[0]);
+    final month = (dateParts[1]);
+    final day = (dateParts[2]);
+    return "$day-$month-$year";
+  }
+}
+
+class LowerCaseTextFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    return TextEditingValue(
+      text: newValue.text.toLowerCase(),
+      selection: newValue.selection,
+    );
+  }
+}
+
+class UpperCaseTextFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    return TextEditingValue(
+      text: newValue.text.toUpperCase(),
+      selection: newValue.selection,
+    );
   }
 }

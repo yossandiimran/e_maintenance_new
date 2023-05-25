@@ -47,10 +47,41 @@ class AuthService {
       await preference.setString("usap", (data["usap"] ?? ""));
       await preference.setString("psap", (data["psap"] ?? ""));
       await preference.setString("werks", (data["werks"] ?? ""));
+      await preference.setString("id_jenis_user", (data["id_jenis_user"] ?? ""));
       return 200;
     } catch (err) {
       print(err);
       return 201;
+    }
+  }
+
+  Future getSetting() async {
+    try {
+      final response = await http.get(global.getMainServiceUrl("getSetting"));
+      final data = jsonDecode(response.body);
+      if (data.length > 0) {
+        for (var i = 0; i < data.length; i++) {
+          preference.setString(data[i]["name_setting"], (data[i]["value"] ?? ""));
+        }
+      }
+    } on SocketException {
+      showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Info'),
+            content: SingleChildScrollView(
+              child: ListBody(
+                children: const <Widget>[
+                  Text('Koneksi ke server gagal!'),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+      print('No Internet connection');
     }
   }
 }

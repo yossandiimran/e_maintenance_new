@@ -24,6 +24,14 @@ dependencies:
   flutter_launcher_icons: "^0.11.0"
   auto_start_flutter: ^0.1.1
   google_nav_bar: ^5.0.6
+  qr_code_scanner: ^1.0.1
+  intl: ^0.18.1
+  dio: ^5.1.2
+  flutter_zebra_sdk: ^0.0.4+1
+  permission_handler: ^10.2.0
+  excel: ^2.0.0-null-safety-3
+  
+  # zebrautility: ^0.0.41
 
 dev_dependencies:
   flutter_test:

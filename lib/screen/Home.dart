@@ -10,6 +10,7 @@ class HomeState extends State<Home> {
   @override
   void initState() {
     super.initState();
+    AuthService(context: context).getSetting();
   }
 
   @override

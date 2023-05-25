@@ -1,4 +1,6 @@
 // ignore_for_file: use_key_in_widget_constructors, avoid_print, unused_element
+import 'dart:convert';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -60,7 +62,6 @@ class App extends StatelessWidget {
         ),
       ),
       initialRoute: '/',
-      // initialRoute: '/test',
       onGenerateRoute: RouteGenerator.generateRoute,
     );
   }
