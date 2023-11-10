@@ -1,3 +1,5 @@
+// ignore_for_file: prefer_interpolation_to_compose_strings
+
 import 'package:flutter/material.dart';
 import 'package:e_maintenance/header.dart';
 import 'package:flutter/services.dart';
@@ -10,7 +12,7 @@ TextStyling textStyling = TextStyling();
 FirebaseMessagingHelper fbmessaging = FirebaseMessagingHelper();
 
 var qrCode = "-";
-var appVersion = '0.0.1';
+var appVersion = '2.0.1';
 var isMenuActive = 0;
 
 //Default Theme Color
@@ -22,25 +24,29 @@ Color defPurple = const Color(0xff6861ce), defPurple2 = const Color(0xff5c55bf);
 Color defOrange2 = const Color(0xffe7a92c), defblue2 = const Color(0xff22328f);
 Color defTaro1 = const Color(0xff8894c4), defTaro2 = const Color(0xffa4a9cf);
 Color defTaro3 = const Color(0xff7c8cbc), defwheat = const Color(0xfff6d99c);
-var defblue3 = Colors.blue[100], defred2 = Colors.red[100], defgreen2 = Colors.green[100];
-var deforg3 = Colors.orange[200], defyel = Colors.yellow[100], defteal = Colors.teal[100];
+Color defblue3 = Colors.blue.shade100, defred2 = Colors.red.shade100, defgreen2 = Colors.green.shade100;
+Color deforg3 = Colors.orange.shade200, defyel = Colors.yellow.shade100, defteal = Colors.teal.shade100;
 
 class Global {
   getWidth(context) => MediaQuery.of(context).size.width;
   getHeight(context) => MediaQuery.of(context).size.height;
 
-  //Handle Service ===============================================================
-  // DEV PUBLIC 36.91.208.116
-  // var baseUrl = 'http://192.168.1.113:30/master-data/public/api/';
-
-  var baseUrl = "http://192.168.1.128/cek_kendaraan/public/api/";
+//Handle Service ===============================================================
   var bapiUrl = '';
+  var baseIp = '210.210.165.197';
+  var baseUrl = "/e_maintenance_v2/public/";
+  var baseUrl2 = "/e_maintenance/public/";
 
-  //PRD PUBLIC
-  // var baseUrl = 'http://210.210.165.197/geura/public/api/';
-  // var bapiUrl = 'http://202.138.230.51:8080/ebbm/';
+  getMainServiceUrl(String link) {
+    var ip = preference.getData("globalIp") ?? baseIp;
+    return Uri.parse('http://' + ip + baseUrl + "api/" + link);
+  }
 
-  getMainServiceUrl(String link) => Uri.parse(baseUrl + link);
+  getFotoServiceUrl(String link) {
+    var ip = preference.getData("globalIp") ?? baseIp;
+    return 'http://' + ip + baseUrl2 + link;
+  }
+
   getBapiManualServiceUrl(String link) async {
     bapiUrl = preference.getData("url");
     return Uri.parse(bapiUrl + link);
@@ -60,37 +66,45 @@ class Global {
 
   defaultSuccessResponse(context, message) => alert.alertSuccess(context: context, text: message);
 
-  errorResponse(context, message) {
+  void errorResponse(context, message) {
     Navigator.pop(context);
     alert.alertWarning(context: context, text: message);
   }
 
-  errorResponseNavigate(context, message, route) {
+  void errorResponseNoPop(context, message) {
+    alert.alertWarning(context: context, text: message);
+  }
+
+  void errorResponseNavigate(context, message, route) {
     Navigator.pushNamed(context, route);
     alert.alertWarning(context: context, text: message);
   }
 
-  successResponse(context, message) {
+  void successResponse(context, message) {
     Navigator.pop(context);
     alert.alertSuccess(context: context, text: message);
   }
 
-  successResponseNavigate(context, message, route) {
+  void successResponseNavigate(context, message, route) {
     Navigator.pushNamed(context, route);
     alert.alertSuccess(context: context, text: message);
   }
 
-  errorResponsePop(context, message) {
+  void errorResponsePop(context, message) {
     Navigator.pop(context);
     alert.alertWarning(context: context, text: message);
   }
 
-  successResponsePop(context, message) {
+  void successResponsePop(context, message) {
     Navigator.pop(context);
     alert.alertSuccess(context: context, text: message);
   }
 
-  checkResponseStatus({context, res, data}) async {
+  void successResponseNoPop(context, message) {
+    alert.alertSuccess(context: context, text: message);
+  }
+
+  Future<void> checkResponseStatus({context, res, data}) async {
     if (res.statusCode == 200) {
       return data["data"];
     } else if (res.statusCode == 201) {
@@ -107,7 +121,7 @@ class Global {
     }
   }
 
-  DateTime parseDate(String dateString, type) {
+  Future<DateTime> parseDate(String dateString, type) async {
     final dateParts = dateString.split("-");
     final year = int.parse(dateParts[0]);
     final month = int.parse(dateParts[1]);
@@ -119,7 +133,7 @@ class Global {
     }
   }
 
-  String convertDate(String dateString) {
+  Future<String> convertDate(String dateString) async {
     final dateParts = dateString.split("-");
     final year = (dateParts[0]);
     final month = (dateParts[1]);

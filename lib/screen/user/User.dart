@@ -26,7 +26,9 @@ class _UserState extends State<User> {
   }
 
   Future<void> getListUser() async {
-    data = await UserService(context: context).getUserList();
+    Map obj = {"lokasi": preference.getData("werks")};
+    data = await UserService(context: context, objParam: obj).getUserList();
+    data.sort((a, b) => a["name"].compareTo(b["name"]));
     if (data.isNotEmpty) {
       loading = false;
     }
@@ -47,6 +49,19 @@ class _UserState extends State<User> {
             Navigator.pop(context);
           },
         ),
+        actions: [
+          IconButton(
+            onPressed: () {
+              loading = true;
+              setState(() {});
+              Map obj = {
+                "jenis": "Tambah",
+              };
+              Navigator.pushNamed(context, '/userForm', arguments: obj).then((value) => getListUser());
+            },
+            icon: Icon(Icons.add_rounded),
+          ),
+        ],
         backgroundColor: defBlack1,
       ),
       body: Stack(
@@ -67,121 +82,6 @@ class _UserState extends State<User> {
                   height: global.getHeight(context),
                   child: Column(
                     children: [
-                      Container(
-                        height: global.getHeight(context) / 3.2,
-                        margin: EdgeInsets.only(left: 20, right: 20, bottom: 10),
-                        decoration: widget.decCont(defWhite, 20, 20, 20, 20),
-                        child: Column(
-                          children: [
-                            SizedBox(height: 5),
-                            Container(
-                              margin: EdgeInsets.symmetric(horizontal: 30),
-                              decoration: widget.decCont(Colors.white, 23, 23, 23, 23),
-                              child: TextField(
-                                inputFormatters: [LowerCaseTextFormatter()],
-                                controller: namaController,
-                                decoration: InputDecoration(
-                                  icon: Icon(Icons.person, color: defBlue),
-                                  border: OutlineInputBorder(borderSide: BorderSide.none),
-                                  hintText: "Nama",
-                                ),
-                                readOnly: false,
-                              ),
-                            ),
-                            Container(
-                              margin: EdgeInsets.symmetric(horizontal: 30),
-                              child: TextField(
-                                inputFormatters: [UpperCaseTextFormatter()],
-                                controller: werksController,
-                                decoration: InputDecoration(
-                                  icon: Icon(Icons.location_city_rounded, color: defPurple),
-                                  border: OutlineInputBorder(borderSide: BorderSide.none),
-                                  hintText: "Werks",
-                                ),
-                                readOnly: false,
-                              ),
-                            ),
-                            Container(
-                              margin: EdgeInsets.symmetric(horizontal: 20),
-                              padding: EdgeInsets.symmetric(vertical: 0),
-                              child: ListTile(
-                                subtitle: DropdownButton<String>(
-                                  value: jenisUser,
-                                  isExpanded: true,
-                                  items: getItemsDropdown(),
-                                  onChanged: (newValue) {
-                                    jenisUser = newValue!;
-                                    setState(() {});
-                                  },
-                                ),
-                              ),
-                            ),
-                            Text(
-                              "Password : centr@l1001",
-                              style: TextStyle(fontStyle: FontStyle.italic, color: defBlue),
-                            ),
-                            SizedBox(height: 5),
-                            Row(
-                              children: [
-                                Spacer(),
-                                GestureDetector(
-                                  onTap: () async {
-                                    alert.loadingAlert(context: context, text: "Menyimpan Data", isPop: true);
-                                    Map obj = {
-                                      "username": namaController.text,
-                                      "werks": werksController.text,
-                                      "id_jenis_user": jenisUser,
-                                      "id": activeId,
-                                    };
-                                    if (namaController.text == "" || werksController.text == "" || jenisUser == "0") {
-                                      return global.errorResponse(context, "Silahkan Lengkapi Data !");
-                                    }
-                                    String send = await UserService(context: context, objParam: obj).addUserList();
-                                    if (send == "Sukses") {
-                                      global.successResponsePop(context, "Data berhasil disimpan !");
-                                      namaController.text = "";
-                                      werksController.text = "";
-                                      jenisUser = "0";
-                                      activeId = "0";
-                                    } else {
-                                      global.errorResponsePop(context, send);
-                                    }
-                                    getListUser();
-                                  },
-                                  child: Container(
-                                    width: 80,
-                                    decoration: widget.decCont2(defGreen, 10, 10, 10, 10),
-                                    padding: EdgeInsets.all(10),
-                                    child: Center(
-                                      child: Text(edit ? "Edit" : "Simpan", style: textStyling.defaultWhiteBold(14)),
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(width: 20),
-                                GestureDetector(
-                                  onTap: () {
-                                    namaController.text = "";
-                                    werksController.text = "";
-                                    jenisUser = "0";
-                                    activeId = "0";
-                                    edit = false;
-                                    setState(() {});
-                                  },
-                                  child: Container(
-                                    width: 80,
-                                    decoration: widget.decCont2(defRed, 10, 10, 10, 10),
-                                    padding: EdgeInsets.all(10),
-                                    child: Center(
-                                      child: Text("Batal", style: textStyling.defaultWhiteBold(14)),
-                                    ),
-                                  ),
-                                ),
-                                Spacer(),
-                              ],
-                            )
-                          ],
-                        ),
-                      ),
                       Container(
                         margin: EdgeInsets.symmetric(horizontal: 20),
                         child: Table(
@@ -239,9 +139,9 @@ class _UserState extends State<User> {
                         ),
                       ),
                       Container(
-                        decoration: widget.decCont2(defWhite, 0, 0, 0, 0),
+                        decoration: widget.decCont2(defWhite, 10, 10, 0, 0),
                         margin: EdgeInsets.only(left: 20, right: 20, bottom: 5),
-                        height: global.getHeight(context) / 2,
+                        height: global.getHeight(context) - (kToolbarHeight * 2),
                         child: SingleChildScrollView(
                           child: Column(
                             children: [
@@ -269,9 +169,140 @@ class _UserState extends State<User> {
     );
   }
 
+  openModalSheet(jenis) {
+    return showModalBottomSheet(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(25.0))),
+      backgroundColor: Colors.black,
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: Container(
+          height: global.getHeight(context) / 2.5,
+          padding: MediaQuery.of(context).viewInsets,
+          decoration: widget.decCont(defWhite, 0, 0, 20, 20),
+          child: Column(
+            children: [
+              SizedBox(height: 5),
+              Text("Form $jenis User", style: textStyling.defaultBlackBold(18)),
+              Divider(thickness: 2),
+              Container(
+                margin: EdgeInsets.symmetric(horizontal: 30),
+                decoration: widget.decCont(Colors.white, 23, 23, 23, 23),
+                child: TextField(
+                  inputFormatters: [LowerCaseTextFormatter()],
+                  controller: namaController,
+                  decoration: InputDecoration(
+                    icon: Icon(Icons.person, color: defBlue),
+                    border: OutlineInputBorder(borderSide: BorderSide.none),
+                    hintText: "Nama",
+                  ),
+                  readOnly: false,
+                ),
+              ),
+              Container(
+                margin: EdgeInsets.symmetric(horizontal: 30),
+                child: TextField(
+                  inputFormatters: [UpperCaseTextFormatter()],
+                  controller: werksController,
+                  decoration: InputDecoration(
+                    icon: Icon(Icons.location_city_rounded, color: defPurple),
+                    border: OutlineInputBorder(borderSide: BorderSide.none),
+                    hintText: "Werks",
+                  ),
+                  readOnly: false,
+                ),
+              ),
+              Container(
+                margin: EdgeInsets.symmetric(horizontal: 20),
+                padding: EdgeInsets.symmetric(vertical: 0),
+                child: ListTile(
+                  subtitle: DropdownButton<String>(
+                    value: jenisUser,
+                    isExpanded: true,
+                    items: getItemsDropdown(),
+                    onChanged: (newValue) {
+                      jenisUser = newValue!;
+                      setState(() {});
+                    },
+                  ),
+                ),
+              ),
+              Text(
+                "Password : centr@l1001",
+                style: TextStyle(fontStyle: FontStyle.italic, color: defBlue),
+              ),
+              SizedBox(height: 5),
+              Row(
+                children: [
+                  Spacer(),
+                  GestureDetector(
+                    onTap: () async {
+                      alert.loadingAlert(context: context, text: "Menyimpan Data", isPop: true);
+                      Map obj = {
+                        "username": namaController.text,
+                        "werks": werksController.text,
+                        "id_jenis_user": jenisUser,
+                        "id": activeId,
+                      };
+                      if (namaController.text == "" || werksController.text == "" || jenisUser == "0") {
+                        return global.errorResponse(context, "Silahkan Lengkapi Data !");
+                      }
+                      String send = await UserService(context: context, objParam: obj).addUserList();
+                      if (send == "Sukses") {
+                        global.successResponsePop(context, "Data berhasil disimpan !");
+                        namaController.text = "";
+                        werksController.text = "";
+                        jenisUser = "0";
+                        activeId = "0";
+                      } else {
+                        global.errorResponsePop(context, send);
+                      }
+                      getListUser();
+                    },
+                    child: Container(
+                      width: 80,
+                      decoration: widget.decCont2(defGreen, 10, 10, 10, 10),
+                      padding: EdgeInsets.all(10),
+                      child: Center(
+                        child: Text(edit ? "Edit" : "Simpan", style: textStyling.defaultWhiteBold(14)),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 20),
+                  GestureDetector(
+                    onTap: () {
+                      namaController.text = "";
+                      werksController.text = "";
+                      jenisUser = "0";
+                      activeId = "0";
+                      edit = false;
+                      Navigator.pop(context);
+                      setState(() {});
+                    },
+                    child: Container(
+                      width: 80,
+                      decoration: widget.decCont2(defRed, 10, 10, 10, 10),
+                      padding: EdgeInsets.all(10),
+                      child: Center(
+                        child: Text("Batal", style: textStyling.defaultWhiteBold(14)),
+                      ),
+                    ),
+                  ),
+                  Spacer(),
+                ],
+              )
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   getItemsDropdown() {
     List<DropdownMenuItem<String>> widget = [];
     widget.add(DropdownMenuItem(value: "0", child: Text("Pilih Jenis User", style: textStyling.defaultBlack(14))));
+    widget.add(DropdownMenuItem(value: "1", child: Text("Admin", style: textStyling.defaultBlack(14))));
     widget.add(DropdownMenuItem(value: "2", child: Text("Pimpinan", style: textStyling.defaultBlack(14))));
     widget.add(DropdownMenuItem(value: "3", child: Text("Kabag", style: textStyling.defaultBlack(14))));
     widget.add(DropdownMenuItem(value: "4", child: Text("User", style: textStyling.defaultBlack(14))));
@@ -299,13 +330,14 @@ class _UserState extends State<User> {
         ),
         GestureDetector(
           onTap: () {
-            setState(() {
-              namaController.text = val["name"];
-              werksController.text = val["werks"];
-              jenisUser = val["id_jenis_user"];
-              activeId = val["id"].toString();
-              edit = true;
-            });
+            Map obj = {
+              "jenis": "Edit",
+              "nama": val["name"],
+              "werks": val["werks"],
+              "jenisUser": val["id_jenis_user"],
+              "id": val["id"],
+            };
+            Navigator.pushNamed(context, '/userForm', arguments: obj).then((value) => getListUser());
           },
           child: Container(
             padding: EdgeInsets.all(5),

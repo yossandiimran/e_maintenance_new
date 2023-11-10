@@ -3,7 +3,7 @@ description: A new Flutter project.
 
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 2.0.1+9
 
 environment:
   sdk: '>=2.18.6 <3.0.0'
@@ -42,7 +42,7 @@ dev_dependencies:
 flutter_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/logo.png"
+  image_path: "assets/icon.png"
   min_sdk_android: 21 # android min sdk min:16, default 21
   # optionally, as transparency is not allowed on app store
   # remove_alpha_ios: true

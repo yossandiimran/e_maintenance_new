@@ -7,15 +7,37 @@ class ReportService {
   final objParam;
   ReportService({required this.context, this.objParam});
 
-  Future<String> getSloc({obj}) async {
+  Future<Map> getSloc({obj}) async {
     var ret;
     var url = await global.getBapiManualServiceUrl("getsloc");
+    print(url);
+    print(obj);
     await http.post(url, body: obj).then((res) {
-      var data = jsonEncode(res.body);
+      var data = json.decode(res.body);
       if (res.statusCode == 200) {
         ret = data;
       } else {
-        ret = "err";
+        ret = {
+          "T_RET": ["Err"]
+        };
+      }
+    });
+    return ret;
+  }
+
+  Future<Map> getLkend({obj}) async {
+    var ret;
+    var url = await global.getBapiManualServiceUrl("getlkend");
+    print(url);
+    print(obj);
+    await http.post(url, body: obj).then((res) {
+      var data = json.decode(res.body);
+      if (res.statusCode == 200) {
+        ret = data;
+      } else {
+        ret = {
+          "T_RET": ["Err"]
+        };
       }
     });
     return ret;
@@ -44,13 +66,16 @@ class ReportService {
   Future<List> getUserReport() async {
     List ret = [];
     alert.loadingAlert(context: context, text: "Mengambil data ...", isPop: false);
-    var url = await global.getMainServiceUrl("getUserReport");
+    var url = await await global.getMainServiceUrl("getUserReport");
     try {
       await http.post(url, body: objParam).then((response) {
         final content = json.decode(response.body);
+        print(content);
         if (content["success"] == true) {
           Navigator.pop(context);
-          ret = content["data"];
+          if (content["data"] != null) {
+            ret = content["data"];
+          }
         } else {
           global.errorResponsePop(context, "Terjadi kesalahan Service");
           ret = [];
@@ -58,7 +83,53 @@ class ReportService {
       });
     } catch (e) {
       ret = [];
-      global.errorResponsePop(context, "Terjadi kesalahan Aplikasi");
+      print(e);
+      global.errorResponse(context, "Terjadi kesalahan Aplikasi");
+    }
+    return ret;
+  }
+
+  Future<Map> getTransaksiReport() async {
+    Map ret = {};
+    var url = await await global.getMainServiceUrl("getReportCekKendaraan");
+    print(url.toString());
+    print(objParam);
+    try {
+      await http.post(url, body: objParam).then((res) {
+        var content = json.decode(res.body);
+        print(content);
+        if (content['hasil'] is String) {
+          ret = {};
+          global.errorResponse(context, content['hasil']);
+        } else {
+          ret = content;
+        }
+      });
+    } catch (e) {
+      ret = {};
+      global.errorResponse(context, "Terjadi kesalahan Aplikasi");
+    }
+    return ret;
+  }
+
+  Future<Map> getTransaksiReportNew() async {
+    Map ret = {};
+    var url = await await global.getMainServiceUrl("getNewReport");
+    print(url.toString());
+    print(objParam);
+    try {
+      await http.post(url, body: objParam).then((res) {
+        var content = json.decode(res.body);
+        if (content['hasil'] is String) {
+          ret = {};
+          global.errorResponse(context, content['hasil']);
+        } else {
+          ret = content;
+        }
+      });
+    } catch (e) {
+      ret = {};
+      global.errorResponse(context, "Terjadi kesalahan Aplikasi");
     }
     return ret;
   }

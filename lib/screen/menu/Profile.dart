@@ -70,7 +70,9 @@ class ProfileState extends State<Profile> {
                                 ),
                               ),
                               GestureDetector(
-                                onTap: () {},
+                                onTap: () {
+                                  Navigator.pushNamed(context, '/configSetting');
+                                },
                                 child: ListTile(
                                   title: Text("Pengaturan App"),
                                   leading: Icon(Icons.settings_rounded, color: defGreen),

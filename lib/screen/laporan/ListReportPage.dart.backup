@@ -1,0 +1,280 @@
+// ignore_for_file: prefer_typing_uninitialized_variables, non_ant_identifier_names, prefer__ructors, unnecessary_null_comparison, prefer_interpolation_to_compose_strings, prefer_const_constructors, file_names, non_constant_identifier_names, duplicate_ignore, prefer_const_constructors_in_immutables, library_private_types_in_public_api, unused_field, prefer_final_fields, prefer_if_null_operators, unused_local_variable, avoid_print, no_logic_in_create_state
+
+part of "../../header.dart";
+
+class ListReportPage extends StatefulWidget {
+  final jenis_cek, jenis_kendaraan, asloc, kendaraan, tgl_awal, tgl_akhir;
+  ListReportPage(
+      {Key? key, this.jenis_cek, this.jenis_kendaraan, this.asloc, this.kendaraan, this.tgl_awal, this.tgl_akhir})
+      : super(key: key);
+
+  @override
+  _ListReportPageState createState() => _ListReportPageState(
+        jenis_cek,
+        jenis_kendaraan,
+        asloc,
+        kendaraan,
+        tgl_awal,
+        tgl_akhir,
+      );
+}
+
+class _ListReportPageState extends State<ListReportPage> {
+  final jenis_cek, jenis_kendaraan, asloc, kendaraan, tgl_awal, tgl_akhir;
+  _ListReportPageState(this.jenis_cek, this.jenis_kendaraan, this.asloc, this.kendaraan, this.tgl_awal, this.tgl_akhir);
+  final String url = 'public/api/getReportCekKendaraan';
+  String _tanggal = "";
+  Map<String, dynamic> data = {};
+  List data_mastertodo = [];
+  List data_periode = [];
+  List todo_d = [];
+  bool loading = true;
+
+  // Csv exportToCsv =  Csv();
+
+  @override
+  void initState() {
+    super.initState();
+    _kirim(url);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.blueGrey.shade50,
+      appBar: AppBar(
+        iconTheme: IconThemeData(
+          color: Colors.black54,
+        ),
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: Icon(Icons.arrow_back_ios_rounded, color: defWhite),
+        ),
+        title: FittedBox(
+          fit: BoxFit.fitWidth,
+          child: Text("Data Laporan", style: TextStyle(color: defWhite)),
+        ),
+        backgroundColor: defBlack1,
+        elevation: 0,
+        actions: <Widget>[
+          data == null
+              ? Text("")
+              : IconButton(
+                  icon: Icon(Icons.file_download, color: defWhite),
+                  tooltip: "Download Excel",
+                  onPressed: () {
+                    downloadExcel();
+                  },
+                ),
+        ],
+      ),
+      body: (loading == true
+          ? Container() //Loading Card
+          : SingleChildScrollView(
+              child: Container(
+                margin: EdgeInsets.fromLTRB(10, 5, 10, 5),
+                child: (data == null
+                    ? Text("Data tidak ditemukan")
+                    : Column(
+                        children: [
+                          for (var valsatu in data_periode)
+                            Table(
+                              children: [
+                                for (var valdua in todo_d)
+                                  if (data['tanggal'][valsatu] != null)
+                                    if (data['tanggal'][valsatu][valdua['sn_kendaraan']] != null)
+                                      for (var valtiga in data['tanggal'][valsatu][valdua['sn_kendaraan']])
+                                        valtiga['sn_kendaraan'] == valdua['sn_kendaraan']
+                                            ? TableRow(
+                                                children: [
+                                                  TableCell(
+                                                    child: Container(
+                                                      margin: EdgeInsets.fromLTRB(0, 5, 0, 5),
+                                                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                                      decoration: widget.decCont2(defWhite, 20, 20, 20, 20),
+                                                      child: Column(
+                                                        children: [
+                                                          Row(
+                                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                            children: <Widget>[
+                                                              Text("Nama",
+                                                                  style: TextStyle(
+                                                                      fontSize: 11, fontWeight: FontWeight.bold)),
+                                                              Text((valtiga['nama'] == null ? "" : valtiga['nama']),
+                                                                  style: TextStyle(
+                                                                      fontSize: 11, fontWeight: FontWeight.bold)),
+                                                            ],
+                                                          ),
+                                                          Row(
+                                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                            children: <Widget>[
+                                                              Text("Tanggal",
+                                                                  style: TextStyle(
+                                                                      fontSize: 11, fontWeight: FontWeight.bold)),
+                                                              Text(global.convertDate(valsatu),
+                                                                  style: TextStyle(
+                                                                      fontSize: 11, fontWeight: FontWeight.bold)),
+                                                            ],
+                                                          ),
+                                                          Row(
+                                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                            children: <Widget>[
+                                                              Text("SN Asset",
+                                                                  style: TextStyle(
+                                                                      fontSize: 11, fontWeight: FontWeight.bold)),
+                                                              Text(
+                                                                  valdua['sn_kendaraan']
+                                                                      .substring(valdua['sn_kendaraan'].length - 5),
+                                                                  style: TextStyle(
+                                                                      fontSize: 11, fontWeight: FontWeight.bold)),
+                                                            ],
+                                                          ),
+                                                          Divider(
+                                                            height: 5,
+                                                            thickness: 0,
+                                                            indent: 0,
+                                                            endIndent: 0,
+                                                          ),
+                                                          SizedBox(height: 5),
+                                                          Row(
+                                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                            children: <Widget>[
+                                                              Text("Asset", style: TextStyle(fontSize: 10)),
+                                                              Text(
+                                                                  (valdua['kendaraan'] == null
+                                                                      ? ""
+                                                                      : valdua['kendaraan']),
+                                                                  style: TextStyle(fontSize: 10)),
+                                                            ],
+                                                          ),
+                                                          for (var valempat in data_mastertodo)
+                                                            Column(
+                                                              children: [
+                                                                Row(
+                                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                  children: <Widget>[
+                                                                    Text(valempat['title'],
+                                                                        style: TextStyle(fontSize: 10)),
+                                                                    (valempat['title'] != ""
+                                                                        ? (valtiga[valempat['title']] == "yes"
+                                                                            ? Icon(
+                                                                                Icons.check_box,
+                                                                                color: defGreen,
+                                                                                size: 20.0,
+                                                                              )
+                                                                            : Icon(
+                                                                                Icons.indeterminate_check_box_rounded,
+                                                                                color: defRed,
+                                                                                size: 20.0,
+                                                                              ))
+                                                                        : Icon(
+                                                                            Icons.indeterminate_check_box_rounded,
+                                                                            color: defRed,
+                                                                            size: 20.0,
+                                                                          )),
+                                                                  ],
+                                                                ),
+                                                                Row(
+                                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                                  children: [
+                                                                    InkWell(
+                                                                      onTap: () {
+                                                                        valtiga['photo'] != null
+                                                                            ? showImg(valtiga['nama'], valtiga['photo'])
+                                                                            : alert.alertWarning(
+                                                                                context: context,
+                                                                                text: "Data Cek tidak ditemukan ! ",
+                                                                              );
+                                                                      },
+                                                                      child: (valtiga['photo'] != null
+                                                                          ? Icon(
+                                                                              Icons.image,
+                                                                              color: defGreen,
+                                                                              size: 30.0,
+                                                                            )
+                                                                          : Icon(
+                                                                              Icons.hide_image_outlined,
+                                                                              color: defRed,
+                                                                              size: 30.0,
+                                                                            )),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                                Divider(thickness: 2),
+                                                              ],
+                                                            ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              )
+                                            : TableRow()
+                              ],
+                            ),
+                        ],
+                      )),
+              ),
+            )),
+    );
+  }
+
+  downloadExcel() {
+    if (data.isEmpty) return alert.alertWarning(context: context, text: "Data tidak ditemukan !");
+    Map obj = {
+      "tglAwal": tgl_awal,
+      "tglAkhir": tgl_akhir,
+      "jenisCek": (jenis_cek == "1"
+          ? "Harian"
+          : (jenis_cek == "2" ? "Mingguan" : (jenis_cek == "3" ? "Bulanan" : "Tutup Pabrik"))),
+    };
+    ExcelReportTransaksi(context: context).exportTransaksiReport(data: data, obj: obj);
+  }
+
+  Future<String> _kirim(String url) async {
+    Map obj = {
+      "jenis_cek": jenis_cek,
+      "jenis_kendaraan": jenis_kendaraan,
+      "asloc": asloc,
+      "kendaraan": kendaraan,
+      "tgl_awal": tgl_awal,
+      "tgl_akhir": tgl_akhir
+    };
+    Map res = await ReportService(context: context, objParam: obj).getTransaksiReport();
+    setState(() {
+      if (res['hasil'] is String) {
+        data = {};
+      } else {
+        data = res['hasil'];
+      }
+      print(data);
+      data_mastertodo = res['mastertodo'];
+      data_periode = res['periode'];
+      todo_d = res['todo_d'];
+      loading = false;
+    });
+    return 'success!';
+  }
+
+  showImg(String asset, String img) {
+    return showDialog(
+      barrierDismissible: true,
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(asset),
+          content: Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Image.network(global.mainUrl + "photo/${img == null ? 'no-image.png' : img}"),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.pop(context, 'OK'),
+              child: Text('Ok'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}

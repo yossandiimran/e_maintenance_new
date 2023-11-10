@@ -9,7 +9,7 @@ class InputService {
 
   Future<String> getTodoList({String? urls}) async {
     String jeniscek = objParam["jenisCek"];
-    var url = global.getMainServiceUrl("$urls/$jeniscek");
+    var url = await global.getMainServiceUrl("$urls/$jeniscek");
     final response = await http.get(url);
 
     var data = json.decode(response.body);
@@ -17,6 +17,7 @@ class InputService {
   }
 
   Future<String> getDataKendaraan() async {
+    print("Tahap 3");
     var ret;
     var url = await global.getBapiManualServiceUrl("getkend");
     print(url);
@@ -32,6 +33,7 @@ class InputService {
       }
       ret = jsonEncode(content);
     });
+    print("Tahap 4");
 
     return ret;
   }
@@ -39,7 +41,7 @@ class InputService {
   Future uploadFoto({File? image}) async {
     alert.loadingAlert(context: context, text: "Uploading ... ", isPop: false);
     var ret = "success";
-    var request = http.MultipartRequest('POST', global.getMainServiceUrl("upload"));
+    var request = http.MultipartRequest('POST', await global.getMainServiceUrl("upload"));
     request.fields['kode_customer'] = "";
     request.files.add(await http.MultipartFile.fromPath('photo', image!.path));
     await request.send().then((val) async {
@@ -63,9 +65,21 @@ class TodoRepository {
   final DataBase dataBase = DataBase();
 
   Future getAllTodos() => dataBase.getTodos();
-  Future addTodo(BuildContext context, List title, String desc, String date, String jp, String sn, String kendaraan,
-          String nama, String werks) =>
-      dataBase.addTodo(context, title, desc, date, jp, sn, kendaraan, nama, werks);
+
+  Future addTodo(
+    BuildContext context,
+    List title,
+    String desc,
+    String date,
+    String jp,
+    String sn,
+    String kendaraan,
+    String nama,
+    String werks,
+  ) {
+    return dataBase.addTodo(context, title, desc, date, jp, sn, kendaraan, nama, werks);
+  }
+
   Future deleteTodo(int id) => dataBase.deleteTodo(id);
   Future updateTodo(int id) => dataBase.updateTodo(id);
 }
@@ -88,7 +102,7 @@ class TodoBloc {
   addTodo(BuildContext context, List title, String desc, String date, String jp, String sn, String kendaraan,
       String nama, String werks) async {
     _controller.sink.add(await _repository.addTodo(context, title, desc, date, jp, sn, kendaraan, nama, werks));
-    getTodos();
+    // getTodos();
   }
 
   deleteTodo(int id) async {
@@ -107,9 +121,11 @@ class DataBase {
 
   addTodo(BuildContext context, List title, String desc, String date, String jp, String sn, String kendaraan,
       String nama, String werks) async {
-    var url = global.getMainServiceUrl("addCekKendaraan");
+    var url = await global.getMainServiceUrl("addCekKendaraan");
     bool status = false;
     var t_status = "";
+
+    print(title.length);
 
     for (int i = 0; i < title.length; i++) {
       Map<String, dynamic> jsonMap = {
@@ -134,13 +150,14 @@ class DataBase {
       )
           .then((http.Response r) {
         var data = jsonDecode(r.body);
+        print(data);
         return t_status = data[0];
       }).onError((error, stackTrace) async {
         status = false;
         return "err";
       }).whenComplete(() {
         status = true;
-        print("add completed");
+        print("add completed " + jsonMap["title"]);
       });
     }
     final snackBar = SnackBar(
@@ -149,20 +166,21 @@ class DataBase {
     );
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
     Navigator.pop(context);
+    Navigator.pop(context);
   }
 
   deleteTodo(int id) async {
-    var url = global.getMainServiceUrl("todo/$id");
+    var url = await global.getMainServiceUrl("todo/$id");
     await client.delete(url).then((http.Response r) => r.body).whenComplete(() => print("delete completed"));
   }
 
   updateTodo(int id) async {
-    var url = global.getMainServiceUrl("todo/$id");
+    var url = await global.getMainServiceUrl("todo/$id");
     await client.put(url).then((http.Response r) => r.body).whenComplete(() => print("update completed"));
   }
 
   getTodos() async {
-    var url = global.getMainServiceUrl("todo");
+    var url = await global.getMainServiceUrl("todo");
     final response = await client.get(url);
     var list = (json.decode(response.body) as List).map((data) => Todo.fromJson(data)).toList();
     return list;

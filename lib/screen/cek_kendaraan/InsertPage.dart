@@ -45,6 +45,8 @@ class _InsertPageState extends State<InsertPage> {
   }
 
   Future<String> getDataKendaraan() async {
+    print("Tahap 1");
+    var resp;
     try {
       Map obj = {
         'SERNR': barcode.toString(),
@@ -52,13 +54,14 @@ class _InsertPageState extends State<InsertPage> {
         'ASHOST': preference.getData("ashost").toString(),
         'CLIENT': preference.getData("client").toString(),
         'SYSNR': preference.getData("sysnr").toString(),
-        'USAP': usap.toString(),
-        'PASS': psap.toString(),
+        'USAP': preference.getData("usap").toString(),
+        'PASS': preference.getData("pass").toString(),
         'USERID': preference.getData("id").toString(),
       };
+      print(obj);
       var response = await InputService(context: context, objParam: obj).getDataKendaraan();
       loading = false;
-      var resp = jsonDecode(response);
+      resp = jsonDecode(response);
       MAKTX = resp['MAKTX'];
       FLAG = resp['FLAG'];
       MATNR = resp['MATNR'];
@@ -67,9 +70,10 @@ class _InsertPageState extends State<InsertPage> {
       setState(() {});
       return "Success!";
     } catch (err) {
+      print(err);
       global.errorResponsePop(
         context,
-        " {ERROR: com.sap.conn.jco.JCoException: (103) JCO_ERROR_LOGON_FAILURE: Initialization of destination EMAINTENANCE_...",
+        resp,
       );
       return "failed";
     }
@@ -160,8 +164,19 @@ class _InsertPageState extends State<InsertPage> {
           IconButton(
             icon: const Icon(Icons.save),
             onPressed: () {
-              String date = "${_date.year}-${_date.month}-${_date.day}";
-              bloc.addTodo(context, data, data[0]["jenis_cek"], date, _valJP.toString(), barcode, MAKTX, nama, werks);
+              print(_valJP);
+              try {
+                if (_valJP != 0) {
+                  alert.loadingAlert(context: context, text: "Menimpan Data", isPop: false);
+                  String date = "${_date.year}-${_date.month}-${_date.day}";
+                  bloc.addTodo(
+                      context, data, data[0]["jenis_cek"], date, _valJP.toString(), barcode, MAKTX, nama, werks);
+                } else {
+                  alert.alertWarning(context: context, text: "Jenis Pengecekan Belum Dipilih !");
+                }
+              } catch (err) {
+                alert.alertWarning(context: context, text: "Terjadi Kesalahan Sistem !");
+              }
             },
           ),
         ],
@@ -251,7 +266,10 @@ class _InsertPageState extends State<InsertPage> {
                                 ),
                                 children: <TextSpan>[
                                   TextSpan(text: 'Tanggal : '),
-                                  TextSpan(text: tglSekarang, style: TextStyle(fontWeight: FontWeight.bold)),
+                                  TextSpan(
+                                    text: global.convertDate(tglSekarang).toString(),
+                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                  ),
                                 ],
                               ),
                             ),

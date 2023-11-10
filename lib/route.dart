@@ -19,9 +19,12 @@ class RouteGenerator {
         return MaterialPageRoute(builder: (_) => Laporan2());
       case '/user':
         return MaterialPageRoute(builder: (_) => User());
+      case '/userForm':
+        return MaterialPageRoute(builder: (_) => UserForm(obj: settings.arguments));
       case '/insert':
         return MaterialPageRoute(builder: (_) => InsertPage(barcode: dec["qrCode"]));
-
+      case '/configSetting':
+        return MaterialPageRoute(builder: (_) => ConfigSettingPage());
       case '/testBtPrinter':
         return MaterialPageRoute(builder: (_) => TestBtPrinter());
       default:

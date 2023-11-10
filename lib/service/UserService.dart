@@ -9,7 +9,7 @@ class UserService {
 
   Future<List> getUserList() async {
     List ret = [];
-    Uri url = await global.getMainServiceUrl("userList");
+    Uri url = await await global.getMainServiceUrl("userList");
     await http.post(url, body: objParam).then((response) {
       final content = json.decode(response.body);
       if (content["success"] == true) {
@@ -25,7 +25,7 @@ class UserService {
   Future<String> deleteUserList() async {
     String ret = "";
     print(objParam);
-    Uri url = await global.getMainServiceUrl("userDelete");
+    Uri url = await await global.getMainServiceUrl("userDelete");
     await http.post(url, body: objParam).then((response) {
       final content = json.decode(response.body);
       if (content["success"] == true) {
@@ -42,7 +42,7 @@ class UserService {
     String ret = "";
     String uri = "userAdd";
     print(objParam);
-    Uri url = await global.getMainServiceUrl(uri);
+    Uri url = await await global.getMainServiceUrl(uri);
     await http.post(url, body: objParam).then((response) {
       final content = json.decode(response.body);
       if (content["success"] == true) {

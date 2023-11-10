@@ -38,9 +38,9 @@ class DashboardState extends State<Dashboard> {
                 Spacer(),
                 Container(
                   padding: EdgeInsets.only(top: 15, left: 10, right: 10),
-                  height: global.getHeight(context) - (kToolbarHeight * 2.5),
+                  height: global.getHeight(context) - (kToolbarHeight * 2.5 + 5),
                   decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.only(topRight: Radius.circular(30), topLeft: Radius.circular(30)),
+                    borderRadius: const BorderRadius.only(topRight: Radius.circular(13), topLeft: Radius.circular(13)),
                     color: defBlack1,
                   ),
                   child: Column(
@@ -120,7 +120,7 @@ class DashboardState extends State<Dashboard> {
                         SizedBox(height: 10),
                         Container(
                           margin: EdgeInsets.symmetric(horizontal: 10),
-                          decoration: widget.decCont(defWhite, 20, 20, 20, 20),
+                          decoration: widget.decCont(defWhite, 10, 10, 10, 10),
                           child: Column(
                             children: [
                               SizedBox(height: 15),
@@ -147,7 +147,7 @@ class DashboardState extends State<Dashboard> {
                                       width: global.getWidth(context) / 1.2,
                                       padding: EdgeInsets.all(15),
                                       margin: EdgeInsets.only(left: 10, right: 10, bottom: 10),
-                                      decoration: widget.decCont2(defWhite, 19, 19, 19, 19),
+                                      decoration: widget.decCont2(defWhite, 9, 9, 9, 9),
                                       child: Row(
                                         children: [
                                           Image.asset("assets/barcode.png", width: 60),
@@ -181,7 +181,7 @@ class DashboardState extends State<Dashboard> {
                                       width: global.getWidth(context) / 1.2,
                                       padding: EdgeInsets.all(15),
                                       margin: EdgeInsets.only(left: 10, right: 10, bottom: 10),
-                                      decoration: widget.decCont2(defPurple, 19, 19, 19, 19),
+                                      decoration: widget.decCont2(defPurple, 9, 9, 9, 9),
                                       child: Row(
                                         children: [
                                           Image.asset("assets/printer.png", width: 60),
@@ -215,7 +215,7 @@ class DashboardState extends State<Dashboard> {
                                       width: global.getWidth(context) / 1.2,
                                       padding: EdgeInsets.all(15),
                                       margin: EdgeInsets.only(left: 10, right: 10, bottom: 10),
-                                      decoration: widget.decCont2(defOrange, 19, 19, 19, 19),
+                                      decoration: widget.decCont2(defOrange, 9, 9, 9, 9),
                                       child: Row(
                                         children: [
                                           Image.asset("assets/maintenance_planning.png", width: 60),
@@ -249,7 +249,7 @@ class DashboardState extends State<Dashboard> {
                                       width: global.getWidth(context) / 1.2,
                                       padding: EdgeInsets.all(15),
                                       margin: EdgeInsets.only(left: 10, right: 10, bottom: 10),
-                                      decoration: widget.decCont2(defGreen, 19, 19, 19, 19),
+                                      decoration: widget.decCont2(defGreen, 9, 9, 9, 9),
                                       child: Row(
                                         children: [
                                           Image.asset(
@@ -269,7 +269,7 @@ class DashboardState extends State<Dashboard> {
                                   Spacer(),
                                 ],
                               ),
-                              SizedBox(height: 5),
+                              SizedBox(height: 15),
                             ],
                           ),
                         ),
@@ -286,6 +286,7 @@ class DashboardState extends State<Dashboard> {
   }
 
   openQrPage() {
+    qrCode = "-";
     showModalBottomSheet<void>(
       context: context,
       builder: (BuildContext context) => Container(
@@ -294,9 +295,10 @@ class DashboardState extends State<Dashboard> {
         child: QrScanner(),
       ),
     ).then((value) async {
-      qrCode = "1C001C03TEST0001";
-      // qrCode = "1C001C03TEST0004";
-
+      // qrCode = "10000000X818440";
+      // qrCode = "1C01ASTAUDT1428";
+      // qrCode = "1C01ASTAUDT1101";
+      // qrCode = "ROSELLA12345678";
       if (qrCode != "-") {
         Navigator.pushNamed(context, '/insert', arguments: {"qrCode": qrCode});
       }

@@ -260,15 +260,20 @@ class Laporan2State extends State<Laporan2> {
   List<Widget> getTableDetail() {
     List<Widget> ret = [];
     ret.add(SizedBox(height: 10));
+    data.sort((a, b) => a["name"].compareTo(b["name"]));
     for (var i = 0; i < data.length; i++) {
-      ret.add(
-        ListTileTheme(
-          child: ExpansionTile(
-            title: Text(data[i]["name"], style: textStyling.customColor(15, defBlack1)),
-            children: getIconTrailing(data[i]["todo"]),
+      print(data[i]["name"]);
+      print(data[i]["todo"].length);
+      if (data[i]["todo"].length == 0) {
+        ret.add(
+          ListTileTheme(
+            child: ExpansionTile(
+              title: Text(data[i]["name"], style: textStyling.customColor(15, defBlack1)),
+              children: getIconTrailing(data[i]["todo"]),
+            ),
           ),
-        ),
-      );
+        );
+      }
     }
     return ret;
   }
@@ -297,7 +302,8 @@ class Laporan2State extends State<Laporan2> {
         ret.add(Container(
           padding: EdgeInsets.symmetric(horizontal: 20),
           alignment: Alignment.topLeft,
-          child: Text(" - " + global.convertDate(showEmptyDate[j]), style: textStyling.customColorBold(14, defRed)),
+          child: Text(" - " + global.convertDate(showEmptyDate[j]).toString(),
+              style: textStyling.customColorBold(14, defRed)),
         ));
     }
 
@@ -312,8 +318,8 @@ class Laporan2State extends State<Laporan2> {
     }
 
     dateList = getDateRangeList(
-      global.parseDate(TglAwalController.text, ""),
-      global.parseDate(TglAkhirController.text, ""),
+      await global.parseDate(TglAwalController.text, ""),
+      await global.parseDate(TglAkhirController.text, ""),
     );
 
     Map obj = {
@@ -354,25 +360,17 @@ class Laporan2State extends State<Laporan2> {
     final DateTime? picked = await showDatePicker(
         context: context, initialDate: DateTime.now(), firstDate: DateTime(2018), lastDate: DateTime(2101));
 
-    if (picked != selectedDate) {
-      setState(() {
-        selectedDate = picked!;
-        TglAwalController.text = '${customFormat.format(selectedDate)}';
-      });
-    }
+    setState(() {
+      TglAwalController.text = '${customFormat.format(picked!)}';
+    });
   }
 
   Future<void> showPickerTglAkhir(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: selectedDate,
-      lastDate: DateTime(2101),
-    );
+        context: context, initialDate: DateTime.now(), firstDate: DateTime(2018), lastDate: DateTime(2101));
 
     setState(() {
-      selectedDate = picked!;
-      TglAkhirController.text = '${customFormat.format(selectedDate)}';
+      TglAkhirController.text = '${customFormat.format(picked!)}';
     });
   }
 }

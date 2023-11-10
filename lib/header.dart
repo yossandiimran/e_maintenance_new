@@ -36,6 +36,7 @@ part 'service/AuthService.dart';
 part 'service/InputService.dart';
 part 'service/ReportService.dart';
 part 'service/UserService.dart';
+part 'service/RestartGlassfish.dart';
 
 // Screen / View ======================================
 part 'screen/TestBtPrinter.dart';
@@ -48,6 +49,10 @@ part 'screen/menu/Profile.dart';
 part 'screen/cek_kendaraan/InsertPage.dart';
 part 'screen/laporan/Laporan1.dart';
 part 'screen/laporan/Laporan2.dart';
+part 'screen/laporan/ListReportPage.dart';
 part 'screen/laporan/excel/ExcelReportUse.dart';
+part 'screen/laporan/excel/ExcelReportTransaksi.dart';
 part 'screen/user/User.dart';
+part 'screen/user/UserForm.dart';
+part 'screen/ConfigSetting.dart';
 // ================= Vendor Screen ====================

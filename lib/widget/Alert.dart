@@ -1,4 +1,4 @@
-// ignore_for_file: prefer_const_constructors, file_names
+// ignore_for_file: prefer_const_constructors, file_names, avoid_print, use_build_context_synchronously
 
 part of '../header.dart';
 
@@ -176,9 +176,29 @@ class Alert {
                     Spacer(),
                     GestureDetector(
                       onTap: () async {
-                        preference.clearPreference();
-                        Navigator.pushReplacementNamed(context, '/');
-                        // await SapLogoutService(context: context).sapCall();
+                        var userId = preference.getData("id");
+                        var url = await global.getBapiManualServiceUrl('unregdes?USERID=$userId');
+                        print(url);
+                        try {
+                          await http.post(url).then((res) async {
+                            print(res.statusCode);
+                            var data = json.decode(res.body);
+                            print(data);
+                            if (res.statusCode == 200) {
+                              preference.clearPreference();
+                              return Navigator.pushReplacementNamed(context, '/');
+                            }
+                          }).timeout(const Duration(seconds: 100), onTimeout: () {
+                            preference.clearPreference();
+                            return Navigator.pushReplacementNamed(context, '/');
+                          }).catchError((err1) {
+                            preference.clearPreference();
+                            return Navigator.pushReplacementNamed(context, '/');
+                          });
+                        } catch (err2) {
+                          preference.clearPreference();
+                          Navigator.pushReplacementNamed(context, '/');
+                        }
                       },
                       child: Container(
                         decoration: widget.decCont2(defRed, 10, 10, 10, 10),

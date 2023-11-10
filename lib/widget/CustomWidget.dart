@@ -320,7 +320,7 @@ class CustomWidget {
   }
 
   getChoicePopUp(context) {
-    return {'Logout', 'Pengaturan'}.map((String choice) {
+    return {'Logout'}.map((String choice) {
       return PopupMenuItem<String>(
         value: choice,
         child: Row(

@@ -11,9 +11,15 @@ class AuthService {
     alert.loadingAlert(context: context, text: "Mohon Tunggu .. ", isPop: false);
 
     try {
-      var url = global.getMainServiceUrl('login');
+      var url = await global.getMainServiceUrl('login');
+      print(url);
       var dvc = await FirebaseMessaging.instance.getToken();
-      var obj = {"username": objParam["username"], "password": objParam["password"], "device_token": dvc};
+      var obj = {
+        "username": objParam["username"],
+        "password": objParam["password"],
+        "device_token": dvc,
+        "app_version": appVersion,
+      };
       await http.post(url, body: obj).then((res) async {
         var data = json.decode(res.body);
         print(data);
@@ -21,20 +27,33 @@ class AuthService {
           if (data["success"] == false) {
             return global.errorResponse(context, data["message"]);
           } else {
-            var checkPreference = await setUserPreference(data["for_session"], objParam["password"]);
-            if (checkPreference == 200) {
-              return global.successResponseNavigate(context, "Berhasil Login", '/home');
+            if (data["for_session"]["app_version"] == appVersion) {
+              var checkPreference = await setUserPreference(data["for_session"], objParam["password"]);
+              if (checkPreference == 200) {
+                return global.successResponseNavigate(context, "Berhasil Login", '/home');
+              } else {
+                return global.errorResponse(context, 'Tidak dapat Login !');
+              }
             } else {
-              return global.errorResponse(context, 'Tidak dapat Login !');
+              print("okey2");
+              return global.errorResponse(
+                context,
+                'Tidak dapat login, silahkan update app ke versi terbaru, hubungi team EDP!',
+              );
             }
           }
         } else {
-          return global.errorResponse(context, data["message"]);
+          print("okey");
+          return global.errorResponse(
+            context,
+            'Username atau password salah',
+          );
         }
       }).timeout(const Duration(seconds: 10), onTimeout: () {
         return global.errorResponsePop(context, "Koneksi Timeout ...");
       });
     } catch (e) {
+      print(e);
       return global.errorResponsePop(context, "Terjadi Kesalahan !");
     }
   }
@@ -57,7 +76,7 @@ class AuthService {
 
   Future getSetting() async {
     try {
-      final response = await http.get(global.getMainServiceUrl("getSetting"));
+      final response = await http.get(await global.getMainServiceUrl("getSetting"));
       final data = jsonDecode(response.body);
       if (data.length > 0) {
         for (var i = 0; i < data.length; i++) {

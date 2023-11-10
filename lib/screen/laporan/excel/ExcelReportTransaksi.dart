@@ -2,10 +2,10 @@
 
 part of "../../../header.dart";
 
-class ExcelReportUser {
+class ExcelReportTransaksi {
   final BuildContext context;
-  ExcelReportUser({required this.context});
-  exportUserReport({required data, Map? obj}) async {
+  ExcelReportTransaksi({required this.context});
+  exportTransaksiReport({required data, Map? obj}) async {
     var status = await Permission.storage.status;
     if (!status.isGranted) {
       await Permission.storage.request();
@@ -17,7 +17,7 @@ class ExcelReportUser {
     excel.merge("Sheet1", start, end);
     //Header
     excel.appendRow("Sheet1", [
-      "Laporan User",
+      "Laporan Cek Kendaraan",
     ]);
     excel.appendRow("Sheet1", [
       "",
@@ -33,6 +33,9 @@ class ExcelReportUser {
     excel.appendRow("Sheet1", [
       "Jenis Cek : " + obj?["jenisCek"],
     ]);
+    // excel.appendRow("Sheet1", [
+    //   "Jenis Cek : " + obj?["kendaraan"],
+    // ]);
     excel.appendRow("Sheet1", [
       "Periode Tanggal : " +
           global.convertDate(obj?["tglAwal"]).toString() +
@@ -41,9 +44,9 @@ class ExcelReportUser {
     ]);
     excel.appendRow("Sheet1", [
       "NO",
+      "Tanggal",
       "NAMA USER",
       "LOKASI",
-      for (var i = 0; i < obj?["dateList"].length; i++) global.convertDate(obj?["dateList"][i]),
       "Dilakukan",
       "Tidak",
     ]);
@@ -81,13 +84,13 @@ class ExcelReportUser {
     sheetObject.cell(CellIndex.indexByString("H5")).cellStyle = cellStyle4;
     sheetObject.cell(CellIndex.indexByString("I5")).cellStyle = cellStyle4;
 
-    for (var j = 0; j < data.length; j++) {
-      excel.appendRow("Sheet1", getData(data[j]["todo"], data[j], j, obj));
-    }
+    // for (var j = 0; j < data.length; j++) {
+    //   excel.appendRow("Sheet1", getData(data[j]["todo"], data[j], j, obj));
+    // }
 
     var name = obj?["tglAwal"] + "-" + obj?["tglAkhir"];
     var times = DateTime.now().millisecondsSinceEpoch;
-    final String outputFile = '/storage/emulated/0/Download/Report($name)User.xlsx';
+    final String outputFile = '/storage/emulated/0/Download/Report($name)CekKendaraan.xlsx';
     print(outputFile);
     var fileBytes = excel.save();
 

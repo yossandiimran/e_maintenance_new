@@ -1,4 +1,4 @@
-// ignore_for_file: file_names, non_constant_identifier_names, prefer_typing_uninitialized_variables, library_private_types_in_public_api, avoid_print, prefer_const_constructors, prefer_const_literals_to_create_immutables, unnecessary_string_interpolations, curly_braces_in_flow_control_structures, await_only_futures
+// ignore_for_file: file_names, non_constant_identifier_names, prefer_typing_uninitialized_variables, library_private_types_in_public_api, avoid_print, prefer_const_constructors, prefer_const_literals_to_create_immutables, unnecessary_string_interpolations, curly_braces_in_flow_control_structures, await_only_futures, unnecessary_null_comparison
 part of "../../header.dart";
 
 class Laporan1 extends StatefulWidget {
@@ -20,13 +20,13 @@ class _Laporan1State extends State<Laporan1> {
   String message = "";
 
   String _valJenisCek = "1", _valJenisKendaraan = "1";
-  String _valAsloc = "";
-  String _valKendaraan = "";
+  var _valAsloc;
+  var valKendaraan;
   String sn = "";
   DateTime selectedDate = DateTime.now();
   var customFormat = DateFormat('yyyy-MM-dd');
 
-  final List _listJenisCek = ["1", "2", "3"];
+  final List _listJenisCek = ["1", "2", "3", "4"];
   final List _listJenisKendaraan = ["1", "2"];
 
   getPref() async {
@@ -48,12 +48,17 @@ class _Laporan1State extends State<Laporan1> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
+      backgroundColor: Colors.blueGrey.shade50,
       appBar: AppBar(
         iconTheme: IconThemeData(
           color: Colors.black54, //change your color here
         ),
-        title: Text("Laporan", style: TextStyle(color: Colors.black54)),
-        backgroundColor: Colors.transparent,
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: Icon(Icons.arrow_back_ios_rounded, color: defWhite),
+        ),
+        title: Text("Laporan", style: TextStyle(color: defWhite)),
+        backgroundColor: defBlack1,
         elevation: 0,
         actions: <Widget>[],
       ),
@@ -62,7 +67,9 @@ class _Laporan1State extends State<Laporan1> {
           child: Form(
             key: _formKey,
             child: Container(
-              margin: EdgeInsets.fromLTRB(25, 20, 25, 0),
+              decoration: widget.decCont2(defWhite, 20, 20, 20, 20),
+              margin: EdgeInsets.fromLTRB(20, 20, 20, 0),
+              padding: EdgeInsets.fromLTRB(20, 20, 20, 20),
               child: Column(children: <Widget>[
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -78,7 +85,9 @@ class _Laporan1State extends State<Laporan1> {
                       items: _listJenisCek.map((value) {
                         return DropdownMenuItem(
                           value: value,
-                          child: Text((value == "1" ? "Harian" : (value == "2" ? "Mingguan" : "Bulanan"))),
+                          child: Text((value == "1"
+                              ? "Harian"
+                              : (value == "2" ? "Mingguan" : (value == "3" ? "Bulanan" : "Tutup Pabrik")))),
                         );
                       }).toList(),
                       onChanged: (value) {
@@ -193,40 +202,28 @@ class _Laporan1State extends State<Laporan1> {
                           disabledForegroundColor: Colors.grey.withOpacity(0.38),
                         ),
                         onPressed: () {
-                          // if (_valJenisCek == null) {
-                          //   _scaffoldKey.currentState.showSnackBar(SnackBar(
-                          //     content: Text("Jenis cek belum di pilih"),
-                          //     duration: Duration(seconds: 3),
-                          //   ));
-                          // } else if (_valJenisKendaraan == null) {
-                          //   _scaffoldKey.currentState.showSnackBar(SnackBar(
-                          //     content: Text("Jenis kendaraan belum di pilih"),
-                          //     duration: Duration(seconds: 3),
-                          //   ));
-                          // } else if (TglAwalController.text == "") {
-                          //   _scaffoldKey.currentState.showSnackBar(SnackBar(
-                          //     content: Text("Tanggal awal belum di isi"),
-                          //     duration: Duration(seconds: 3),
-                          //   ));
-                          // } else if (TglAkhirController.text == "") {
-                          //   _scaffoldKey.currentState.showSnackBar(SnackBar(
-                          //     content: Text("Tanggal akhir belum di isi"),
-                          //     duration: Duration(seconds: 3),
-                          //   ));
-                          // } else {
-                          // Navigator.push(
-                          //   context,
-                          //   MaterialPageRoute(
-                          //     builder: (context) => ListLaporan1(
-                          //         jenis_cek: _valJenisCek,
-                          //         jenis_kendaraan: _valJenisKendaraan,
-                          //         asloc: _valAsloc,
-                          //         kendaraan: sn,
-                          //         tgl_awal: TglAwalController.text,
-                          //         tgl_akhir: TglAkhirController.text),
-                          //   ),
-                          // );
-                          // }
+                          if (_valJenisCek == null) {
+                            alert.alertWarning(context: context, text: "Jenis cek belum di pilih");
+                          } else if (_valJenisKendaraan == null) {
+                            alert.alertWarning(context: context, text: "Jenis kendaraan belum di pilih");
+                          } else if (TglAwalController.text == "") {
+                            alert.alertWarning(context: context, text: "Tanggal awal belum di isi");
+                          } else if (TglAkhirController.text == "") {
+                            alert.alertWarning(context: context, text: "Tanggal akhir belum di isi");
+                          } else {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ListReportPage(
+                                    jenis_cek: _valJenisCek,
+                                    jenis_kendaraan: _valJenisKendaraan,
+                                    asloc: _valAsloc,
+                                    kendaraan: sn,
+                                    tgl_awal: TglAwalController.text,
+                                    tgl_akhir: TglAkhirController.text),
+                              ),
+                            );
+                          }
                         },
                         child: Text('OK'),
                       ),
@@ -246,54 +243,35 @@ class _Laporan1State extends State<Laporan1> {
     final DateTime? picked = await showDatePicker(
         context: context, initialDate: DateTime.now(), firstDate: DateTime(2018), lastDate: DateTime(2101));
 
-    if (picked != selectedDate) {
-      setState(() {
-        selectedDate = picked!;
-        TglAwalController.text = '${customFormat.format(selectedDate)}';
-      });
-    }
+    setState(() {
+      TglAwalController.text = '${customFormat.format(picked!)}';
+    });
   }
 
   Future<void> showPickerTglAkhir(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
         context: context, initialDate: DateTime.now(), firstDate: DateTime(2018), lastDate: DateTime(2101));
 
-    if (picked != selectedDate)
-      setState(() {
-        selectedDate = picked!;
-        TglAkhirController.text = '${customFormat.format(selectedDate)}';
-      });
+    setState(() {
+      TglAkhirController.text = '${customFormat.format(picked!)}';
+    });
   }
 
   Future<void> getSloc(String usap, String psap, String werks) async {
     print("okesloc");
 
     var obj = await {
-      'ashost': await preference.getData("ashost"),
-      'client': await preference.getData("client"),
-      'sysnr': await preference.getData("sysnr"),
-      'usap': usap,
-      'psap': psap
+      'ASHOST': await preference.getData("ashost").toString(),
+      'CLIENT': await preference.getData("client").toString(),
+      'SYSNR': await preference.getData("sysnr").toString(),
+      'USAP': await preference.getData("usap").toString(),
+      'PASS': await preference.getData("pass").toString(),
+      'USERID': preference.getData("id").toString(),
+      'WERKS': preference.getData("werks"),
     };
     final res = await ReportService(context: context).getSloc(obj: obj);
     data = res;
     setState(() {});
-    print(res);
-    print(data);
-
-    //attache countryname on parameter country in url
-    // if (res.statusCode == 200) {
-    //   setState(() {
-    //     data = json.decode(res.body);
-    //   });
-    //   print(data);
-    // } else {
-    //   //there is error
-    //   setState(() {
-    //     error = true;
-    //     message = "Error during fetching data";
-    //   });
-    // }
   }
 
   Widget slocList() {
@@ -316,7 +294,6 @@ class _Laporan1State extends State<Laporan1> {
               setState(() {
                 _valAsloc = value.toString();
                 getLkend(usap, psap, value.toString());
-                _valKendaraan = "";
               });
               print("Selected city is $value");
             });
@@ -329,70 +306,58 @@ class _Laporan1State extends State<Laporan1> {
   }
 
   Future<void> getLkend(String usap, String psap, String werks) async {
-    SharedPreferences preferences = await SharedPreferences.getInstance();
-    final res = await http.post(
-      Uri.parse("http://192.168.1.128:7171/emaintenance/getlkend"),
-      body: {
-        'werks': werks,
-        'ashost': preferences.getString("ashost"),
-        'client': preferences.getString("client"),
-        'sysnr': preferences.getString("sysnr"),
-        'usap': usap,
-        'psap': psap
-      },
-    );
-    //attache countryname on parameter country in url
-    if (res.statusCode == 200) {
-      setState(() {
-        dataLkend = json.decode(res.body);
-        // print(dataLkend);
-      });
-    } else {
-      //there is error
-      setState(() {
-        error = true;
-        message = "Error during fetching data";
-      });
+    print("getLkend");
+    try {
+      var obj = await {
+        'ASHOST': await preference.getData("ashost").toString(),
+        'CLIENT': await preference.getData("client").toString(),
+        'SYSNR': await preference.getData("sysnr").toString(),
+        'USAP': await preference.getData("usap").toString(),
+        'PASS': await preference.getData("pass").toString(),
+        'USERID': preference.getData("id").toString(),
+        'WERKS': werks,
+      };
+      final res = await ReportService(context: context).getLkend(obj: obj);
+      print(res["T_KEND"]);
+      dataLkend = res;
+      setState(() {});
+    } catch (err) {
+      alert.alertWarning(context: context, text: "Kesalahan Koneksi Ke SAP !");
     }
   }
 
   Widget lkendList() {
-    //widget function for city list
     if (dataLkend != null) {
-      if (dataLkend["result"]["T_KEND"].length != 0) {
-        List<Lkend> Lkendlist = List<Lkend>.from(dataLkend["result"]["T_KEND"].map((i) {
+      if (dataLkend["T_KEND"].length != 0) {
+        List<Lkend> lKendList = List<Lkend>.from(dataLkend["T_KEND"].map((i) {
           return Lkend.fromJSON(i);
-        })); //searilize sloclist json data to object model.
+        }));
         return DropdownButton(
-            hint: Text("Pilih Aset"),
+            hint: Text("Silahkan Pilih Kendaraan"),
             isExpanded: true,
-            value: _valKendaraan,
-            items: Lkendlist.map((lkend) {
+            value: valKendaraan,
+            items: lKendList.map((sloc) {
               return DropdownMenuItem(
-                value: lkend.SERNR,
-                child: Text(lkend.MAKTX),
+                value: sloc.SERNR,
+                child: Text(sloc.MAKTX),
               );
             }).toList(),
-            onChanged: (value) {
-              // setState(() {
-              //   _valKendaraan = value.toString();
-              //   if ("${value[0]}" == "0") {
-              //     sn = value.substring(3);
-              //     print("Awalan 000 : ");
-              //     print(sn);
-              //   } else {
-              //     sn = value;
-              //   }
-              // });
-              // print("Huruf awal ${_valKendaraan[0]}");
-              // print("Huruf terakhir ${_valKendaraan[17]}");
-              // print("Selected city is $_valKendaraan");
+            onChanged: (val) {
+              setState(() {
+                valKendaraan = val;
+                if ("${val.toString()[0]}" == "0") {
+                  sn = val.toString().substring(3);
+                } else {
+                  sn = val.toString();
+                }
+                print(sn);
+              });
             });
       } else {
-        return Text("Tidak ada data kendaraan");
+        return Text("Tidak ada data asloc");
       }
     } else {
-      return Text("Tidak ada data kendaraan");
+      return Text("Tidak ada data asloc");
     }
   }
 }
