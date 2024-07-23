@@ -295,10 +295,11 @@ class DashboardState extends State<Dashboard> {
         child: QrScanner(),
       ),
     ).then((value) async {
-      // qrCode = "10000000X818440";
+      // qrCode = "1234560000AS010";
       // qrCode = "1C01ASTAUDT1428";
-      // qrCode = "1C01ASTAUDT1101";
-      // qrCode = "ROSELLA12345678";
+      // qrCode = "1C17AZ170919023";
+      // qrCode = "1C001C03TEST0004";
+      // qrCode = "100000000061702";
       if (qrCode != "-") {
         Navigator.pushNamed(context, '/insert', arguments: {"qrCode": qrCode});
       }

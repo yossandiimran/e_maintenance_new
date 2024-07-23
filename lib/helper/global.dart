@@ -12,7 +12,7 @@ TextStyling textStyling = TextStyling();
 FirebaseMessagingHelper fbmessaging = FirebaseMessagingHelper();
 
 var qrCode = "-";
-var appVersion = '2.0.1';
+var appVersion = '2.1.0';
 var isMenuActive = 0;
 
 //Default Theme Color
@@ -36,6 +36,10 @@ class Global {
   var baseIp = '210.210.165.197';
   var baseUrl = "/e_maintenance_v2/public/";
   var baseUrl2 = "/e_maintenance/public/";
+
+  // var baseIp = '192.168.1.128';
+  // var baseUrl = "/cek_kendaraan/public/";
+  // var baseUrl2 = "/cek_kendaraan/public/";
 
   getMainServiceUrl(String link) {
     var ip = preference.getData("globalIp") ?? baseIp;
@@ -133,7 +137,7 @@ class Global {
     }
   }
 
-  Future<String> convertDate(String dateString) async {
+  String convertDate(String dateString) {
     final dateParts = dateString.split("-");
     final year = (dateParts[0]);
     final month = (dateParts[1]);

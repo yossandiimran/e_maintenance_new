@@ -6,10 +6,10 @@ class RestartGlassfish {
   RestartGlassfish({required BuildContext this.context, required var this.obj});
 
   Future<void> restartConnection() async {
-    var url = await global.getMainServiceUrl('server/restart');
+    // var url = await global.getMainServiceUrl('server/restart');
     var data;
     try {
-      await http.post(url).then((res) {
+      await http.get(Uri.parse("http://202.138.230.51:8080/eReset/ResetWar?APPNAME=emaintenance")).then((res) {
         var rawData = json.decode(res.body);
         if (res.statusCode == 200) {
           bool hasError = rawData.containsKey("ERROR");
@@ -17,9 +17,9 @@ class RestartGlassfish {
             return global.errorResponsePop(context, rawData["ERROR"]);
           }
           var error = rawData["ERROR"];
-          var success = rawData["SUCCESS"];
+          var success = rawData["SUCCESS_RESET"];
           data = {"ERROR": error.toString(), "SUCCESS": success.toString()};
-
+          print(data);
           global.successResponseNoPop(context, "Koneksi Berhasil Di Reset !");
         } else if (res.statusCode == 400) {
           global.errorResponseNoPop(context, data["message"]);

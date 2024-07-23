@@ -77,7 +77,7 @@ class ConfigSettingPageState extends State<ConfigSettingPage> {
                                 child: Column(
                                   children: [
                                     Spacer(),
-                                    Text("def : ${global.baseIp}", style: textStyling.customColor(12.5, defGrey)),
+                                    Text("default : ${global.baseIp}", style: textStyling.customColor(12.5, defGrey)),
                                     SizedBox(height: 5),
                                     Container(
                                       margin: EdgeInsets.symmetric(horizontal: 20),

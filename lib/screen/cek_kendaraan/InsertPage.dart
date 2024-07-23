@@ -121,8 +121,27 @@ class _InsertPageState extends State<InsertPage> {
       } else {
         if (FLAG == "X") {
           getTodo(jeniscek, "getDataTodoForklip");
-        } else {
+        } else if (FLAG == "") {
           getTodo(jeniscek, "getDataTodoMobil");
+        } else {
+          Navigator.pop(context);
+          showDialog<String>(
+            barrierDismissible: false,
+            context: context,
+            builder: (BuildContext context) => AlertDialog(
+              title: const Text('Peringatan!'),
+              content: const Text('KONEKSI SAP TIMEOUT, HARAP RESTART KONEKSI SAP MELALUI MENU SETTING APLIKASI !'),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context, 'OK');
+                    Navigator.pop(context);
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          );
         }
       }
     });
