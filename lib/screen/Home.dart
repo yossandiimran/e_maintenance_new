@@ -15,14 +15,15 @@ class HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
         alert.alertConfirmExit(context);
-        return false;
       },
       child: Scaffold(
         resizeToAvoidBottomInset: false,
-        backgroundColor: defWhite,
+        backgroundColor: linearBg,
         extendBodyBehindAppBar: true,
         bottomNavigationBar: navBarApp(),
         body: getMenuWidget(),
@@ -40,33 +41,41 @@ class HomeState extends State<Home> {
   }
 
   navBarApp() {
-    return GNav(
-        color: defWhite,
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: const EdgeInsets.all(8),
+      decoration: CustomWidget().linearPanelDecoration(
+        radius: 24,
+        color: linearPanel,
+      ),
+      child: GNav(
+        color: linearTextTertiary,
         haptic: true,
-        tabBorderRadius: 15,
-        curve: Curves.linear,
-        duration: Duration(milliseconds: 100),
+        tabBorderRadius: 18,
+        curve: Curves.easeOutCubic,
+        duration: const Duration(milliseconds: 180),
         gap: 8,
-        activeColor: defWhite,
-        iconSize: 24,
-        backgroundColor: defBlack1,
-        tabBackgroundColor: defblue2,
-        tabMargin: EdgeInsets.only(left: 3, right: 3, top: 4, bottom: 4),
-        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        activeColor: linearTextPrimary,
+        iconSize: 22,
+        backgroundColor: Colors.transparent,
+        tabBackgroundColor: linearBrand.withValues(alpha: 0.18),
+        tabMargin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         onTabChange: (value) {
           isMenuActive = value;
           setState(() {});
-          print(isMenuActive);
         },
         tabs: const [
           GButton(
-            icon: Icons.home_rounded,
-            text: 'Home',
+            icon: Icons.dashboard_rounded,
+            text: 'Workspace',
           ),
           GButton(
             icon: Icons.person_rounded,
             text: 'Akun',
           )
-        ]);
+        ],
+      ),
+    );
   }
 }

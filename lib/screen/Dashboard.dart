@@ -13,274 +13,241 @@ class DashboardState extends State<Dashboard> {
     super.initState();
   }
 
+  bool get _isRestrictedUser => preference.getData("id_jenis_user").toString() == "4";
+
+  void _openProtectedRoute(String routeName) {
+    if (_isRestrictedUser) {
+      alert.alertWarning(context: context, text: "Anda tidak memiliki akses");
+      return;
+    }
+    Navigator.pushNamed(context, routeName);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
+    final ui = CustomWidget();
+    final userName = preference.getData("nama").toString();
+    final currentHost = preference.getData("globalIp") ?? global.baseIp;
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
         alert.alertConfirmExit(context);
-        return false;
       },
       child: Scaffold(
         resizeToAvoidBottomInset: false,
-        backgroundColor: defWhite,
-        extendBodyBehindAppBar: true,
-        appBar: widget.appBarTitle(context, "E-Maintenance New", Colors.transparent),
-        body: Stack(children: [
-          widget.bgAppbar(context),
-          Positioned(
-            top: 0,
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Spacer(),
-                Container(
-                  padding: EdgeInsets.only(top: 15, left: 10, right: 10),
-                  height: global.getHeight(context) - (kToolbarHeight * 2.5 + 5),
-                  decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.only(topRight: Radius.circular(13), topLeft: Radius.circular(13)),
-                    color: defBlack1,
-                  ),
-                  child: Column(
+        backgroundColor: linearBg,
+        body: Container(
+          decoration: BoxDecoration(gradient: global.heroGradient),
+          child: SafeArea(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 120),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      SizedBox(
-                        width: global.getWidth(context),
-                        child: Row(
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            SizedBox(width: 15),
-                            Text(
-                              "Selamat datang, \n" + preference.getData("nama"),
-                              style: textStyling.customColor(global.getWidth(context) / 20, defWhite),
+                            ui.linearPill(
+                              icon: Icons.warehouse_rounded,
+                              label: "Host $currentHost",
                             ),
-                            Spacer(),
-                            PopupMenuButton<String>(
-                              icon: Icon(Icons.more_vert_rounded, color: defWhite),
-                              onSelected: (value) async {
-                                if (value == "Logout") {
-                                  alert.alertLogout(context);
-                                } else {
-                                  var token = await FirebaseMessaging.instance.getToken();
-                                  print(token);
-                                }
-                              },
-                              itemBuilder: (BuildContext context) => widget.getChoicePopUp(context),
+                            const SizedBox(height: 16),
+                            Text("Workspace", style: textStyling.linearDisplay(34)),
+                            const SizedBox(height: 8),
+                            Text(
+                              "Selamat datang kembali, $userName",
+                              style: textStyling.linearBody(16, color: linearTextSecondary),
                             ),
                           ],
                         ),
                       ),
+                      PopupMenuButton<String>(
+                        icon: Icon(Icons.more_horiz_rounded, color: linearTextPrimary),
+                        onSelected: (value) async {
+                          if (value == "Logout") {
+                            alert.alertLogout(context);
+                          } else {
+                            var token = await FirebaseMessaging.instance.getToken();
+                            print(token);
+                          }
+                        },
+                        itemBuilder: (BuildContext context) => widget.getChoicePopUp(context),
+                      ),
                     ],
                   ),
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            top: 0,
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Spacer(),
-                Container(
-                  padding: EdgeInsets.only(top: 20, left: 10, right: 10),
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: defGreen,
-                  ),
-                  child: ScrollConfiguration(
-                    behavior: const ScrollBehavior().copyWith(overscroll: false),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            top: 0,
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(height: kToolbarHeight * 2.6),
-                Expanded(
-                  child: SingleChildScrollView(
-                    physics: BouncingScrollPhysics(),
+                  const SizedBox(height: 20),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(24),
+                    decoration: ui.linearHeroDecoration(),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SizedBox(height: 10),
-                        Container(
-                          margin: EdgeInsets.symmetric(horizontal: 10),
-                          decoration: widget.decCont(defWhite, 10, 10, 10, 10),
-                          child: Column(
-                            children: [
-                              SizedBox(height: 15),
-                              ListTile(
-                                dense: true,
-                                visualDensity: VisualDensity(horizontal: 0, vertical: -4),
-                                leading: Icon(Icons.dashboard_rounded, color: defblue2, size: 40),
-                                title: Text(
-                                  "Menu :",
-                                  style: textStyling.defaultBlackBold(20),
-                                ),
-                              ),
-                              SizedBox(height: 7),
-                              Divider(color: defBlack1, thickness: 4),
-                              SizedBox(height: 14),
-                              Row(
-                                children: [
-                                  Spacer(),
-                                  GestureDetector(
-                                    onTap: () {
-                                      openQrPage();
-                                    },
-                                    child: Container(
-                                      width: global.getWidth(context) / 1.2,
-                                      padding: EdgeInsets.all(15),
-                                      margin: EdgeInsets.only(left: 10, right: 10, bottom: 10),
-                                      decoration: widget.decCont2(defWhite, 9, 9, 9, 9),
-                                      child: Row(
-                                        children: [
-                                          Image.asset("assets/barcode.png", width: 60),
-                                          Spacer(),
-                                          Text(
-                                            "Cek kendaraan",
-                                            style: textStyling.customColorBold(16, defBlack1),
-                                          ),
-                                          Spacer(),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  Spacer(),
-                                ],
-                              ),
-                              SizedBox(height: 5),
-                              Row(
-                                children: [
-                                  Spacer(),
-                                  GestureDetector(
-                                    onTap: () {
-                                      var ijs = preference.getData("id_jenis_user");
-                                      if (ijs != "4") {
-                                        Navigator.pushNamed(context, '/lap1');
-                                      } else {
-                                        alert.alertWarning(context: context, text: "Anda tidak memiliki akses");
-                                      }
-                                    },
-                                    child: Container(
-                                      width: global.getWidth(context) / 1.2,
-                                      padding: EdgeInsets.all(15),
-                                      margin: EdgeInsets.only(left: 10, right: 10, bottom: 10),
-                                      decoration: widget.decCont2(defPurple, 9, 9, 9, 9),
-                                      child: Row(
-                                        children: [
-                                          Image.asset("assets/printer.png", width: 60),
-                                          Spacer(),
-                                          Text(
-                                            "Laporan Transaksi",
-                                            style: textStyling.customColorBold(16, defWhite),
-                                          ),
-                                          Spacer(),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  Spacer(),
-                                ],
-                              ),
-                              SizedBox(height: 5),
-                              Row(
-                                children: [
-                                  Spacer(),
-                                  GestureDetector(
-                                    onTap: () {
-                                      var ijs = preference.getData("id_jenis_user");
-                                      if (ijs != "4") {
-                                        Navigator.pushNamed(context, '/lap2');
-                                      } else {
-                                        alert.alertWarning(context: context, text: "Anda tidak memiliki akses");
-                                      }
-                                    },
-                                    child: Container(
-                                      width: global.getWidth(context) / 1.2,
-                                      padding: EdgeInsets.all(15),
-                                      margin: EdgeInsets.only(left: 10, right: 10, bottom: 10),
-                                      decoration: widget.decCont2(defOrange, 9, 9, 9, 9),
-                                      child: Row(
-                                        children: [
-                                          Image.asset("assets/maintenance_planning.png", width: 60),
-                                          Spacer(),
-                                          Text(
-                                            "Laporan User",
-                                            style: textStyling.customColorBold(16, defWhite),
-                                          ),
-                                          Spacer(),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  Spacer(),
-                                ],
-                              ),
-                              SizedBox(height: 5),
-                              Row(
-                                children: [
-                                  Spacer(),
-                                  GestureDetector(
-                                    onTap: () {
-                                      var ijs = preference.getData("id_jenis_user");
-                                      if (ijs != "4") {
-                                        Navigator.pushNamed(context, '/user');
-                                      } else {
-                                        alert.alertWarning(context: context, text: "Anda tidak memiliki akses");
-                                      }
-                                    },
-                                    child: Container(
-                                      width: global.getWidth(context) / 1.2,
-                                      padding: EdgeInsets.all(15),
-                                      margin: EdgeInsets.only(left: 10, right: 10, bottom: 10),
-                                      decoration: widget.decCont2(defGreen, 9, 9, 9, 9),
-                                      child: Row(
-                                        children: [
-                                          Image.asset(
-                                            "assets/external-driver-women-profession-sbts2018-lineal-color-sbts2018.png",
-                                            width: 60,
-                                          ),
-                                          Spacer(),
-                                          Text(
-                                            "Setting User",
-                                            style: textStyling.customColorBold(16, defWhite),
-                                          ),
-                                          Spacer(),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  Spacer(),
-                                ],
-                              ),
-                              SizedBox(height: 15),
-                            ],
-                          ),
+                        Text("Operasional harian kendaraan", style: textStyling.linearTitle(22, strong: true)),
+                        const SizedBox(height: 8),
+                        Text(
+                          "Akses cepat ke checklist inspeksi, laporan transaksi, laporan user, dan administrasi akun.",
+                          style: textStyling.linearBody(15, color: linearTextSecondary, height: 1.65),
+                        ),
+                        const SizedBox(height: 20),
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: [
+                            _buildStatPill(Icons.qr_code_scanner_rounded, "Scan & inspeksi"),
+                            _buildStatPill(Icons.assessment_rounded, "Report monitoring"),
+                            _buildStatPill(
+                              _isRestrictedUser ? Icons.lock_outline_rounded : Icons.verified_user_rounded,
+                              _isRestrictedUser ? "Akses operator" : "Akses admin",
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 20),
+                  Text("Menu utama", style: textStyling.linearTitle(18, strong: true)),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Setiap area kerja disusun sebagai card ringkas agar lebih cepat dipindai di mobile.",
+                    style: textStyling.linearBody(14, color: linearTextTertiary),
+                  ),
+                  const SizedBox(height: 16),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isWide = constraints.maxWidth > 720;
+                      return Wrap(
+                        spacing: 14,
+                        runSpacing: 14,
+                        children: [
+                          SizedBox(
+                            width: isWide ? (constraints.maxWidth - 14) / 2 : constraints.maxWidth,
+                            child: _buildMenuCard(
+                              icon: Icons.qr_code_scanner_rounded,
+                              accent: linearAccent,
+                              title: "Cek kendaraan",
+                              subtitle: "Scan serial number dan lanjutkan checklist inspeksi rutin.",
+                              asset: "assets/barcode.png",
+                              onTap: openQrPage,
+                            ),
+                          ),
+                          SizedBox(
+                            width: isWide ? (constraints.maxWidth - 14) / 2 : constraints.maxWidth,
+                            child: _buildMenuCard(
+                              icon: Icons.receipt_long_rounded,
+                              accent: linearBrand,
+                              title: "Laporan transaksi",
+                              subtitle: "Lihat dan ekspor histori transaksi inspeksi kendaraan.",
+                              asset: "assets/printer.png",
+                              onTap: () => _openProtectedRoute('/lap1'),
+                            ),
+                          ),
+                          SizedBox(
+                            width: isWide ? (constraints.maxWidth - 14) / 2 : constraints.maxWidth,
+                            child: _buildMenuCard(
+                              icon: Icons.people_alt_rounded,
+                              accent: defOrange,
+                              title: "Laporan user",
+                              subtitle: "Audit aktivitas user dan ringkasan penggunaan aplikasi.",
+                              asset: "assets/maintenance_planning.png",
+                              onTap: () => _openProtectedRoute('/lap2'),
+                            ),
+                          ),
+                          SizedBox(
+                            width: isWide ? (constraints.maxWidth - 14) / 2 : constraints.maxWidth,
+                            child: _buildMenuCard(
+                              icon: Icons.manage_accounts_rounded,
+                              accent: linearSuccess,
+                              title: "Setting user",
+                              subtitle: "Kelola akun dan hak akses untuk admin atau supervisor.",
+                              asset:
+                                  "assets/external-driver-women-profession-sbts2018-lineal-color-sbts2018.png",
+                              onTap: () => _openProtectedRoute('/user'),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
-        ]),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatPill(IconData icon, String label) {
+    return CustomWidget().linearPill(
+      icon: icon,
+      label: label,
+      color: global.surfaceL1,
+    );
+  }
+
+  Widget _buildMenuCard({
+    required IconData icon,
+    required Color accent,
+    required String title,
+    required String subtitle,
+    required String asset,
+    required VoidCallback onTap,
+  }) {
+    final ui = CustomWidget();
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: ui.linearPanelDecoration(radius: 24),
+        child: Row(
+          children: [
+            Container(
+              width: 72,
+              height: 72,
+              padding: const EdgeInsets.all(12),
+              decoration: ui.linearCardDecoration(
+                radius: 22,
+                color: accent.withValues(alpha: 0.14),
+              ),
+              child: Image.asset(asset),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(icon, color: accent, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: textStyling.linearTitle(16, color: linearTextPrimary, strong: true),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    subtitle,
+                    style: textStyling.linearBody(13, color: linearTextTertiary, height: 1.55),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Icon(Icons.arrow_forward_ios_rounded, size: 16, color: linearTextQuaternary),
+          ],
+        ),
       ),
     );
   }
@@ -289,17 +256,20 @@ class DashboardState extends State<Dashboard> {
     qrCode = "-";
     showModalBottomSheet<void>(
       context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (BuildContext context) => Container(
         height: global.getHeight(context),
-        color: Colors.white,
+        color: Colors.transparent,
         child: QrScanner(),
       ),
-    ).then((value) async {
+    ).then((value) {
       // qrCode = "1234560000AS010";
       // qrCode = "1C01ASTAUDT1428";
       // qrCode = "1C17AZ170919023";
       // qrCode = "1C001C03TEST0004";
       // qrCode = "100000000061702";
+      if (!mounted) return;
       if (qrCode != "-") {
         Navigator.pushNamed(context, '/insert', arguments: {"qrCode": qrCode});
       }

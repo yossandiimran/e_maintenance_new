@@ -328,6 +328,7 @@ class Laporan2State extends State<Laporan2> {
       "tgl_akhir": TglAkhirController.text,
       "jenis_cek": jenisCek,
     };
+    if (!mounted) return;
     data = await ReportService(context: context, objParam: obj).getUserReport();
     setState(() {});
   }

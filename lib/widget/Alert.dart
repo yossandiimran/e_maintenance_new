@@ -8,23 +8,29 @@ class Alert {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(20.0))),
-          contentPadding: const EdgeInsets.only(top: 10.0),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.warning_amber_rounded,
-                color: defOrange,
-                size: global.getWidth(context) / 8,
-              ),
               Container(
-                margin: const EdgeInsets.all(10),
-                child: Text(
-                  "$text",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: global.getWidth(context) / 20),
+                width: 68,
+                height: 68,
+                decoration: widget.linearCardDecoration(
+                  radius: 20,
+                  color: defOrange.withValues(alpha: 0.14),
                 ),
+                child: Icon(
+                  Icons.warning_amber_rounded,
+                  color: defOrange,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                "$text",
+                textAlign: TextAlign.center,
+                style: textStyling.linearBody(15, color: linearTextPrimary),
               ),
             ],
           ),
@@ -38,23 +44,29 @@ class Alert {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(20.0))),
-          contentPadding: const EdgeInsets.only(top: 10.0),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.check_circle_outline_outlined,
-                color: defBlue,
-                size: global.getWidth(context) / 8,
-              ),
               Container(
-                margin: const EdgeInsets.all(10),
-                child: Text(
-                  "$text",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: global.getWidth(context) / 20),
+                width: 68,
+                height: 68,
+                decoration: widget.linearCardDecoration(
+                  radius: 20,
+                  color: linearSuccess.withValues(alpha: 0.14),
                 ),
+                child: Icon(
+                  Icons.check_circle_outline_outlined,
+                  color: linearSuccess,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                "$text",
+                textAlign: TextAlign.center,
+                style: textStyling.linearBody(15, color: linearTextPrimary),
               ),
             ],
           ),
@@ -67,31 +79,34 @@ class Alert {
     return showDialog(
       context: context,
       builder: (BuildContext context) {
-        return WillPopScope(
+        return PopScope(
+          canPop: isPop,
           child: AlertDialog(
-            shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(20.0))),
-            contentPadding: const EdgeInsets.only(top: 10.0),
-            content: Container(
-              height: global.getWidth(context) / 3,
-              margin: const EdgeInsets.all(10),
+            insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+            contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+            content: SizedBox(
+              width: 220,
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Spacer(),
-                  const CircularProgressIndicator(),
-                  Container(
-                    margin: const EdgeInsets.all(10),
-                    child: Text(
-                      "$text",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: global.getWidth(context) / 20),
+                  SizedBox(
+                    width: 54,
+                    height: 54,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3,
+                      color: linearAccent,
                     ),
                   ),
-                  const Spacer(),
+                  const SizedBox(height: 20),
+                  Text(
+                    "$text",
+                    textAlign: TextAlign.center,
+                    style: textStyling.linearBody(15, color: linearTextPrimary),
+                  ),
                 ],
               ),
             ),
           ),
-          onWillPop: () => isPop,
         );
       },
     );
@@ -102,46 +117,44 @@ class Alert {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(20.0))),
-          contentPadding: const EdgeInsets.only(top: 10.0),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
           content: SizedBox(
-            height: global.getWidth(context) / 3,
+            width: 260,
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Spacer(),
-                Container(
-                  margin: const EdgeInsets.all(10),
-                  child: Text(
-                    "Keluar dari Aplikasi ?",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: global.getWidth(context) / 20),
-                  ),
+                Text(
+                  "Keluar dari aplikasi?",
+                  textAlign: TextAlign.center,
+                  style: textStyling.linearTitle(18, color: linearTextPrimary, strong: true),
                 ),
-                Spacer(),
+                const SizedBox(height: 10),
+                Text(
+                  "Sesi saat ini akan ditutup di perangkat ini.",
+                  textAlign: TextAlign.center,
+                  style: textStyling.linearBody(14, color: linearTextTertiary),
+                ),
+                const SizedBox(height: 24),
                 Row(
                   children: [
-                    Spacer(),
-                    GestureDetector(
-                      onTap: () => exit(0),
-                      child: Container(
-                        decoration: widget.decCont2(defRed, 10, 10, 10, 10),
-                        padding: EdgeInsets.only(left: 25, right: 25, top: 10, bottom: 10),
-                        child: Text("   Ya   ", style: textStyling.customColor(14, defWhite)),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () => exit(0),
+                        style: widget.linearPrimaryButtonStyle(backgroundColor: defRed),
+                        child: const Text("Keluar"),
                       ),
                     ),
-                    SizedBox(width: 10),
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        decoration: widget.decCont2(defBlue, 10, 10, 10, 10),
-                        padding: EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 10),
-                        child: Text("Tidak", style: textStyling.customColor(14, defWhite)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: widget.linearGhostButtonStyle(),
+                        child: const Text("Batal"),
                       ),
                     ),
-                    Spacer(),
                   ],
                 ),
-                Spacer(),
               ],
             ),
           ),
@@ -155,27 +168,30 @@ class Alert {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(20.0))),
-          contentPadding: const EdgeInsets.only(top: 10.0),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
           content: SizedBox(
-            height: global.getWidth(context) / 3,
+            width: 260,
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Spacer(),
-                Container(
-                  margin: const EdgeInsets.all(10),
-                  child: Text(
-                    "Keluar dari akun anda ?",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: global.getWidth(context) / 20),
-                  ),
+                Text(
+                  "Keluar dari akun Anda?",
+                  textAlign: TextAlign.center,
+                  style: textStyling.linearTitle(18, color: linearTextPrimary, strong: true),
                 ),
-                Spacer(),
+                const SizedBox(height: 10),
+                Text(
+                  "Token perangkat akan dibersihkan lalu aplikasi kembali ke halaman masuk.",
+                  textAlign: TextAlign.center,
+                  style: textStyling.linearBody(14, color: linearTextTertiary),
+                ),
+                const SizedBox(height: 24),
                 Row(
                   children: [
-                    Spacer(),
-                    GestureDetector(
-                      onTap: () async {
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () async {
                         var userId = preference.getData("id");
                         var url = await global.getBapiManualServiceUrl('unregdes?USERID=$userId');
                         print(url);
@@ -199,26 +215,21 @@ class Alert {
                           preference.clearPreference();
                           Navigator.pushReplacementNamed(context, '/');
                         }
-                      },
-                      child: Container(
-                        decoration: widget.decCont2(defRed, 10, 10, 10, 10),
-                        padding: EdgeInsets.only(left: 25, right: 25, top: 10, bottom: 10),
-                        child: Text("   Ya   ", style: textStyling.customColor(14, defWhite)),
+                        },
+                        style: widget.linearPrimaryButtonStyle(backgroundColor: defRed),
+                        child: const Text("Logout"),
                       ),
                     ),
-                    SizedBox(width: 10),
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        decoration: widget.decCont2(defBlue, 10, 10, 10, 10),
-                        padding: EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 10),
-                        child: Text("Tidak", style: textStyling.customColor(14, defWhite)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: widget.linearGhostButtonStyle(),
+                        child: const Text("Batal"),
                       ),
                     ),
-                    Spacer(),
                   ],
                 ),
-                const Spacer(),
               ],
             ),
           ),

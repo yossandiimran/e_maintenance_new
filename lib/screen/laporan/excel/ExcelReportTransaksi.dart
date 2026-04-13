@@ -11,15 +11,15 @@ class ExcelReportTransaksi {
       await Permission.storage.request();
     }
 
-    var excel = Excel.createExcel();
-    CellIndex start = CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0);
-    CellIndex end = CellIndex.indexByColumnRow(columnIndex: 8, rowIndex: 1);
+    var excel = xl.Excel.createExcel();
+    xl.CellIndex start = xl.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0);
+    xl.CellIndex end = xl.CellIndex.indexByColumnRow(columnIndex: 8, rowIndex: 1);
     excel.merge("Sheet1", start, end);
     //Header
-    excel.appendRow("Sheet1", [
+    excel.appendRow("Sheet1", _textRow([
       "Laporan Cek Kendaraan",
-    ]);
-    excel.appendRow("Sheet1", [
+    ]));
+    excel.appendRow("Sheet1", _textRow([
       "",
       "",
       "",
@@ -29,60 +29,60 @@ class ExcelReportTransaksi {
       "",
       "",
       "",
-    ]);
-    excel.appendRow("Sheet1", [
+    ]));
+    excel.appendRow("Sheet1", _textRow([
       "Jenis Cek : " + obj?["jenisCek"],
-    ]);
+    ]));
     // excel.appendRow("Sheet1", [
     //   "Jenis Cek : " + obj?["kendaraan"],
     // ]);
-    excel.appendRow("Sheet1", [
+    excel.appendRow("Sheet1", _textRow([
       "Periode Tanggal : " +
           global.convertDate(obj?["tglAwal"]).toString() +
           "-" +
           global.convertDate(obj?["tglAkhir"]).toString(),
-    ]);
-    excel.appendRow("Sheet1", [
+    ]));
+    excel.appendRow("Sheet1", _textRow([
       "NO",
       "Tanggal",
       "NAMA USER",
       "LOKASI",
       "Dilakukan",
       "Tidak",
-    ]);
+    ]));
     //Styling Excel
-    Sheet sheetObject = excel['Sheet1'];
+    xl.Sheet sheetObject = excel['Sheet1'];
 
-    CellStyle cellStyle3 = CellStyle(
-      fontFamily: getFontFamily(FontFamily.Calibri),
-      verticalAlign: VerticalAlign.Center,
+    xl.CellStyle cellStyle3 = xl.CellStyle(
+      fontFamily: xl.getFontFamily(xl.FontFamily.Calibri),
+      verticalAlign: xl.VerticalAlign.Center,
       bold: true,
       fontSize: 14,
     );
-    CellStyle cellStyle31 = CellStyle(
-      fontFamily: getFontFamily(FontFamily.Calibri),
-      verticalAlign: VerticalAlign.Center,
+    xl.CellStyle cellStyle31 = xl.CellStyle(
+      fontFamily: xl.getFontFamily(xl.FontFamily.Calibri),
+      verticalAlign: xl.VerticalAlign.Center,
       bold: true,
     );
-    CellStyle cellStyle4 = CellStyle(
-      fontFamily: getFontFamily(FontFamily.Calibri),
-      horizontalAlign: HorizontalAlign.Center,
-      verticalAlign: VerticalAlign.Center,
+    xl.CellStyle cellStyle4 = xl.CellStyle(
+      fontFamily: xl.getFontFamily(xl.FontFamily.Calibri),
+      horizontalAlign: xl.HorizontalAlign.Center,
+      verticalAlign: xl.VerticalAlign.Center,
       bold: true,
     );
 
-    sheetObject.cell(CellIndex.indexByString("A1")).cellStyle = cellStyle3;
-    sheetObject.cell(CellIndex.indexByString("A3")).cellStyle = cellStyle31;
-    sheetObject.cell(CellIndex.indexByString("A4")).cellStyle = cellStyle31;
-    sheetObject.cell(CellIndex.indexByString("A5")).cellStyle = cellStyle4;
-    sheetObject.cell(CellIndex.indexByString("B5")).cellStyle = cellStyle4;
-    sheetObject.cell(CellIndex.indexByString("C5")).cellStyle = cellStyle4;
-    sheetObject.cell(CellIndex.indexByString("D5")).cellStyle = cellStyle4;
-    sheetObject.cell(CellIndex.indexByString("E5")).cellStyle = cellStyle4;
-    sheetObject.cell(CellIndex.indexByString("F5")).cellStyle = cellStyle4;
-    sheetObject.cell(CellIndex.indexByString("G5")).cellStyle = cellStyle4;
-    sheetObject.cell(CellIndex.indexByString("H5")).cellStyle = cellStyle4;
-    sheetObject.cell(CellIndex.indexByString("I5")).cellStyle = cellStyle4;
+    sheetObject.cell(xl.CellIndex.indexByString("A1")).cellStyle = cellStyle3;
+    sheetObject.cell(xl.CellIndex.indexByString("A3")).cellStyle = cellStyle31;
+    sheetObject.cell(xl.CellIndex.indexByString("A4")).cellStyle = cellStyle31;
+    sheetObject.cell(xl.CellIndex.indexByString("A5")).cellStyle = cellStyle4;
+    sheetObject.cell(xl.CellIndex.indexByString("B5")).cellStyle = cellStyle4;
+    sheetObject.cell(xl.CellIndex.indexByString("C5")).cellStyle = cellStyle4;
+    sheetObject.cell(xl.CellIndex.indexByString("D5")).cellStyle = cellStyle4;
+    sheetObject.cell(xl.CellIndex.indexByString("E5")).cellStyle = cellStyle4;
+    sheetObject.cell(xl.CellIndex.indexByString("F5")).cellStyle = cellStyle4;
+    sheetObject.cell(xl.CellIndex.indexByString("G5")).cellStyle = cellStyle4;
+    sheetObject.cell(xl.CellIndex.indexByString("H5")).cellStyle = cellStyle4;
+    sheetObject.cell(xl.CellIndex.indexByString("I5")).cellStyle = cellStyle4;
 
     // for (var j = 0; j < data.length; j++) {
     //   excel.appendRow("Sheet1", getData(data[j]["todo"], data[j], j, obj));
@@ -99,10 +99,11 @@ class ExcelReportTransaksi {
         ..createSync(recursive: true)
         ..writeAsBytesSync(fileBytes);
     }
+    if (!context.mounted) return;
     alert.alertSuccess(context: context, text: "File saved to $outputFile");
   }
 
-  getData(todo, data, index, obj) {
+  List<xl.CellValue?> getData(todo, data, index, obj) {
     List ret = [];
     ret.add((index + 1).toString());
     ret.add(data["name"]);
@@ -134,6 +135,10 @@ class ExcelReportTransaksi {
     ret.add(dilakukan);
     ret.add(tidakDilakukan);
 
-    return ret;
+    return _textRow(ret);
+  }
+
+  List<xl.CellValue?> _textRow(List<dynamic> values) {
+    return values.map((value) => xl.TextCellValue('${value ?? ''}')).toList();
   }
 }

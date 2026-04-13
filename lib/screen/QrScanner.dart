@@ -19,7 +19,7 @@ class _QRViewExampleState extends State<QrScanner> {
   @override
   void reassemble() {
     super.reassemble();
-    controller!.resumeCamera();
+    controller?.resumeCamera();
   }
 
   @override
@@ -30,96 +30,115 @@ class _QRViewExampleState extends State<QrScanner> {
 
   @override
   Widget build(BuildContext context) {
+    final ui = CustomWidget();
     return Scaffold(
-      body: Column(
-        children: <Widget>[
-          Expanded(flex: 5, child: _buildQrView(context)),
-          Expanded(
-            flex: 1,
-            child: Container(
-              color: Colors.blueGrey.shade50,
-              child: Row(
-                children: <Widget>[
-                  const Spacer(),
-                  if (result != null)
-                    Row(
-                      children: <Widget>[
-                        Container(
-                          margin: const EdgeInsets.all(8),
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              setState(() {
-                                result = null;
-                              });
-                              await controller?.resumeCamera();
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: defBlue,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      backgroundColor: linearBg,
+      body: Container(
+        decoration: BoxDecoration(gradient: global.heroGradient),
+        child: SafeArea(
+          child: Column(
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                child: Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: ui.linearPanelDecoration(radius: 24),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: IconButton.styleFrom(
+                          backgroundColor: global.surfaceL1,
+                          side: BorderSide(color: global.borderSubtle),
+                        ),
+                        icon: Icon(Icons.arrow_back_ios_new_rounded, color: linearTextPrimary, size: 18),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Scanner QR", style: textStyling.linearTitle(20, strong: true)),
+                            const SizedBox(height: 4),
+                            Text(
+                              "Arahkan kamera ke barcode atau QR kendaraan untuk melanjutkan inspeksi.",
+                              style: textStyling.linearBody(13, color: linearTextTertiary),
                             ),
-                            child: Row(children: const [Icon(Icons.code), Text("Ulangi")]),
-                          ),
-                        ),
-                        const SizedBox(height: 40),
-                      ],
-                    ),
-                  if (result != null) const Spacer(),
-                  Row(
-                    children: <Widget>[
-                      // Container(
-                      //   margin: const EdgeInsets.all(8),
-                      //   child: ElevatedButton(
-                      //     onPressed: () async {
-                      //       setState(() {
-                      //         result = null;
-                      //       });
-                      //       await controller?.resumeCamera();
-                      //     },
-                      //     style: ElevatedButton.styleFrom(
-                      //       backgroundColor: defaultBlue,
-                      //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                      //     ),
-                      //     child: Row(
-                      //       children: const [Icon(Icons.camera), Text("Reset Camera")],
-                      //     ),
-                      //   ),
-                      // ),
-                      ElevatedButton(
-                        onPressed: () async {
-                          // qrVariable = result != null ? '${result!.code}' : '-';
-                          // if (type == "qrRakAwl") {
-                          //   qrRakAwl = '1000003491';
-                          // } else if (type == "qrRakAkh") {
-                          //   qrRakAkh = 'P36-1.1';
-                          //   // qrRakAkh = 'P36-STORGE';
-                          // }
-                          // global.alertWarning(context, "Belum Ada Data Yang Di Scan");
-                          Navigator.pop(context);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: result != null ? defGreen : defRed,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                        ),
-                        child: FutureBuilder(
-                          future: controller?.getFlashStatus(),
-                          builder: (context, snapshot) {
-                            return Row(
-                              children: [
-                                Icon(result != null ? Icons.check_circle : Icons.close),
-                                Text(result != null ? "Lanjutkan" : "Belum Melakukan Scan"),
-                              ],
-                            );
-                          },
+                          ],
                         ),
                       ),
                     ],
                   ),
-                  const Spacer(),
-                ],
+                ),
               ),
-            ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(28),
+                    child: _buildQrView(context),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: ui.linearPanelDecoration(radius: 24),
+                  child: Column(
+                    children: [
+                      if (result != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Row(
+                            children: [
+                              Icon(Icons.check_circle_rounded, color: linearSuccessPill, size: 18),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  result?.code ?? '-',
+                                  style: textStyling.linearMono(12, color: linearTextSecondary),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      Row(
+                        children: <Widget>[
+                          if (result != null)
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () async {
+                                  setState(() {
+                                    result = null;
+                                  });
+                                  await controller?.resumeCamera();
+                                },
+                                style: ui.linearGhostButtonStyle(),
+                                icon: const Icon(Icons.refresh_rounded),
+                                label: const Text("Ulangi"),
+                              ),
+                            ),
+                          if (result != null) const SizedBox(width: 12),
+                          Expanded(
+                            child: FilledButton.icon(
+                              onPressed: () => Navigator.pop(context),
+                              style: ui.linearPrimaryButtonStyle(
+                                backgroundColor: result != null ? linearSuccess : defRed,
+                              ),
+                              icon: Icon(result != null ? Icons.check_circle : Icons.close_rounded),
+                              label: Text(result != null ? "Lanjutkan" : "Tutup"),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -141,10 +160,11 @@ class _QRViewExampleState extends State<QrScanner> {
 
   void _onQRViewCreated(QRViewController controller) {
     this.controller = controller;
-    controller.scannedDataStream.listen((scanData) async {
+    controller.scannedDataStream.listen((scanData) {
       setState(() => result = scanData);
       controller.pauseCamera();
       qrCode = result != null ? '${result!.code}' : '-';
+      if (!mounted) return;
       Navigator.pop(context, true);
     });
     controller.resumeCamera();

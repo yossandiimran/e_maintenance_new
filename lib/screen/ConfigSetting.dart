@@ -38,197 +38,255 @@ class ConfigSettingPageState extends State<ConfigSettingPage> {
 
   @override
   Widget build(BuildContext context) {
+    final ui = CustomWidget();
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      backgroundColor: Colors.grey.shade300,
-      appBar: AppBar(
-        title: const Text('Pengaturan App'),
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
-      body: WillPopScope(
-        child: Stack(
-          children: [
-            Positioned(
-              top: 0,
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: SizedBox(
-                height: global.getHeight(context),
-                child: Column(
-                  children: [
-                    SizedBox(height: kToolbarHeight * 1.5 + 10),
-                    GestureDetector(
-                      onTap: () async {
-                        var globalIp = await preference.getData("globalIp") ?? global.baseIp;
-                        addressIpController.text = globalIp.toString();
-                        return showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              shape: const RoundedRectangleBorder(
-                                borderRadius: BorderRadius.all(Radius.circular(20.0)),
-                              ),
-                              contentPadding: const EdgeInsets.only(top: 10.0),
-                              content: SizedBox(
-                                height: global.getWidth(context) / 2.5,
-                                child: Column(
-                                  children: [
-                                    Spacer(),
-                                    Text("default : ${global.baseIp}", style: textStyling.customColor(12.5, defGrey)),
-                                    SizedBox(height: 5),
-                                    Container(
-                                      margin: EdgeInsets.symmetric(horizontal: 20),
-                                      decoration: widget.decCont(Colors.blueGrey.shade100, 10, 10, 10, 10),
-                                      child: ListTile(
-                                        subtitle: TextField(
-                                          controller: addressIpController,
-                                          decoration: InputDecoration(
-                                            icon: Icon(Icons.http_rounded),
-                                            border: OutlineInputBorder(borderSide: BorderSide.none),
-                                            hintText: "Host / IP",
-                                          ),
-                                          readOnly: false,
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(height: 10),
-                                    Row(
-                                      children: [
-                                        Spacer(),
-                                        GestureDetector(
-                                          onTap: () async {
-                                            await preference.setString("globalIp", addressIpController.text);
-                                            Navigator.pop(context);
-                                            checkConnection();
-                                          },
-                                          child: Container(
-                                            decoration: widget.decCont2(defGreen, 8, 8, 8, 8),
-                                            padding: EdgeInsets.only(left: 25, right: 25, top: 10, bottom: 10),
-                                            child: Text("Simpan", style: textStyling.customColor(14, Colors.white)),
-                                          ),
-                                        ),
-                                        SizedBox(width: 10),
-                                        GestureDetector(
-                                          onTap: () => Navigator.pop(context),
-                                          child: Container(
-                                            decoration: widget.decCont2(defRed, 8, 8, 8, 8),
-                                            padding: EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 10),
-                                            child: Text(" Cancel ", style: textStyling.customColor(14, Colors.white)),
-                                          ),
-                                        ),
-                                        Spacer(),
-                                      ],
-                                    ),
-                                    Spacer(),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ).then((value) {});
-                      },
-                      child: Container(
-                        margin: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                        decoration: widget.decCont(defWhite, 8, 8, 8, 8),
-                        child: ListTile(
-                          title: Text("Setting IP", style: textStyling.customColor(16, defBlack1)),
-                          leading: Icon(Icons.http_rounded, size: 40, color: defBlack1),
-                          trailing: Icon(Icons.arrow_forward_ios_rounded, color: defBlue),
-                        ),
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () async {
-                        print(preference.getData("groupUser"));
-                        if (preference.getData("groupUser").toString() != "4") {
-                          isRestart = true;
-                          setState(() {});
-                          await RestartGlassfish(context: context, obj: {}).restartConnection();
-                          print("RESTARING ....");
-                          isRestart = false;
-                          setState(() {});
-                        } else {
-                          alert.alertWarning(context: context, text: "Anda tidak memiliki akses !");
-                        }
-                      },
-                      child: Container(
-                        margin: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                        decoration: widget.decCont(defWhite, 8, 8, 8, 8),
-                        child: ListTile(
-                          title: Text("Restart Koneksi", style: textStyling.customColor(16, defBlack1)),
-                          leading: !isRestart
-                              ? Icon(Icons.restart_alt_rounded, size: 40, color: defOrange)
-                              : CircularProgressIndicator(),
-                          trailing: Icon(Icons.arrow_forward_ios_rounded, color: defBlue),
-                        ),
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () async {
-                        checkConnection();
-                      },
-                      child: Container(
-                        margin: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                        decoration: widget.decCont(defWhite, 8, 8, 8, 8),
-                        child: ListTile(
-                          title: Text("Test Koneksi", style: textStyling.customColor(16, defBlack1)),
-                          leading: !checkConn
-                              ? Icon(Icons.cast_connected_rounded, size: 40, color: isConnect ? defGreen : defBlue)
-                              : CircularProgressIndicator(),
-                          trailing: Icon(Icons.arrow_forward_ios_rounded, color: defBlue),
-                        ),
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () async {
-                        print(preference.getData("groupUser"));
-                        if (preference.getData("groupUser").toString() != "4") {
-                          Navigator.pushNamed(context, '/user');
-                        } else {
-                          alert.alertWarning(context: context, text: "Anda tidak memiliki akses !");
-                        }
-                      },
-                      child: Container(
-                        margin: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                        decoration: widget.decCont(defWhite, 8, 8, 8, 8),
-                        child: ListTile(
-                          title: Text("Setting User", style: textStyling.customColor(16, defBlack1)),
-                          leading: Icon(Icons.person, size: 40, color: defBlue),
-                          trailing: Icon(Icons.arrow_forward_ios_rounded, color: defBlue),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Positioned(
-              top: 0,
-              bottom: 0,
-              left: 0,
-              right: 0,
+      backgroundColor: linearBg,
+      body: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) return;
+          Navigator.pop(context);
+        },
+        child: Container(
+          decoration: BoxDecoration(gradient: global.heroGradient),
+          child: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Row(
+                    children: [
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: IconButton.styleFrom(
+                          backgroundColor: global.surfaceL1,
+                          side: BorderSide(color: global.borderSubtle),
+                        ),
+                        icon: Icon(Icons.arrow_back_ios_new_rounded, color: linearTextPrimary, size: 18),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text("Pengaturan App", style: textStyling.linearDisplay(28)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    "Kontrol koneksi backend, restart layanan, dan akses pengelolaan user dari satu panel.",
+                    style: textStyling.linearBody(15, color: linearTextSecondary),
+                  ),
+                  const SizedBox(height: 18),
                   Container(
-                    height: kToolbarHeight * 1.5,
-                    decoration: widget.decCont2(defBlack1, 20.0, 20.0, 0.0, 0.0),
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: ui.linearHeroDecoration(),
+                    child: Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        ui.linearPill(
+                          icon: isConnect ? Icons.cloud_done_rounded : Icons.cloud_off_rounded,
+                          label: isConnect ? "Host tersambung" : "Host belum tersambung",
+                          color: (isConnect ? linearSuccess : defRed).withValues(alpha: 0.14),
+                          textColor: isConnect ? linearSuccessPill : defRed,
+                        ),
+                        ui.linearPill(
+                          icon: Icons.link_rounded,
+                          label: "Default ${global.baseIp}",
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  _buildSettingTile(
+                    icon: Icons.http_rounded,
+                    color: linearAccent,
+                    title: "Setting IP",
+                    subtitle: "Atur host API aktif untuk kebutuhan VPN atau server lokal.",
+                    trailing: Text(
+                      (preference.getData("globalIp") ?? global.baseIp).toString(),
+                      style: textStyling.linearCaption(11),
+                    ),
+                    onTap: _showHostDialog,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildSettingTile(
+                    icon: Icons.restart_alt_rounded,
+                    color: defOrange,
+                    title: "Restart Koneksi",
+                    subtitle: "Restart layanan backend jika koneksi SAP atau API mengalami timeout.",
+                    trailing: isRestart
+                        ? SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2.4, color: linearAccent),
+                          )
+                        : null,
+                    onTap: () async {
+                      if (preference.getData("groupUser").toString() != "4") {
+                        isRestart = true;
+                        setState(() {});
+                        await RestartGlassfish(context: context, obj: {}).restartConnection();
+                        isRestart = false;
+                        setState(() {});
+                      } else {
+                        alert.alertWarning(context: context, text: "Anda tidak memiliki akses !");
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _buildSettingTile(
+                    icon: Icons.cast_connected_rounded,
+                    color: isConnect ? linearSuccess : linearAccent,
+                    title: "Test Koneksi",
+                    subtitle: "Periksa apakah host saat ini dapat dijangkau dari perangkat.",
+                    trailing: checkConn
+                        ? SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2.4, color: linearAccent),
+                          )
+                        : null,
+                    onTap: () async {
+                      checkConnection();
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _buildSettingTile(
+                    icon: Icons.manage_accounts_rounded,
+                    color: linearBrand,
+                    title: "Setting User",
+                    subtitle: "Masuk ke modul pengelolaan akun dan hak akses.",
+                    onTap: () async {
+                      if (preference.getData("groupUser").toString() != "4") {
+                        Navigator.pushNamed(context, '/user');
+                      } else {
+                        alert.alertWarning(context: context, text: "Anda tidak memiliki akses !");
+                      }
+                    },
                   ),
                 ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showHostDialog() async {
+    var globalIp = await preference.getData("globalIp") ?? global.baseIp;
+    addressIpController.text = globalIp.toString();
+    if (!mounted) return;
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        final ui = CustomWidget();
+        return AlertDialog(
+          contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+          content: SizedBox(
+            width: 280,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Host aktif",
+                  style: textStyling.linearTitle(18, color: linearTextPrimary, strong: true),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "Default : ${global.baseIp}",
+                  style: textStyling.linearBody(13, color: linearTextTertiary),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: addressIpController,
+                  style: textStyling.linearBody(15, color: linearTextPrimary),
+                  decoration: ui.linearInputDecoration(
+                    label: "Host / IP",
+                    hint: global.baseIp,
+                    icon: Icons.http_rounded,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () async {
+                          await preference.setString("globalIp", addressIpController.text);
+                          Navigator.pop(context);
+                          checkConnection();
+                        },
+                        style: ui.linearPrimaryButtonStyle(),
+                        child: const Text("Simpan"),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: ui.linearGhostButtonStyle(),
+                        child: const Text("Batal"),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSettingTile({
+    required IconData icon,
+    required Color color,
+    required String title,
+    required String subtitle,
+    Widget? trailing,
+    required VoidCallback onTap,
+  }) {
+    final ui = CustomWidget();
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(22),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: ui.linearPanelDecoration(radius: 22),
+        child: Row(
+          children: [
+            Container(
+              width: 54,
+              height: 54,
+              decoration: ui.linearCardDecoration(
+                radius: 18,
+                color: color.withValues(alpha: 0.14),
+              ),
+              child: Icon(icon, color: color),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: textStyling.linearTitle(16, color: linearTextPrimary, strong: true)),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: textStyling.linearBody(13, color: linearTextTertiary, height: 1.5),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            trailing ?? Icon(Icons.arrow_forward_ios_rounded, size: 16, color: linearTextQuaternary),
           ],
         ),
-        onWillPop: () async {
-          Navigator.pop(context);
-          return false;
-        },
       ),
     );
   }

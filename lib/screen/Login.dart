@@ -21,186 +21,152 @@ class LoginState extends State<Login> {
   TextEditingController password = TextEditingController(text: "centr@l1001");
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
+    final ui = CustomWidget();
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
         alert.alertConfirmExit(context);
-        return false;
       },
       child: Scaffold(
         resizeToAvoidBottomInset: true,
-        backgroundColor: Colors.blueGrey.shade50,
-        extendBodyBehindAppBar: true,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          automaticallyImplyLeading: false,
-          actions: [
-            IconButton(
-              onPressed: () async {
-                var globalIp = await preference.getData("globalIp") ?? global.baseIp;
-                addressIpController.text = globalIp.toString();
-                changeIPAddress();
-              },
-              icon: Icon(Icons.settings_rounded, color: defBlack1),
-            ),
-          ],
-        ),
-        body: Stack(
-          children: [
-            Positioned(
-              top: 0,
-              bottom: kToolbarHeight,
-              left: 0,
-              right: 0,
-              child: Stack(
+        backgroundColor: linearBg,
+        body: Container(
+          decoration: BoxDecoration(gradient: global.heroGradient),
+          child: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Positioned(
-                    top: 0,
-                    bottom: 0,
-                    right: 0,
-                    left: 0,
-                    child: SizedBox(
-                      height: global.getHeight(context),
-                      child: Column(
-                        children: [
-                          SizedBox(height: kToolbarHeight),
-                          Image.asset(
-                            "assets/icon.png",
-                            width: global.getWidth(context) / 2,
-                          ),
-                          Spacer(),
-                        ],
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: IconButton(
+                      onPressed: () async {
+                        var globalIp = await preference.getData("globalIp") ?? global.baseIp;
+                        addressIpController.text = globalIp.toString();
+                        changeIPAddress();
+                      },
+                      style: IconButton.styleFrom(
+                        backgroundColor: global.surfaceL1,
+                        side: BorderSide(color: global.borderSubtle),
                       ),
+                      icon: Icon(Icons.settings_rounded, color: linearTextPrimary),
                     ),
                   ),
-                  Positioned(
-                    top: 0,
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(28),
+                    decoration: ui.linearHeroDecoration(),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Spacer(),
                         Container(
-                          margin: const EdgeInsets.all(20),
-                          padding: const EdgeInsets.all(20),
-                          decoration: widget.decorationContainer1(defBlack1, 20.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "\n   Login E-Maintenance",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(color: defWhite, fontSize: 20, fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(
-                                height: 30,
-                              ),
-                              Container(
-                                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-                                decoration: widget.decCont(defWhite, 15.0, 15.0, 15.0, 15.0),
-                                child: TextField(
-                                  keyboardType: TextInputType.emailAddress,
-                                  controller: email,
-                                  decoration: const InputDecoration(
-                                    focusColor: Colors.white,
-                                    border: InputBorder.none,
-                                    labelText: 'Username',
-                                    labelStyle: TextStyle(fontSize: 15),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(
-                                height: 20,
-                              ),
-                              Container(
-                                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-                                decoration: widget.decCont(defWhite, 15.0, 15.0, 15.0, 15.0),
-                                child: TextField(
-                                  controller: password,
-                                  obscureText: obsText,
-                                  decoration: InputDecoration(
-                                    border: InputBorder.none,
-                                    labelText: 'Password',
-                                    labelStyle: const TextStyle(fontSize: 15),
-                                    suffixIcon: IconButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          !obsText ? obsText = true : obsText = false;
-                                        });
-                                      },
-                                      icon: Icon(!obsText ? Icons.visibility_off : Icons.visibility),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(
-                                height: 20,
-                              ),
-                              Container(
-                                padding: const EdgeInsets.only(
-                                  left: 0,
-                                  right: 0,
-                                  top: 0,
-                                  bottom: 5,
-                                ),
-                                child: Column(
-                                  children: [
-                                    GestureDetector(
-                                      onTap: () async {
-                                        var obj = {"username": email.text, "password": password.text};
-                                        await AuthService(context: context, objParam: obj).login();
-                                        // Navigator.pushNamed(context, '/home');
-                                      },
-                                      child: Container(
-                                        padding: const EdgeInsets.all(15),
-                                        decoration: widget.decCont(
-                                          defGreen,
-                                          15.0,
-                                          15.0,
-                                          15.0,
-                                          15.0,
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            "Masuk Aplikasi",
-                                            style: textStyling.defaultWhiteBold(14.0),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 10),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Container(
-                                padding: EdgeInsets.symmetric(horizontal: 10),
-                                width: global.getWidth(context),
-                                child: Row(
-                                  children: [
-                                    Text(
-                                      "Version $appVersion",
-                                      style: textStyling.customColor(15, Colors.blueGrey.shade400),
-                                    ),
-                                    const Spacer(),
-                                    GestureDetector(
-                                      onTap: () => alert.alertSuccess(
-                                        context: context,
-                                        text: "Silahkan Hubungi Admin",
-                                      ),
-                                      child: Text(
-                                        "Lupa Password ?",
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(color: defWhite, fontStyle: FontStyle.italic),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                            ],
+                          width: 72,
+                          height: 72,
+                          padding: const EdgeInsets.all(14),
+                          decoration: ui.linearCardDecoration(
+                            radius: 22,
+                            color: linearAccent.withValues(alpha: 0.12),
                           ),
+                          child: Image.asset("assets/icon.png"),
+                        ),
+                        const SizedBox(height: 22),
+                        Text("Masuk ke E-Maintenance", style: textStyling.linearDisplay(30)),
+                        const SizedBox(height: 10),
+                        Text(
+                          "Lanjutkan pekerjaan inspeksi, pengelolaan laporan, dan administrasi kendaraan dengan workspace yang lebih fokus.",
+                          style: textStyling.linearBody(15, color: linearTextSecondary, height: 1.65),
+                        ),
+                        const SizedBox(height: 18),
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: [
+                            ui.linearPill(icon: Icons.qr_code_2_rounded, label: "QR inspection"),
+                            ui.linearPill(icon: Icons.print_rounded, label: "Zebra printer"),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(24),
+                    decoration: ui.linearPanelDecoration(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("Login", style: textStyling.linearTitle(20, strong: true)),
+                        const SizedBox(height: 6),
+                        Text(
+                          "Gunakan akun yang sudah didaftarkan oleh administrator.",
+                          style: textStyling.linearBody(14, color: linearTextTertiary),
+                        ),
+                        const SizedBox(height: 20),
+                        TextField(
+                          keyboardType: TextInputType.emailAddress,
+                          controller: email,
+                          style: textStyling.linearBody(15, color: linearTextPrimary),
+                          decoration: ui.linearInputDecoration(
+                            label: 'Username',
+                            hint: 'Masukkan username',
+                            icon: Icons.person_outline_rounded,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        TextField(
+                          controller: password,
+                          obscureText: obsText,
+                          style: textStyling.linearBody(15, color: linearTextPrimary),
+                          decoration: ui.linearInputDecoration(
+                            label: 'Password',
+                            hint: 'Masukkan password',
+                            icon: Icons.lock_outline_rounded,
+                            suffix: IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  obsText = !obsText;
+                                });
+                              },
+                              icon: Icon(
+                                !obsText ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                                color: linearTextTertiary,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.icon(
+                            onPressed: () async {
+                              var obj = {"username": email.text, "password": password.text};
+                              await AuthService(context: context, objParam: obj).login();
+                            },
+                            style: ui.linearPrimaryButtonStyle(),
+                            icon: const Icon(Icons.login_rounded),
+                            label: const Text("Masuk Aplikasi"),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        Row(
+                          children: [
+                            Text("Version $appVersion", style: textStyling.linearCaption(12)),
+                            const Spacer(),
+                            TextButton(
+                              onPressed: () => alert.alertSuccess(
+                                context: context,
+                                text: "Silakan hubungi admin",
+                              ),
+                              child: Text(
+                                "Lupa password?",
+                                style: textStyling.linearBody(13, color: linearAccent, emphasis: true),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -208,7 +174,7 @@ class LoginState extends State<Login> {
                 ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -219,56 +185,55 @@ class LoginState extends State<Login> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(20.0))),
-          contentPadding: const EdgeInsets.only(top: 10.0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
           content: SizedBox(
-            height: global.getWidth(context) / 3,
+            width: 280,
             child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Spacer(),
-                Container(
-                  margin: EdgeInsets.symmetric(horizontal: 20),
-                  decoration: widget.decCont(Colors.blueGrey.shade100, 10, 10, 10, 10),
-                  child: ListTile(
-                    subtitle: TextField(
-                      controller: addressIpController,
-                      decoration: InputDecoration(
-                        icon: Icon(Icons.http_rounded),
-                        border: OutlineInputBorder(borderSide: BorderSide.none),
-                        hintText: "Host / IP",
-                      ),
-                      readOnly: false,
-                    ),
+                Text(
+                  "Pengaturan host",
+                  style: textStyling.linearTitle(18, color: linearTextPrimary, strong: true),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "Ubah alamat IP backend jika dibutuhkan untuk koneksi VPN atau server lokal.",
+                  style: textStyling.linearBody(13, color: linearTextTertiary),
+                ),
+                const SizedBox(height: 18),
+                TextField(
+                  controller: addressIpController,
+                  style: textStyling.linearBody(15, color: linearTextPrimary),
+                  decoration: CustomWidget().linearInputDecoration(
+                    label: "Host / IP",
+                    hint: global.baseIp,
+                    icon: Icons.http_rounded,
                   ),
                 ),
-                SizedBox(height: 10),
+                const SizedBox(height: 18),
                 Row(
                   children: [
-                    Spacer(),
-                    GestureDetector(
-                      onTap: () async {
-                        await preference.setString("globalIp", addressIpController.text);
-                        global.successResponsePop(context, "Berhasil Menyimpan Pengaturan");
-                      },
-                      child: Container(
-                        decoration: widget.decCont2(defGreen, 8, 8, 8, 8),
-                        padding: EdgeInsets.only(left: 25, right: 25, top: 10, bottom: 10),
-                        child: Text("Simpan", style: textStyling.customColorBold(14, Colors.white)),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () async {
+                          await preference.setString("globalIp", addressIpController.text);
+                          global.successResponsePop(context, "Berhasil Menyimpan Pengaturan");
+                        },
+                        style: CustomWidget().linearPrimaryButtonStyle(),
+                        child: const Text("Simpan"),
                       ),
                     ),
-                    SizedBox(width: 10),
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        decoration: widget.decCont2(defRed, 8, 8, 8, 8),
-                        padding: EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 10),
-                        child: Text(" Cancel ", style: textStyling.customColorBold(14, Colors.white)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: CustomWidget().linearGhostButtonStyle(),
+                        child: const Text("Batal"),
                       ),
                     ),
-                    Spacer(),
                   ],
                 ),
-                Spacer(),
               ],
             ),
           ),

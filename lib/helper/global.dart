@@ -27,9 +27,42 @@ Color defTaro3 = const Color(0xff7c8cbc), defwheat = const Color(0xfff6d99c);
 Color defblue3 = Colors.blue.shade100, defred2 = Colors.red.shade100, defgreen2 = Colors.green.shade100;
 Color deforg3 = Colors.orange.shade200, defyel = Colors.yellow.shade100, defteal = Colors.teal.shade100;
 
+// Linear-inspired UI tokens
+Color linearPage = const Color(0xFF010102);
+Color linearBg = const Color(0xFF08090A);
+Color linearPanel = const Color(0xFF0F1011);
+Color linearSurface = const Color(0xFF191A1B);
+Color linearSurface2 = const Color(0xFF28282C);
+Color linearTextPrimary = const Color(0xFFF7F8F8);
+Color linearTextSecondary = const Color(0xFFD0D6E0);
+Color linearTextTertiary = const Color(0xFF8A8F98);
+Color linearTextQuaternary = const Color(0xFF62666D);
+Color linearBrand = const Color(0xFF5E6AD2);
+Color linearAccent = const Color(0xFF7170FF);
+Color linearAccentHover = const Color(0xFF828FFF);
+Color linearSuccess = const Color(0xFF27A644);
+Color linearSuccessPill = const Color(0xFF10B981);
+
 class Global {
   getWidth(context) => MediaQuery.of(context).size.width;
   getHeight(context) => MediaQuery.of(context).size.height;
+
+  Color get surfaceL1 => Colors.white.withValues(alpha: 0.02);
+  Color get surfaceL2 => Colors.white.withValues(alpha: 0.04);
+  Color get surfaceL3 => Colors.white.withValues(alpha: 0.05);
+  Color get borderSubtle => Colors.white.withValues(alpha: 0.05);
+  Color get borderStandard => Colors.white.withValues(alpha: 0.08);
+  Color get overlay => Colors.black.withValues(alpha: 0.85);
+
+  LinearGradient get heroGradient => LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          linearBg,
+          linearPanel,
+          const Color(0xFF111322),
+        ],
+      );
 
 //Handle Service ===============================================================
   var bapiUrl = '';

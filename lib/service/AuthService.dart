@@ -88,11 +88,11 @@ class AuthService {
         context: context,
         barrierDismissible: true,
         builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Info'),
+          return const AlertDialog(
+            title: Text('Info'),
             content: SingleChildScrollView(
               child: ListBody(
-                children: const <Widget>[
+                children: <Widget>[
                   Text('Koneksi ke server gagal!'),
                 ],
               ),

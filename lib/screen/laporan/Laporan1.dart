@@ -199,7 +199,7 @@ class _Laporan1State extends State<Laporan1> {
                         style: TextButton.styleFrom(
                           foregroundColor: Colors.white,
                           backgroundColor: Colors.blue,
-                          disabledForegroundColor: Colors.grey.withOpacity(0.38),
+                          disabledForegroundColor: Colors.grey.withValues(alpha: 0.38),
                         ),
                         onPressed: () {
                           if (_valJenisCek == null) {
@@ -269,6 +269,7 @@ class _Laporan1State extends State<Laporan1> {
       'USERID': preference.getData("id").toString(),
       'WERKS': preference.getData("werks"),
     };
+    if (!mounted) return;
     final res = await ReportService(context: context).getSloc(obj: obj);
     data = res;
     setState(() {});
@@ -317,11 +318,13 @@ class _Laporan1State extends State<Laporan1> {
         'USERID': preference.getData("id").toString(),
         'WERKS': werks,
       };
+      if (!mounted) return;
       final res = await ReportService(context: context).getLkend(obj: obj);
       print(res["T_KEND"]);
       dataLkend = res;
       setState(() {});
     } catch (err) {
+      if (!mounted) return;
       alert.alertWarning(context: context, text: "Kesalahan Koneksi Ke SAP !");
     }
   }

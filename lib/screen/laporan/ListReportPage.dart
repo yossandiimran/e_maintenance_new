@@ -96,15 +96,13 @@ class _ListReportPageState extends State<ListReportPage> {
 
     groupedData.forEach((snKendaraan, dataTanggal) {
       dataColumn.add(
-        Container(
-          child: ExpansionTile(
-            initiallyExpanded: true,
-            title: Text(
-              'Tanggal   : $snKendaraan',
-              style: textStyling.customColorBold(16, defBlack2),
-            ),
-            children: getDataChildernChild(snKendaraan, dataTanggal),
+        ExpansionTile(
+          initiallyExpanded: true,
+          title: Text(
+            'Tanggal   : $snKendaraan',
+            style: textStyling.customColorBold(16, defBlack2),
           ),
+          children: getDataChildernChild(snKendaraan, dataTanggal),
         ),
       );
     });

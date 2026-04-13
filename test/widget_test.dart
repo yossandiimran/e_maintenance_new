@@ -1,30 +1,36 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:e_maintenance/main.dart';
+import 'package:e_maintenance/model/TodoModels.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(App());
+  test('Todo.fromJson maps API payload into model fields', () {
+    final todo = Todo.fromJson({
+      'id': 7,
+      'title': 'Periksa rem',
+      'description': 'Cek kondisi kampas rem',
+      '_is_done': 1,
+      'tanggal': '2026-04-13',
+      'jp': 'Harian',
+    });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    expect(todo.id, 7);
+    expect(todo.title, 'Periksa rem');
+    expect(todo.description, 'Cek kondisi kampas rem');
+    expect(todo.isDone, isTrue);
+    expect(todo.dueDate, '2026-04-13');
+    expect(todo.jp, 'Harian');
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+  test('Todo.fromJson keeps unfinished item as false', () {
+    final todo = Todo.fromJson({
+      'id': 8,
+      'title': 'Periksa oli',
+      'description': 'Pastikan level oli aman',
+      '_is_done': 0,
+      'tanggal': '2026-04-14',
+      'jp': 'Mingguan',
+    });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(todo.isDone, isFalse);
+    expect(todo.dueDate, '2026-04-14');
   });
 }

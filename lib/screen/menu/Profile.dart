@@ -15,134 +15,151 @@ class ProfileState extends State<Profile> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
+    final ui = CustomWidget();
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
         alert.alertConfirmExit(context);
-        return false;
       },
       child: Scaffold(
         resizeToAvoidBottomInset: false,
-        backgroundColor: Colors.blueGrey.shade50,
-        extendBodyBehindAppBar: true,
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          title: Text("Akun Pengguna", style: textStyling.defaultWhite(20)),
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-        ),
-        body: getBodyView(),
-      ),
-    );
-  }
-
-  Widget getBodyView() {
-    return Stack(
-      children: [
-        Positioned(
-          top: 0,
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Spacer(),
-              Container(
-                padding: EdgeInsets.only(top: 20),
-                height: global.getHeight(context) - (kToolbarHeight * 5.5),
-                child: ScrollConfiguration(
-                  behavior: const ScrollBehavior().copyWith(overscroll: false),
-                  child: SingleChildScrollView(
+        backgroundColor: linearBg,
+        body: Container(
+          decoration: BoxDecoration(gradient: global.heroGradient),
+          child: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 120),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Akun Pengguna", style: textStyling.linearDisplay(30)),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Kelola informasi akun, preferensi aplikasi, dan sesi aktif Anda.",
+                    style: textStyling.linearBody(15, color: linearTextSecondary),
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(24),
+                    decoration: ui.linearHeroDecoration(),
                     child: Column(
                       children: [
                         Container(
-                          margin: EdgeInsets.symmetric(horizontal: 20),
-                          padding: EdgeInsets.all(10),
-                          decoration: widget.decCont2(Colors.white, 25, 25, 25, 25),
-                          child: Column(
-                            children: [
-                              GestureDetector(
-                                onTap: () {},
-                                child: ListTile(
-                                  title: Text("Ganti Password"),
-                                  leading: Icon(Icons.lock_rounded, color: defBlue),
-                                  trailing: Icon(Icons.arrow_forward_ios_rounded),
-                                ),
-                              ),
-                              GestureDetector(
-                                onTap: () {
-                                  Navigator.pushNamed(context, '/configSetting');
-                                },
-                                child: ListTile(
-                                  title: Text("Pengaturan App"),
-                                  leading: Icon(Icons.settings_rounded, color: defGreen),
-                                  trailing: Icon(Icons.arrow_forward_ios_rounded),
-                                ),
-                              ),
-                              GestureDetector(
-                                onTap: () {
-                                  alert.alertLogout(context);
-                                },
-                                child: ListTile(
-                                  title: Text("Logout"),
-                                  leading: Icon(Icons.logout_rounded, color: defRed),
-                                  trailing: Icon(Icons.arrow_forward_ios_rounded),
-                                ),
-                              ),
-                              Divider(thickness: 2),
-                              Text("Version $appVersion", style: textStyling.nunitoBold(12, defBlack1))
-                            ],
+                          width: 108,
+                          height: 108,
+                          decoration: ui.linearCardDecoration(
+                            radius: 30,
+                            color: linearAccent.withValues(alpha: 0.14),
                           ),
+                          child: Icon(Icons.person_rounded, size: 48, color: linearTextPrimary),
+                        ),
+                        const SizedBox(height: 18),
+                        Text(
+                          preference.getData("nama"),
+                          style: textStyling.linearTitle(22, color: linearTextPrimary, strong: true),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          alignment: WrapAlignment.center,
+                          children: [
+                            ui.linearPill(icon: Icons.verified_user_rounded, label: "User aktif"),
+                            ui.linearPill(icon: Icons.terminal_rounded, label: "Version $appVersion"),
+                          ],
                         ),
                       ],
                     ),
                   ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        Positioned(
-          top: 0,
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(
-                padding: EdgeInsets.only(top: 20, left: 10, right: 10),
-                height: kToolbarHeight * 3,
-                decoration: widget.decorationContainerGradient(defBlack1, defBlack2, 0.0),
-                child: ScrollConfiguration(
-                  behavior: const ScrollBehavior().copyWith(overscroll: false),
-                  child: SingleChildScrollView(
-                    child: Column(),
+                  const SizedBox(height: 18),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: ui.linearPanelDecoration(),
+                    child: Column(
+                      children: [
+                        _buildProfileTile(
+                          icon: Icons.lock_rounded,
+                          color: linearAccent,
+                          title: "Ganti Password",
+                          subtitle: "Segera aktifkan alur reset yang lebih aman untuk akun operator.",
+                          onTap: () {},
+                        ),
+                        const SizedBox(height: 12),
+                        _buildProfileTile(
+                          icon: Icons.settings_rounded,
+                          color: linearSuccess,
+                          title: "Pengaturan App",
+                          subtitle: "Atur koneksi backend, test host, dan preferensi app.",
+                          onTap: () => Navigator.pushNamed(context, '/configSetting'),
+                        ),
+                        const SizedBox(height: 12),
+                        _buildProfileTile(
+                          icon: Icons.logout_rounded,
+                          color: defRed,
+                          title: "Logout",
+                          subtitle: "Akhiri sesi di perangkat ini dan kembali ke halaman login.",
+                          onTap: () => alert.alertLogout(context),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
-        Positioned(
-          top: 0,
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: Column(
-            children: [
-              Container(
-                width: 120,
-                height: 120,
-                decoration: widget.decCont2(defWhite, 100, 100, 100, 100),
-                margin: EdgeInsets.only(top: kToolbarHeight * 1.8, bottom: 5),
-                child: Icon(Icons.person, size: 40, color: defBlack1),
+      ),
+    );
+  }
+
+  Widget _buildProfileTile({
+    required IconData icon,
+    required Color color,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    final ui = CustomWidget();
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: ui.linearCardDecoration(radius: 20),
+        child: Row(
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: ui.linearCardDecoration(
+                radius: 16,
+                color: color.withValues(alpha: 0.14),
               ),
-              Text(preference.getData("nama"), style: textStyling.defaultBlack(16))
-            ],
-          ),
+              child: Icon(icon, color: color),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: textStyling.linearTitle(16, color: linearTextPrimary, strong: true)),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: textStyling.linearBody(13, color: linearTextTertiary, height: 1.5),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            Icon(Icons.arrow_forward_ios_rounded, size: 16, color: linearTextQuaternary),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

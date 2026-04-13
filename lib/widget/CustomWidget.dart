@@ -5,23 +5,147 @@ part of '../header.dart';
 class CustomWidget {
   radiusVal(radius) => Radius.circular(radius);
 
+  BoxDecoration linearPanelDecoration({
+    double radius = 24,
+    Color? color,
+    bool elevated = true,
+    bool inset = false,
+  }) {
+    return BoxDecoration(
+      color: color ?? global.surfaceL1,
+      borderRadius: BorderRadius.circular(radius),
+      border: Border.all(color: global.borderStandard),
+      boxShadow: [
+        if (elevated)
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.35),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+          ),
+        if (inset)
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 14,
+            spreadRadius: -8,
+          ),
+      ],
+    );
+  }
+
+  BoxDecoration linearCardDecoration({
+    double radius = 20,
+    Color? color,
+  }) {
+    return BoxDecoration(
+      color: color ?? global.surfaceL1,
+      borderRadius: BorderRadius.circular(radius),
+      border: Border.all(color: global.borderSubtle),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.25),
+          blurRadius: 20,
+          offset: const Offset(0, 10),
+        ),
+      ],
+    );
+  }
+
+  BoxDecoration linearHeroDecoration() {
+    return BoxDecoration(
+      gradient: global.heroGradient,
+      border: Border.all(color: global.borderSubtle),
+      borderRadius: BorderRadius.circular(28),
+      boxShadow: [
+        BoxShadow(
+          color: linearAccent.withValues(alpha: 0.08),
+          blurRadius: 30,
+          offset: const Offset(0, 18),
+        ),
+      ],
+    );
+  }
+
+  InputDecoration linearInputDecoration({
+    required String label,
+    String? hint,
+    IconData? icon,
+    Widget? suffix,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      prefixIcon: icon != null ? Icon(icon, color: linearTextTertiary) : null,
+      suffixIcon: suffix,
+    );
+  }
+
+  ButtonStyle linearPrimaryButtonStyle({Color? backgroundColor}) {
+    return FilledButton.styleFrom(
+      backgroundColor: backgroundColor ?? linearBrand,
+      foregroundColor: linearTextPrimary,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      textStyle: textStyling.linearBody(15, color: linearTextPrimary, emphasis: true),
+    );
+  }
+
+  ButtonStyle linearGhostButtonStyle() {
+    return OutlinedButton.styleFrom(
+      foregroundColor: linearTextSecondary,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      side: BorderSide(color: global.borderStandard),
+      backgroundColor: global.surfaceL1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      textStyle: textStyling.linearBody(14, color: linearTextSecondary, emphasis: true),
+    );
+  }
+
+  Widget linearPill({
+    required IconData icon,
+    required String label,
+    Color? color,
+    Color? textColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: color ?? global.surfaceL1,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: global.borderSubtle),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: textColor ?? linearTextSecondary),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: textStyling.linearCaption(12, color: textColor ?? linearTextSecondary, emphasis: true),
+          ),
+        ],
+      ),
+    );
+  }
+
   appBarTitle(context, title, color) {
     return AppBar(
       backgroundColor: color,
       elevation: 0,
       automaticallyImplyLeading: false,
       leading: Container(
-        padding: EdgeInsets.only(left: 10),
+        margin: const EdgeInsets.only(left: 14, top: 8, bottom: 8),
+        decoration: linearCardDecoration(radius: 16, color: global.surfaceL1),
+        padding: const EdgeInsets.all(10),
         child: Image.asset("assets/icon.png"),
       ),
       title: Text(
         title,
-        style: textStyling.customColorBold(18, defBlack1),
+        style: textStyling.linearTitle(18, color: linearTextPrimary, strong: true),
       ),
       actions: [
         IconButton(
           onPressed: () {},
-          icon: Icon(Icons.notifications_on_rounded, color: defblue2),
+          icon: Icon(Icons.notifications_on_rounded, color: linearAccent),
         ),
       ],
     );
@@ -39,7 +163,9 @@ class CustomWidget {
           Container(
             padding: EdgeInsets.only(top: kToolbarHeight, left: 20, right: 20),
             height: kToolbarHeight * 2,
-            decoration: BoxDecoration(color: Colors.blueGrey.shade50),
+            decoration: BoxDecoration(
+              gradient: global.heroGradient,
+            ),
           ),
         ],
       ),
@@ -53,7 +179,7 @@ class CustomWidget {
       decoration: decorationGradient3Color(Colors.lightBlue, defBlue, 0.0, 0.0, 50.0, 50.0),
       child: ListTile(
         title: Text(
-          "Versi " + appVersion + " ©2022 Central Developer",
+          "Versi $appVersion ©2022 Central Developer",
           textAlign: TextAlign.center,
           style: textStyling.customColor(14, defWhite),
         ),
@@ -75,7 +201,7 @@ class CustomWidget {
       decoration: decorationGradient3Color(Colors.lightBlue, defBlue, 0.0, 0.0, 50.0, 0.0),
       child: ListTile(
         title: Text(
-          "Versi " + appVersion + " ©2023 Central Developer",
+          "Versi $appVersion ©2023 Central Developer",
           textAlign: TextAlign.center,
           style: textStyling.customColor(14, defWhite),
         ),
@@ -170,7 +296,7 @@ class CustomWidget {
       borderRadius: BorderRadius.all(radiusVal(radius)),
       boxShadow: [
         BoxShadow(
-          color: Colors.grey.withOpacity(0.3),
+          color: Colors.grey.withValues(alpha: 0.3),
           spreadRadius: 2,
           blurRadius: 7,
           offset: const Offset(0, 3),
@@ -185,7 +311,7 @@ class CustomWidget {
       borderRadius: BorderRadius.all(radiusVal(radius)),
       boxShadow: [
         BoxShadow(
-          color: Colors.grey.withOpacity(0.3),
+          color: Colors.grey.withValues(alpha: 0.3),
           spreadRadius: 5,
           blurRadius: 7,
           offset: const Offset(0, 3),
@@ -200,7 +326,7 @@ class CustomWidget {
       borderRadius: BorderRadius.all(radiusVal(radius)),
       boxShadow: [
         BoxShadow(
-          color: Colors.grey.withOpacity(0.3),
+          color: Colors.grey.withValues(alpha: 0.3),
           spreadRadius: 2,
           blurRadius: 7,
           offset: const Offset(0, 3),
@@ -220,7 +346,7 @@ class CustomWidget {
       ),
       boxShadow: [
         BoxShadow(
-          color: Colors.grey.withOpacity(0.3),
+          color: Colors.grey.withValues(alpha: 0.3),
           spreadRadius: 2,
           blurRadius: 7,
           offset: const Offset(0, 3),
@@ -240,7 +366,7 @@ class CustomWidget {
       ),
       boxShadow: [
         BoxShadow(
-          color: Colors.grey.withOpacity(0.3),
+          color: Colors.grey.withValues(alpha: 0.3),
           spreadRadius: 2,
           blurRadius: 7,
           offset: const Offset(0, 3),
@@ -272,7 +398,7 @@ class CustomWidget {
       ),
       boxShadow: [
         BoxShadow(
-          color: Colors.grey.withOpacity(0.3),
+          color: Colors.grey.withValues(alpha: 0.3),
           spreadRadius: 5,
           blurRadius: 7,
           offset: const Offset(0, 3),

@@ -67,10 +67,12 @@ class _InsertPageState extends State<InsertPage> {
       MATNR = resp['MATNR'];
       MSG = resp['MSG'];
       sn = barcode.substring(barcode.length - 5);
+      if (!mounted) return "Success!";
       setState(() {});
       return "Success!";
     } catch (err) {
       print(err);
+      if (!mounted) return "failed";
       global.errorResponsePop(
         context,
         resp,
@@ -166,22 +168,23 @@ class _InsertPageState extends State<InsertPage> {
 
   @override
   Widget build(BuildContext context) {
+    final ui = CustomWidget();
     return Scaffold(
-      backgroundColor: Colors.blueGrey.shade50,
+      backgroundColor: linearBg,
       appBar: AppBar(
         elevation: 0,
-        title: Text("Tambah Pengecekan"),
-        centerTitle: true,
+        backgroundColor: linearBg,
+        title: Text("Tambah Pengecekan", style: textStyling.linearTitle(18, color: linearTextPrimary, strong: true)),
+        centerTitle: false,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: linearTextPrimary, size: 18),
           onPressed: () {
             Navigator.pop(context);
           },
         ),
-        backgroundColor: defBlack1,
         actions: <Widget>[
           IconButton(
-            icon: const Icon(Icons.save),
+            icon: Icon(Icons.save_rounded, color: linearAccent),
             onPressed: () {
               print(_valJP);
               try {
@@ -204,14 +207,16 @@ class _InsertPageState extends State<InsertPage> {
         children: [
           Positioned(
             child: Container(
-              decoration: widget.decCont(defBlack1, 50, 50, 0, 0),
+              decoration: BoxDecoration(gradient: global.heroGradient),
               height: kToolbarHeight * 6,
             ),
           ),
           loading == true
               ? Container(
                   child: Center(
-                    child: CircularProgressIndicator(),
+                    child: CircularProgressIndicator(
+                      color: linearAccent,
+                    ),
                   ),
                 )
               : Container(
@@ -221,7 +226,7 @@ class _InsertPageState extends State<InsertPage> {
                       Container(
                         margin: EdgeInsets.symmetric(horizontal: 10),
                         padding: EdgeInsets.all(15),
-                        decoration: widget.decCont(defWhite, 20, 20, 20, 20),
+                        decoration: ui.linearPanelDecoration(radius: 24),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
@@ -229,11 +234,14 @@ class _InsertPageState extends State<InsertPage> {
                               text: TextSpan(
                                 style: TextStyle(
                                   fontSize: 14.0,
-                                  color: Colors.black,
+                                  color: linearTextSecondary,
                                 ),
                                 children: <TextSpan>[
                                   TextSpan(text: 'NRP/Nama : '),
-                                  TextSpan(text: nama, style: TextStyle(fontWeight: FontWeight.bold)),
+                                  TextSpan(
+                                    text: nama,
+                                    style: TextStyle(fontWeight: FontWeight.bold, color: linearTextPrimary),
+                                  ),
                                 ],
                               ),
                             ),
@@ -242,11 +250,14 @@ class _InsertPageState extends State<InsertPage> {
                               text: TextSpan(
                                 style: TextStyle(
                                   fontSize: 14.0,
-                                  color: Colors.black,
+                                  color: linearTextSecondary,
                                 ),
                                 children: <TextSpan>[
                                   TextSpan(text: 'Lokasi : '),
-                                  TextSpan(text: werks, style: TextStyle(fontWeight: FontWeight.bold)),
+                                  TextSpan(
+                                    text: werks,
+                                    style: TextStyle(fontWeight: FontWeight.bold, color: linearTextPrimary),
+                                  ),
                                 ],
                               ),
                             ),
@@ -255,11 +266,14 @@ class _InsertPageState extends State<InsertPage> {
                               text: TextSpan(
                                 style: TextStyle(
                                   fontSize: 14.0,
-                                  color: Colors.black,
+                                  color: linearTextSecondary,
                                 ),
                                 children: <TextSpan>[
                                   TextSpan(text: 'Kendaraan : '),
-                                  TextSpan(text: MAKTX, style: TextStyle(fontWeight: FontWeight.bold)),
+                                  TextSpan(
+                                    text: MAKTX,
+                                    style: TextStyle(fontWeight: FontWeight.bold, color: linearTextPrimary),
+                                  ),
                                 ],
                               ),
                             ),
@@ -268,11 +282,14 @@ class _InsertPageState extends State<InsertPage> {
                               text: TextSpan(
                                 style: TextStyle(
                                   fontSize: 14.0,
-                                  color: Colors.black,
+                                  color: linearTextSecondary,
                                 ),
                                 children: <TextSpan>[
                                   TextSpan(text: 'Serial No : '),
-                                  TextSpan(text: sn, style: TextStyle(fontWeight: FontWeight.bold)),
+                                  TextSpan(
+                                    text: sn,
+                                    style: TextStyle(fontWeight: FontWeight.bold, color: linearTextPrimary),
+                                  ),
                                 ],
                               ),
                             ),
@@ -281,13 +298,13 @@ class _InsertPageState extends State<InsertPage> {
                               text: TextSpan(
                                 style: TextStyle(
                                   fontSize: 14.0,
-                                  color: Colors.black,
+                                  color: linearTextSecondary,
                                 ),
                                 children: <TextSpan>[
                                   TextSpan(text: 'Tanggal : '),
                                   TextSpan(
                                     text: global.convertDate(tglSekarang).toString(),
-                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                    style: TextStyle(fontWeight: FontWeight.bold, color: linearTextPrimary),
                                   ),
                                 ],
                               ),
@@ -298,73 +315,49 @@ class _InsertPageState extends State<InsertPage> {
                       ),
                       SizedBox(height: 10.0),
                       Container(
-                        decoration: widget.decCont(defWhite, 25, 25, 25, 25),
+                        decoration: ui.linearPanelDecoration(radius: 24),
                         margin: EdgeInsets.symmetric(horizontal: 5),
                         child: Column(
                           children: [
-                            Text("\nJenis Pengecekan: "),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Radio(
-                                  value: 1,
-                                  groupValue: _valJP,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _valJP = value!;
-                                      indikatorKondisi = true;
-                                      getCekKondisi(value.toString());
-                                    });
-                                  },
-                                  activeColor: Colors.green,
-                                ),
-                                Text("Harian", style: textStyling.customColor(10, defBlack1)),
-                                Radio(
-                                  value: 2,
-                                  groupValue: _valJP,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _valJP = value!;
-                                      indikatorKondisi = true;
-                                      getCekKondisi(value.toString());
-                                    });
-                                  },
-                                  activeColor: Colors.green,
-                                ),
-                                Text("Mingguan", style: textStyling.customColor(10, defBlack1)),
-                                Radio(
-                                  value: 3,
-                                  groupValue: _valJP,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _valJP = value!;
-                                      indikatorKondisi = true;
-                                      getCekKondisi(value.toString());
-                                    });
-                                  },
-                                  activeColor: Colors.green,
-                                ),
-                                Text("Bulanan", style: textStyling.customColor(10, defBlack1)),
-                                Radio(
-                                  value: 4,
-                                  groupValue: _valJP,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _valJP = value!;
-                                      indikatorKondisi = true;
-                                      getCekKondisi(value.toString());
-                                    });
-                                  },
-                                  activeColor: Colors.green,
-                                ),
-                                Text("Tutup Pabrik", style: textStyling.customColor(10, defBlack1)),
-                              ],
+                            Text(
+                              "\nJenis Pengecekan:",
+                              style: textStyling.linearTitle(16, color: linearTextPrimary, strong: true),
+                            ),
+                            RadioGroup<int>(
+                              groupValue: _valJP,
+                              onChanged: (value) {
+                                if (value == null) return;
+                                setState(() {
+                                  _valJP = value;
+                                  indikatorKondisi = true;
+                                  getCekKondisi(value.toString());
+                                });
+                              },
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Radio(value: 1, activeColor: linearAccent),
+                                  Text("Harian", style: textStyling.linearCaption(11, color: linearTextSecondary)),
+                                  Radio(value: 2, activeColor: linearAccent),
+                                  Text("Mingguan", style: textStyling.linearCaption(11, color: linearTextSecondary)),
+                                  Radio(value: 3, activeColor: linearAccent),
+                                  Text("Bulanan", style: textStyling.linearCaption(11, color: linearTextSecondary)),
+                                  Radio(value: 4, activeColor: linearAccent),
+                                  Text("Tutup Pabrik", style: textStyling.linearCaption(11, color: linearTextSecondary)),
+                                ],
+                              ),
                             ),
                           ],
                         ),
                       ),
                       SizedBox(height: 10.0),
-                      Text("   \t Daftar pengecekan: ", style: textStyling.defaultWhiteBold(14)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Text(
+                          "Daftar pengecekan",
+                          style: textStyling.linearTitle(16, color: linearTextPrimary, strong: true),
+                        ),
+                      ),
                       SizedBox(height: 10.0),
                       ListView(
                         shrinkWrap: true,
@@ -374,7 +367,7 @@ class _InsertPageState extends State<InsertPage> {
                             children: [
                               Visibility(
                                 visible: indikatorKondisi,
-                                child: CircularProgressIndicator(),
+                                child: CircularProgressIndicator(color: linearAccent),
                               ),
                             ],
                           ),
@@ -382,7 +375,10 @@ class _InsertPageState extends State<InsertPage> {
                               ? Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Text('"Silahkan pilih jenis pengecekan."'),
+                                    Text(
+                                      '"Silahkan pilih jenis pengecekan."',
+                                      style: textStyling.linearBody(14, color: linearTextTertiary),
+                                    ),
                                   ],
                                 )
                               : data.isNotEmpty
@@ -397,12 +393,11 @@ class _InsertPageState extends State<InsertPage> {
                                               Container(
                                                 padding: EdgeInsets.all(10),
                                                 margin: EdgeInsets.only(left: 10, right: 10, bottom: 10),
-                                                decoration: widget.decCont(
-                                                  data[index]["_is_done"] ? defGreen : defOrange,
-                                                  20,
-                                                  20,
-                                                  20,
-                                                  20,
+                                                decoration: ui.linearCardDecoration(
+                                                  radius: 20,
+                                                  color: data[index]["_is_done"]
+                                                      ? linearSuccess.withValues(alpha: 0.16)
+                                                      : linearAccent.withValues(alpha: 0.12),
                                                 ),
                                                 child: Column(
                                                   children: [
@@ -410,7 +405,7 @@ class _InsertPageState extends State<InsertPage> {
                                                       value: data[index]["_is_done"],
                                                       title: Text(
                                                         data[index]["title"],
-                                                        style: textStyling.customColorBold(14, defWhite),
+                                                        style: textStyling.linearBody(14, color: linearTextPrimary, emphasis: true),
                                                       ),
                                                       onChanged: (Value) {
                                                         setState(() {
@@ -435,7 +430,7 @@ class _InsertPageState extends State<InsertPage> {
                                       children: [
                                         Text(
                                           "Belum ada daftar pengecekan !.",
-                                          style: textStyling.defaultWhiteBold(13),
+                                          style: textStyling.linearBody(13, color: linearTextTertiary),
                                         ),
                                       ],
                                     ),
@@ -450,12 +445,17 @@ class _InsertPageState extends State<InsertPage> {
   }
 
   _imgFromCamera(int index) async {
-    PickedFile? image = await ImagePicker.platform
-        .pickImage(source: ImageSource.camera, maxWidth: 1392.00, maxHeight: 1856.00, imageQuality: 30);
+    final image = await ImagePicker().pickImage(
+      source: ImageSource.camera,
+      maxWidth: 1392.00,
+      maxHeight: 1856.00,
+      imageQuality: 30,
+    );
+    if (!mounted || image == null) return;
 
     setState(() {
       _textKeteranganController.text = "";
-      _image = File(image!.path);
+      _image = File(image.path);
       data[index]["_is_done"] = true;
     });
 

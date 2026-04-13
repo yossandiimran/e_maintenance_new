@@ -33,71 +33,107 @@ class SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
+    final ui = CustomWidget();
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
         alert.alertConfirmExit(context);
-        return false;
       },
       child: Scaffold(
         resizeToAvoidBottomInset: true,
-        backgroundColor: Colors.blueGrey.shade50,
-        body: Stack(
-          children: [
-            Positioned(
-              top: 0,
-              bottom: 0,
-              right: 0,
-              left: 0,
-              child: SizedBox(
-                height: global.getHeight(context),
+        backgroundColor: linearBg,
+        body: Container(
+          decoration: BoxDecoration(gradient: global.heroGradient),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: 1),
+                duration: const Duration(milliseconds: 650),
+                curve: Curves.easeOutCubic,
+                builder: (context, value, child) {
+                  return Opacity(
+                    opacity: value,
+                    child: Transform.translate(
+                      offset: Offset(0, 24 * (1 - value)),
+                      child: child,
+                    ),
+                  );
+                },
                 child: Column(
                   children: [
-                    Spacer(),
-                    Text(
-                      "E - Maintenance \n",
-                      textAlign: TextAlign.center,
-                      style: textStyling.customColorBold(30, defBlack2),
-                    ),
-                    Image.asset(
-                      "assets/icon.png",
-                      width: global.getWidth(context) / 2,
-                    ),
-                    SizedBox(height: 25),
-                    Padding(
-                      padding: EdgeInsets.only(left: 15, right: 15),
-                      child: Text(
-                        "\n\"Selamat datang di aplikasi pengecekan rutin Kendaraan Central Springbed\"",
-                        textAlign: TextAlign.center,
-                        style: textStyling.customColor(16, defBlack1),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: ui.linearPill(
+                        icon: Icons.directions_car_filled_rounded,
+                        label: "Vehicle routine monitoring",
+                        color: global.surfaceL1,
                       ),
                     ),
-                    SizedBox(height: 40),
-                    Spacer(),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, '/login');
-                      },
-                      child: Container(
-                        width: global.getWidth(context),
-                        height: kToolbarHeight,
-                        decoration: widget.decCont2(defBlack1, 0, 0, 30, 30),
-                        child: Row(
-                          children: [
-                            Spacer(),
-                            Text(
-                              "Mulai Sekarang",
-                              style: textStyling.defaultWhiteBold(14),
+                    const Spacer(),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(28),
+                      decoration: ui.linearHeroDecoration(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Center(
+                            child: Container(
+                              width: 108,
+                              height: 108,
+                              padding: const EdgeInsets.all(18),
+                              decoration: ui.linearCardDecoration(
+                                radius: 30,
+                                color: linearAccent.withValues(alpha: 0.12),
+                              ),
+                              child: Image.asset("assets/icon.png"),
                             ),
-                            Spacer(),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(height: 28),
+                          Text(
+                            "E-Maintenance",
+                            style: textStyling.linearDisplay(34),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            "Pusat kerja lapangan untuk inspeksi kendaraan, pelaporan, dan kontrol akses pengguna dalam satu alur yang lebih rapi.",
+                            style: textStyling.linearBody(16, color: linearTextSecondary, height: 1.65),
+                          ),
+                          const SizedBox(height: 22),
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: [
+                              ui.linearPill(icon: Icons.qr_code_scanner_rounded, label: "Scan serial kendaraan"),
+                              ui.linearPill(icon: Icons.inventory_2_rounded, label: "Checklist inspeksi"),
+                              ui.linearPill(icon: Icons.assessment_rounded, label: "Laporan transaksi"),
+                            ],
+                          ),
+                        ],
                       ),
+                    ),
+                    const Spacer(),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: () => Navigator.pushNamed(context, '/login'),
+                        style: ui.linearPrimaryButtonStyle(),
+                        icon: const Icon(Icons.arrow_forward_rounded),
+                        label: const Text("Mulai Sekarang"),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      "Version $appVersion",
+                      style: textStyling.linearCaption(12),
                     ),
                   ],
                 ),
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
