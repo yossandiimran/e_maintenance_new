@@ -194,7 +194,10 @@ class _InsertPageState extends State<InsertPage> {
                   children: <Widget>[
                     ClipRRect(
                       borderRadius: BorderRadius.circular(18),
-                      child: Image.file(imageFile, height: 180, width: double.infinity, fit: BoxFit.cover),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 180),
+                        child: Image.file(imageFile, width: 300, fit: BoxFit.cover),
+                      ),
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
