@@ -27,37 +27,57 @@ class Profile extends StatelessWidget {
       return const Center(child: AppLoadingView());
     }
 
+    final initial = session.name.isNotEmpty ? session.name[0].toUpperCase() : '?';
+
     return ListView(
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+      padding: const EdgeInsets.fromLTRB(18, 10, 18, 100),
       children: <Widget>[
         const AppBrandBlocks(),
-        const SizedBox(height: 10),
-        Text('Akun', style: context.textTheme.displayMedium),
-        const SizedBox(height: 4),
-        Text(
-          'Preferensi akun dan aplikasi.',
-          style: context.textTheme.bodyMedium?.copyWith(color: tokens.textMuted),
-        ),
         const SizedBox(height: 12),
+        Text('Akun', style: context.textTheme.displayMedium),
+        const SizedBox(height: 3),
+        Text(
+          'Preferensi dan info profil.',
+          style: context.textTheme.bodySmall?.copyWith(color: tokens.textMuted),
+        ),
+        const SizedBox(height: 16),
+
+        // ── Profile card ──
         AppSurfaceCard(
           child: Column(
             children: <Widget>[
+              // Avatar
               Container(
-                width: 72,
-                height: 72,
+                width: 68,
+                height: 68,
                 decoration: BoxDecoration(
                   gradient: tokens.brandGradient,
                   borderRadius: BorderRadius.circular(22),
+                  boxShadow: <BoxShadow>[
+                    BoxShadow(
+                      color: tokens.brand.withValues(alpha: 0.2),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
                 ),
-                child: Icon(Icons.person_rounded, size: 36, color: tokens.pageBackground),
+                child: Center(
+                  child: Text(
+                    initial,
+                    style: context.textTheme.displayMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(height: 12),
               Text(session.name, style: context.textTheme.headlineMedium, textAlign: TextAlign.center),
-              const SizedBox(height: 6),
+              const SizedBox(height: 3),
               Text(
-                session.username,
-                style: context.textTheme.bodyMedium?.copyWith(color: tokens.textMuted),
+                '@${session.username}',
+                style: context.textTheme.bodySmall?.copyWith(color: tokens.textMuted),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
@@ -67,44 +87,61 @@ class Profile extends StatelessWidget {
                 alignment: WrapAlignment.center,
                 children: <Widget>[
                   AppStatusChip(
-                    label: 'Lokasi ${session.werks}',
+                    label: session.werks,
                     icon: Icons.location_on_outlined,
                     color: tokens.accent,
                   ),
                   AppStatusChip(
-                    label: settings.themeMode == ThemeMode.dark ? 'Dark mode' : 'Light mode',
+                    label: settings.themeMode == ThemeMode.dark ? 'Gelap' : 'Terang',
                     icon: settings.themeMode == ThemeMode.dark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
                     color: tokens.brand,
                   ),
+                  if (!session.isRestrictedOperator)
+                    AppStatusChip(
+                      label: 'Admin',
+                      icon: Icons.verified_user_outlined,
+                      color: tokens.success,
+                    ),
                 ],
               ),
             ],
           ),
         ),
-        const SizedBox(height: 12),
-        AppActionCard(
-          icon: Icons.tune_rounded,
-          title: 'Pengaturan aplikasi',
-          subtitle: 'Atur light/dark mode, host backend, tes koneksi, dan sinkronisasi setting server.',
-          onTap: onOpenSettings,
+        const SizedBox(height: 14),
+
+        // ── Menu items ──
+        AppStaggeredItem(
+          index: 0,
+          child: AppActionCard(
+            icon: Icons.tune_rounded,
+            title: 'Pengaturan',
+            subtitle: 'Dark mode, host backend, tes koneksi.',
+            onTap: onOpenSettings,
+          ),
         ),
         const SizedBox(height: 10),
         if (!session.isRestrictedOperator) ...<Widget>[
-          AppActionCard(
-            icon: Icons.manage_accounts_outlined,
-            title: 'Manajemen user',
-            subtitle: 'Masuk ke modul pengelolaan akun internal dan hak akses operasional.',
-            accentColor: tokens.success,
-            onTap: () => Navigator.of(context).push(AppRouter.userManagement()),
+          AppStaggeredItem(
+            index: 1,
+            child: AppActionCard(
+              icon: Icons.manage_accounts_outlined,
+              title: 'Manajemen user',
+              subtitle: 'Pengelolaan akun dan hak akses.',
+              accentColor: tokens.success,
+              onTap: () => Navigator.of(context).push(AppRouter.userManagement()),
+            ),
           ),
           const SizedBox(height: 10),
         ],
-        AppActionCard(
-          icon: Icons.logout_rounded,
-          title: 'Logout',
-          subtitle: 'Akhiri sesi di perangkat ini dan kembali ke halaman login.',
-          accentColor: tokens.danger,
-          onTap: onLogout,
+        AppStaggeredItem(
+          index: session.isRestrictedOperator ? 1 : 2,
+          child: AppActionCard(
+            icon: Icons.logout_rounded,
+            title: 'Logout',
+            subtitle: 'Akhiri sesi dan kembali ke login.',
+            accentColor: tokens.danger,
+            onTap: onLogout,
+          ),
         ),
       ],
     );

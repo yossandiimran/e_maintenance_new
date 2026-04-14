@@ -18,11 +18,16 @@ class Dashboard extends StatelessWidget {
 
   Future<void> _openScanner(BuildContext context) async {
     final barcode = await Navigator.of(context).push<String?>(AppRouter.scanner());
-    if (barcode == null || barcode.trim().isEmpty || !context.mounted) {
-      return;
-    }
-
+    if (barcode == null || barcode.trim().isEmpty || !context.mounted) return;
     await Navigator.of(context).push(AppRouter.inspection(barcode));
+  }
+
+  String _greeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 11) return 'Selamat pagi';
+    if (hour < 15) return 'Selamat siang';
+    if (hour < 18) return 'Selamat sore';
+    return 'Selamat malam';
   }
 
   @override
@@ -35,75 +40,99 @@ class Dashboard extends StatelessWidget {
       return const Center(child: AppLoadingView());
     }
 
-    final menuItems = <Widget>[
-      AppActionCard(
+    final menuItems = <_MenuItem>[
+      _MenuItem(
         icon: Icons.qr_code_scanner_rounded,
         title: 'Cek kendaraan',
-        subtitle: 'Scan serial number lalu lanjutkan checklist inspeksi harian, mingguan, bulanan, atau tutup pabrik.',
-        accentColor: tokens.brand,
+        subtitle: 'Scan serial number lalu lanjutkan checklist inspeksi.',
+        color: tokens.brand,
         onTap: () => _openScanner(context),
       ),
-      if (!isRestricted) ...<Widget>[
-        AppActionCard(
+      if (!isRestricted) ...<_MenuItem>[
+        _MenuItem(
           icon: Icons.description_outlined,
           title: 'Laporan transaksi',
-          subtitle: 'Lihat histori inspeksi kendaraan, detail checklist, dan dokumentasi foto.',
-          accentColor: tokens.accent,
+          subtitle: 'Histori inspeksi kendaraan dan dokumentasi foto.',
+          color: tokens.accent,
           onTap: () => Navigator.of(context).push(AppRouter.transactionReportFilter()),
         ),
-        AppActionCard(
+        _MenuItem(
           icon: Icons.groups_rounded,
           title: 'Laporan user',
-          subtitle: 'Pantau user yang aktif melakukan pengecekan dan siapa yang masih belum menjalankan tugas.',
-          accentColor: tokens.success,
+          subtitle: 'Pantau user yang aktif melakukan pengecekan.',
+          color: tokens.success,
           onTap: () => Navigator.of(context).push(AppRouter.userReport()),
         ),
-        AppActionCard(
+        _MenuItem(
           icon: Icons.manage_accounts_outlined,
           title: 'Manajemen user',
-          subtitle: 'Tambah, edit, dan rapikan akun user beserta hak akses operasionalnya.',
-          accentColor: tokens.warning,
+          subtitle: 'Tambah, edit, dan atur hak akses user.',
+          color: tokens.warning,
           onTap: () => Navigator.of(context).push(AppRouter.userManagement()),
         ),
       ],
-      AppActionCard(
+      _MenuItem(
         icon: Icons.tune_rounded,
-        title: 'Pengaturan aplikasi',
-        subtitle: 'Kelola host aktif, light/dark mode, pengecekan koneksi, dan preferensi operasional.',
-        accentColor: tokens.danger,
+        title: 'Pengaturan',
+        subtitle: 'Host aktif, dark mode, dan koneksi.',
+        color: tokens.danger,
         onTap: onOpenSettings,
       ),
     ];
 
     return RefreshIndicator(
       onRefresh: () async {},
+      color: tokens.brand,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+        padding: const EdgeInsets.fromLTRB(18, 10, 18, 100),
         children: <Widget>[
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    const AppBrandBlocks(),
-                    const SizedBox(height: 10),
-                    Text('Workspace', style: context.textTheme.displayMedium),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Selamat datang, ${session.name}.',
-                      style: context.textTheme.bodyMedium?.copyWith(color: tokens.textMuted),
-                    ),
-                  ],
+          // ── Header ──
+          const AppBrandBlocks(),
+          const SizedBox(height: 12),
+          Text('Workspace', style: context.textTheme.displayMedium),
+          const SizedBox(height: 3),
+          Text(
+            '${_greeting()}, ${session.name}.',
+            style: context.textTheme.bodyMedium?.copyWith(color: tokens.textMuted),
+          ),
+          const SizedBox(height: 16),
+
+          // ── Menu items with stagger animation ──
+          ...List.generate(menuItems.length, (index) {
+            final item = menuItems[index];
+            return AppStaggeredItem(
+              index: index,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: AppActionCard(
+                  icon: item.icon,
+                  title: item.title,
+                  subtitle: item.subtitle,
+                  accentColor: item.color,
+                  onTap: item.onTap,
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ...menuItems.expand((item) => <Widget>[item, const SizedBox(height: 10)]),
+            );
+          }),
         ],
       ),
     );
   }
+}
+
+class _MenuItem {
+  const _MenuItem({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final VoidCallback onTap;
 }

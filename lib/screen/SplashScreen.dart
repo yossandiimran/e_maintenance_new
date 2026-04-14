@@ -16,18 +16,35 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+  late final AnimationController _animCtrl;
+  late final Animation<double> _fadeIn;
+  late final Animation<Offset> _slideUp;
+
   @override
   void initState() {
     super.initState();
+    _animCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    _fadeIn = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutCubic);
+    _slideUp = Tween<Offset>(begin: const Offset(0, 0.08), end: Offset.zero)
+        .animate(CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutCubic));
+    _animCtrl.forward();
+
     WidgetsBinding.instance.addPostFrameCallback((_) => _redirect());
   }
 
+  @override
+  void dispose() {
+    _animCtrl.dispose();
+    super.dispose();
+  }
+
   Future<void> _redirect() async {
-    await Future<void>.delayed(const Duration(milliseconds: 850));
-    if (!mounted) {
-      return;
-    }
+    await Future<void>.delayed(const Duration(milliseconds: 1100));
+    if (!mounted) return;
 
     final sessionController = context.read<SessionController>();
     if (sessionController.isLoggedIn) {
@@ -53,9 +70,7 @@ class _SplashScreenState extends State<SplashScreen> {
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) {
-          Alert.confirmExit(context);
-        }
+        if (!didPop) Alert.confirmExit(context);
       },
       child: Scaffold(
         backgroundColor: tokens.pageBackground,
@@ -63,88 +78,104 @@ class _SplashScreenState extends State<SplashScreen> {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
+              end: const Alignment(0, 0.5),
               colors: <Color>[
-                tokens.heroEnd.withValues(alpha: context.isDarkMode ? 0.65 : 0.28),
+                tokens.heroEnd.withValues(alpha: context.isDarkMode ? 0.5 : 0.25),
                 tokens.pageBackground,
               ],
             ),
           ),
           child: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  const AppBrandBlocks(),
-                  const Spacer(),
-                  AppSurfaceCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Center(
-                          child: Container(
-                            width: 88,
-                            height: 88,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(26),
-                              boxShadow: <BoxShadow>[
-                                BoxShadow(
-                                  color: tokens.brand.withValues(alpha: 0.25),
-                                  blurRadius: 24,
-                                  offset: const Offset(0, 8),
-                                ),
-                              ],
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+              child: FadeTransition(
+                opacity: _fadeIn,
+                child: SlideTransition(
+                  position: _slideUp,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      const AppBrandBlocks(),
+                      const Spacer(flex: 2),
+                      Center(
+                        child: Container(
+                          width: 92,
+                          height: 92,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(28),
+                            border: Border.all(
+                              color: tokens.brand.withValues(alpha: 0.18),
+                              width: 2,
                             ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(26),
-                              child: Image.asset(
-                                'assets/icon.png',
-                                width: 88,
-                                height: 88,
-                                fit: BoxFit.cover,
+                            boxShadow: <BoxShadow>[
+                              BoxShadow(
+                                color: tokens.brand.withValues(alpha: 0.18),
+                                blurRadius: 32,
+                                offset: const Offset(0, 10),
                               ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(26),
+                            child: Image.asset(
+                              'assets/icon.png',
+                              width: 92,
+                              height: 92,
+                              fit: BoxFit.cover,
                             ),
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        Text('E-Maintenance', style: context.textTheme.displayLarge),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Pusat kerja inspeksi kendaraan yang kini lebih rapi, hangat, dan nyaman dipakai di layar Android.',
-                          style: context.textTheme.bodyLarge?.copyWith(color: tokens.textSecondary),
+                      ),
+                      const SizedBox(height: 20),
+                      Center(
+                        child: Text(
+                          'E-Maintenance',
+                          style: context.textTheme.displayLarge,
+                          textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 14),
-                        Wrap(
+                      ),
+                      const SizedBox(height: 6),
+                      Center(
+                        child: Text(
+                          'Pusat kerja inspeksi kendaraan.\nLebih rapi, hangat, dan nyaman.',
+                          style: context.textTheme.bodyMedium?.copyWith(color: tokens.textMuted),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      Center(
+                        child: Wrap(
                           spacing: 8,
                           runSpacing: 8,
+                          alignment: WrapAlignment.center,
                           children: const <Widget>[
                             AppStatusChip(label: 'Scan serial', icon: Icons.qr_code_scanner_rounded),
                             AppStatusChip(label: 'Checklist', icon: Icons.fact_check_outlined),
                             AppStatusChip(label: 'Laporan', icon: Icons.description_outlined),
                           ],
                         ),
-                      ],
-                    ),
-                  ),
-                  const Spacer(),
-                  Row(
-                    children: <Widget>[
-                      const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(strokeWidth: 2.6),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Text(
-                          'Menyiapkan workspace...',
-                          style: context.textTheme.bodyMedium?.copyWith(color: tokens.textMuted),
+                      const Spacer(flex: 3),
+                      Center(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2.2, color: tokens.brand),
+                            ),
+                            const SizedBox(width: 14),
+                            Text(
+                              'Menyiapkan workspace…',
+                              style: context.textTheme.bodySmall?.copyWith(color: tokens.textMuted),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
             ),
           ),

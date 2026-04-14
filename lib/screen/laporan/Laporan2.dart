@@ -52,10 +52,7 @@ class _Laporan2State extends State<Laporan2> {
       firstDate: DateTime(2018),
       lastDate: DateTime(2101),
     );
-
-    if (picked != null) {
-      controller.text = AppDateUtils.formatApi(picked);
-    }
+    if (picked != null) controller.text = AppDateUtils.formatApi(picked);
   }
 
   Future<void> _search() async {
@@ -76,9 +73,7 @@ class _Laporan2State extends State<Laporan2> {
           ),
         );
 
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
 
     if (!result.isSuccess || result.data == null) {
       setState(() => _loading = false);
@@ -100,7 +95,7 @@ class _Laporan2State extends State<Laporan2> {
 
     final result = await Alert.runWithLoading(
       context: context,
-      message: 'Membuat file Excel...',
+      message: 'Membuat file Excel…',
       task: () => ExcelReportUser().exportUserReport(
         data: _items,
         query: UserReportQuery(
@@ -112,9 +107,7 @@ class _Laporan2State extends State<Laporan2> {
       ),
     );
 
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
 
     if (!result.isSuccess) {
       Alert.showErrorSnackBar(context, result.errorMessage ?? 'Ekspor Excel gagal.');
@@ -122,6 +115,153 @@ class _Laporan2State extends State<Laporan2> {
     }
 
     Alert.showSuccessSnackBar(context, 'File tersimpan di ${result.data}');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+
+    return AppPageScaffold(
+      title: 'Laporan user',
+      subtitle: 'Pantau aktivitas pengecekan per user.',
+      actions: <Widget>[
+        if (_items.isNotEmpty)
+          IconButton(onPressed: _export, icon: const Icon(Icons.download_rounded)),
+      ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          // ── Filter ──
+          AppStaggeredItem(
+            index: 0,
+            child: AppSurfaceCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: tokens.brand.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(Icons.filter_alt_outlined, size: 18, color: tokens.brand),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text('Filter laporan', style: context.textTheme.titleMedium),
+                            Text(
+                              'Tentukan lokasi dan rentang tanggal.',
+                              style: context.textTheme.bodySmall?.copyWith(color: tokens.textMuted),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  TextFormField(
+                    controller: _locationController,
+                    textCapitalization: TextCapitalization.characters,
+                    decoration: const InputDecoration(
+                      labelText: 'Lokasi',
+                      prefixIcon: Icon(Icons.location_on_outlined),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  DropdownButtonFormField<InspectionKind>(
+                    value: _inspectionKind,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Jenis pengecekan',
+                      prefixIcon: Icon(Icons.fact_check_outlined),
+                    ),
+                    items: InspectionKind.values
+                        .map((item) => DropdownMenuItem<InspectionKind>(value: item, child: Text(item.label)))
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null) setState(() => _inspectionKind = value);
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: TextFormField(
+                          controller: _startDateController,
+                          readOnly: true,
+                          onTap: () => _pickDate(_startDateController),
+                          decoration: const InputDecoration(
+                            labelText: 'Mulai',
+                            prefixIcon: Icon(Icons.date_range_outlined),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _endDateController,
+                          readOnly: true,
+                          onTap: () => _pickDate(_endDateController),
+                          decoration: const InputDecoration(
+                            labelText: 'Sampai',
+                            prefixIcon: Icon(Icons.event_note_outlined),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: SizedBox(
+                          height: 48,
+                          child: FilledButton.icon(
+                            onPressed: _search,
+                            icon: const Icon(Icons.search_rounded, size: 18),
+                            label: const Text('Cari data'),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      SizedBox(
+                        height: 48,
+                        child: OutlinedButton.icon(
+                          onPressed: _export,
+                          icon: const Icon(Icons.file_download_outlined, size: 18),
+                          label: const Text('Excel'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // ── Results ──
+          if (_loading)
+            const SizedBox(height: 220, child: AppLoadingView())
+          else if (_items.isEmpty)
+            const AppEmptyState(
+              title: 'Belum ada data',
+              message: 'Jalankan pencarian untuk melihat aktivitas user.',
+              icon: Icons.group_outlined,
+            )
+          else
+            _buildResultTable(context),
+        ],
+      ),
+    );
   }
 
   Widget _buildResultTable(BuildContext context) {
@@ -133,11 +273,11 @@ class _Laporan2State extends State<Laporan2> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          // ── table header ──
+          // Table header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: tokens.brand.withValues(alpha: context.isDarkMode ? 0.14 : 0.06),
+              color: tokens.brand.withValues(alpha: context.isDarkMode ? 0.12 : 0.05),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
             ),
             child: Row(
@@ -145,35 +285,15 @@ class _Laporan2State extends State<Laporan2> {
                 const SizedBox(width: 34),
                 Expanded(
                   flex: 4,
-                  child: Text(
-                    'Nama',
-                    style: context.textTheme.labelMedium?.copyWith(
-                      color: tokens.textMuted,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                  child: Text('Nama', style: context.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700)),
                 ),
                 Expanded(
                   flex: 2,
-                  child: Text(
-                    'Cek',
-                    textAlign: TextAlign.center,
-                    style: context.textTheme.labelMedium?.copyWith(
-                      color: tokens.textMuted,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                  child: Text('Cek', textAlign: TextAlign.center, style: context.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700)),
                 ),
                 Expanded(
                   flex: 2,
-                  child: Text(
-                    'Bolos',
-                    textAlign: TextAlign.center,
-                    style: context.textTheme.labelMedium?.copyWith(
-                      color: tokens.textMuted,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                  child: Text('Bolos', textAlign: TextAlign.center, style: context.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700)),
                 ),
                 const SizedBox(width: 28),
               ],
@@ -181,7 +301,7 @@ class _Laporan2State extends State<Laporan2> {
           ),
           Divider(height: 1, color: tokens.borderSoft),
 
-          // ── rows ──
+          // Rows
           ...List.generate(_items.length, (index) {
             final entry = _items[index];
             final missingDates = allDates.where((d) => !entry.performedDates.contains(d)).toList();
@@ -200,119 +320,19 @@ class _Laporan2State extends State<Laporan2> {
                   missingDates: missingDates,
                   tokens: tokens,
                 ),
-                if (index < _items.length - 1) Divider(height: 1, indent: 14, endIndent: 14, color: tokens.borderSoft),
+                if (index < _items.length - 1)
+                  Divider(height: 1, indent: 14, endIndent: 14, color: tokens.borderSoft),
               ],
             );
           }),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AppPageScaffold(
-      title: 'Laporan user',
-      subtitle: 'Pantau aktivitas user lapangan dan cek tanggal mana yang belum dijalankan.',
-      actions: <Widget>[
-        IconButton(
-          onPressed: _items.isEmpty ? null : _export,
-          icon: const Icon(Icons.download_rounded),
-        ),
-      ],
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          AppSurfaceCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text('Filter laporan', style: context.textTheme.titleLarge),
-                const SizedBox(height: 10),
-                TextFormField(
-                  controller: _locationController,
-                  textCapitalization: TextCapitalization.characters,
-                  decoration: const InputDecoration(
-                    labelText: 'Lokasi',
-                    prefixIcon: Icon(Icons.location_on_outlined),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                DropdownButtonFormField<InspectionKind>(
-                  value: _inspectionKind,
-                  isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Jenis pengecekan',
-                    prefixIcon: Icon(Icons.fact_check_outlined),
-                  ),
-                  items: InspectionKind.values
-                      .map((item) => DropdownMenuItem<InspectionKind>(value: item, child: Text(item.label)))
-                      .toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() => _inspectionKind = value);
-                    }
-                  },
-                ),
-                const SizedBox(height: 10),
-                TextFormField(
-                  controller: _startDateController,
-                  readOnly: true,
-                  onTap: () => _pickDate(_startDateController),
-                  decoration: const InputDecoration(
-                    labelText: 'Tanggal awal',
-                    prefixIcon: Icon(Icons.date_range_outlined),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                TextFormField(
-                  controller: _endDateController,
-                  readOnly: true,
-                  onTap: () => _pickDate(_endDateController),
-                  decoration: const InputDecoration(
-                    labelText: 'Tanggal akhir',
-                    prefixIcon: Icon(Icons.event_note_outlined),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: FilledButton.icon(
-                        onPressed: _search,
-                        icon: const Icon(Icons.search_rounded),
-                        label: const Text('Cari data'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    OutlinedButton.icon(
-                      onPressed: _export,
-                      icon: const Icon(Icons.file_download_outlined),
-                      label: const Text('Excel'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          if (_loading)
-            const SizedBox(height: 220, child: AppLoadingView())
-          else if (_items.isEmpty)
-            const AppEmptyState(
-              title: 'Belum ada data',
-              message: 'Jalankan pencarian untuk melihat siapa saja yang sudah atau belum melakukan pengecekan.',
-              icon: Icons.group_outlined,
-            )
-          else
-            _buildResultTable(context),
+          const SizedBox(height: 4),
         ],
       ),
     );
   }
 }
 
-// ── Expandable row widget for user report table ──
+// ── Expandable user report row ──
 class _UserReportRow extends StatefulWidget {
   const _UserReportRow({
     required this.index,
@@ -352,13 +372,13 @@ class _UserReportRowState extends State<_UserReportRow> {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: Row(
               children: <Widget>[
-                // ── number badge ──
+                // Number badge
                 Container(
                   width: 26,
                   height: 26,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: (widget.isComplete ? tokens.success : tokens.warning).withValues(alpha: 0.12),
+                    color: (widget.isComplete ? tokens.success : tokens.warning).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -371,53 +391,43 @@ class _UserReportRowState extends State<_UserReportRow> {
                 ),
                 const SizedBox(width: 8),
 
-                // ── name + location ──
+                // Name
                 Expanded(
                   flex: 4,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Text(
-                        entry.name,
-                        style: context.textTheme.titleMedium,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        entry.location,
-                        style: context.textTheme.labelSmall?.copyWith(color: tokens.textMuted),
-                      ),
+                      Text(entry.name, style: context.textTheme.titleSmall, overflow: TextOverflow.ellipsis),
+                      Text(entry.location, style: context.textTheme.labelSmall?.copyWith(color: tokens.textMuted)),
                     ],
                   ),
                 ),
 
-                // ── done count ──
+                // Done
                 Expanded(
                   flex: 2,
                   child: Text(
                     '${widget.doneCount}',
                     textAlign: TextAlign.center,
-                    style: context.textTheme.titleMedium?.copyWith(
-                      color: tokens.success,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: context.textTheme.titleSmall?.copyWith(color: tokens.success, fontWeight: FontWeight.w700),
                   ),
                 ),
 
-                // ── miss count ──
+                // Missing
                 Expanded(
                   flex: 2,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: widget.missCount > 0
                         ? BoxDecoration(
-                            color: tokens.danger.withValues(alpha: 0.10),
+                            color: tokens.danger.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(6),
                           )
                         : null,
                     child: Text(
                       widget.missCount > 0 ? '${widget.missCount}' : '—',
                       textAlign: TextAlign.center,
-                      style: context.textTheme.titleMedium?.copyWith(
+                      style: context.textTheme.titleSmall?.copyWith(
                         color: widget.missCount > 0 ? tokens.danger : tokens.textMuted,
                         fontWeight: FontWeight.w700,
                       ),
@@ -425,25 +435,26 @@ class _UserReportRowState extends State<_UserReportRow> {
                   ),
                 ),
 
-                // ── expand chevron ──
+                // Chevron
                 SizedBox(
                   width: 28,
                   child: widget.missingDates.isNotEmpty
-                      ? Icon(
-                          _expanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
-                          size: 18,
-                          color: tokens.textMuted,
+                      ? AnimatedRotation(
+                          turns: _expanded ? 0.5 : 0,
+                          duration: const Duration(milliseconds: 200),
+                          child: Icon(Icons.expand_more_rounded, size: 18, color: tokens.textMuted),
                         )
-                      : Icon(Icons.check_rounded, size: 16, color: tokens.success),
+                      : Icon(Icons.check_rounded, size: 15, color: tokens.success),
                 ),
               ],
             ),
           ),
         ),
 
-        // ── expanded missing dates ──
-        if (_expanded && widget.missingDates.isNotEmpty)
-          Container(
+        // Expanded dates
+        AnimatedCrossFade(
+          firstChild: const SizedBox.shrink(),
+          secondChild: Container(
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(48, 0, 14, 10),
             child: Wrap(
@@ -454,9 +465,9 @@ class _UserReportRowState extends State<_UserReportRow> {
                     (date) => Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: tokens.danger.withValues(alpha: context.isDarkMode ? 0.18 : 0.08),
+                        color: tokens.danger.withValues(alpha: context.isDarkMode ? 0.15 : 0.06),
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: tokens.danger.withValues(alpha: 0.15)),
+                        border: Border.all(color: tokens.danger.withValues(alpha: 0.12)),
                       ),
                       child: Text(
                         AppDateUtils.formatDisplay(date),
@@ -470,6 +481,12 @@ class _UserReportRowState extends State<_UserReportRow> {
                   .toList(),
             ),
           ),
+          crossFadeState: _expanded && widget.missingDates.isNotEmpty
+              ? CrossFadeState.showSecond
+              : CrossFadeState.showFirst,
+          duration: const Duration(milliseconds: 250),
+          sizeCurve: Curves.easeOutCubic,
+        ),
       ],
     );
   }

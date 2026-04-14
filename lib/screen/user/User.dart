@@ -17,11 +17,14 @@ class User extends StatefulWidget {
   State<User> createState() => _UserState();
 }
 
-class _UserState extends State<User> {
+class _UserState extends State<User> with SingleTickerProviderStateMixin {
   bool _loading = true;
   List<AppUser> _users = <AppUser>[];
   String _searchQuery = '';
   final _searchController = TextEditingController();
+
+  late final AnimationController _animCtrl;
+  late final Animation<double> _fadeAnim;
 
   List<AppUser> get _filteredUsers {
     if (_searchQuery.isEmpty) return _users;
@@ -37,11 +40,14 @@ class _UserState extends State<User> {
   @override
   void initState() {
     super.initState();
+    _animCtrl = AnimationController(vsync: this, duration: AppMotion.slow);
+    _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: AppMotion.standard);
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadUsers());
   }
 
   @override
   void dispose() {
+    _animCtrl.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -67,6 +73,7 @@ class _UserState extends State<User> {
       _users = result.data!..sort((a, b) => a.name.compareTo(b.name));
       _loading = false;
     });
+    _animCtrl.forward();
   }
 
   Future<void> _openForm(UserFormData data) async {
@@ -136,10 +143,14 @@ class _UserState extends State<User> {
                     label: const Text('Tambah user'),
                   ),
                 )
-              : Column(
+              : FadeTransition(
+                  opacity: _fadeAnim,
+                  child: Column(
                   children: <Widget>[
                     // ── search bar ──
-                    TextFormField(
+                    AppStaggeredItem(
+                      index: 0,
+                      child: TextFormField(
                       controller: _searchController,
                       decoration: InputDecoration(
                         hintText: 'Cari nama, username, atau role...',
@@ -156,6 +167,7 @@ class _UserState extends State<User> {
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                       ),
                       onChanged: (value) => setState(() => _searchQuery = value.trim()),
+                    ),
                     ),
                     const SizedBox(height: 12),
 
@@ -175,7 +187,9 @@ class _UserState extends State<User> {
                         ),
                       )
                     else
-                      AppSurfaceCard(
+                      AppStaggeredItem(
+                        index: 1,
+                        child: AppSurfaceCard(
                         padding: EdgeInsets.zero,
                         child: Column(
                           children: <Widget>[
@@ -216,7 +230,9 @@ class _UserState extends State<User> {
                               final user = displayUsers[index];
                               final isAdmin = user.roleId == '1';
 
-                              return Column(
+                              return AppStaggeredItem(
+                                index: index + 2,
+                                child: Column(
                                 children: <Widget>[
                                   Padding(
                                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -224,13 +240,22 @@ class _UserState extends State<User> {
                                       children: <Widget>[
                                         // ── avatar ──
                                         Container(
-                                          width: 34,
-                                          height: 34,
+                                          width: 36,
+                                          height: 36,
                                           alignment: Alignment.center,
                                           decoration: BoxDecoration(
                                             gradient: isAdmin ? tokens.brandGradient : null,
                                             color: isAdmin ? null : tokens.surfaceMuted,
                                             borderRadius: BorderRadius.circular(10),
+                                            boxShadow: isAdmin
+                                                ? <BoxShadow>[
+                                                    BoxShadow(
+                                                      color: tokens.brand.withValues(alpha: 0.18),
+                                                      blurRadius: 6,
+                                                      offset: const Offset(0, 2),
+                                                    ),
+                                                  ]
+                                                : null,
                                           ),
                                           child: Text(
                                             user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
@@ -299,6 +324,7 @@ class _UserState extends State<User> {
                                   if (index < displayUsers.length - 1)
                                     Divider(height: 1, indent: 58, endIndent: 14, color: tokens.borderSoft),
                                 ],
+                              ),
                               );
                             }),
 
@@ -307,7 +333,9 @@ class _UserState extends State<User> {
                           ],
                         ),
                       ),
+                      ),
                   ],
+                ),
                 ),
     );
   }
@@ -328,11 +356,12 @@ class _RoleBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = isAdmin ? tokens.brand : tokens.accent;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+    return AnimatedContainer(
+      duration: AppMotion.fast,
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
         color: color.withValues(alpha: context.isDarkMode ? 0.18 : 0.10),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         label,
@@ -360,18 +389,23 @@ class _ActionIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        width: 32,
-        height: 32,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: context.isDarkMode ? 0.16 : 0.08),
-          borderRadius: BorderRadius.circular(8),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        splashColor: color.withValues(alpha: 0.12),
+        child: AnimatedContainer(
+          duration: AppMotion.fast,
+          width: 34,
+          height: 34,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: context.isDarkMode ? 0.16 : 0.08),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, size: 16, color: color),
         ),
-        child: Icon(icon, size: 16, color: color),
       ),
     );
   }

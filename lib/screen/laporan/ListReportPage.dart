@@ -23,14 +23,26 @@ class ListReportPage extends StatefulWidget {
   State<ListReportPage> createState() => _ListReportPageState();
 }
 
-class _ListReportPageState extends State<ListReportPage> {
+class _ListReportPageState extends State<ListReportPage>
+    with SingleTickerProviderStateMixin {
   bool _loading = true;
   List<TransactionReportItem> _items = <TransactionReportItem>[];
+
+  late final AnimationController _animCtrl;
+  late final Animation<double> _fadeAnim;
 
   @override
   void initState() {
     super.initState();
+    _animCtrl = AnimationController(vsync: this, duration: AppMotion.slow);
+    _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: AppMotion.standard);
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadData());
+  }
+
+  @override
+  void dispose() {
+    _animCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -49,6 +61,7 @@ class _ListReportPageState extends State<ListReportPage> {
       _items = result.data!;
       _loading = false;
     });
+    _animCtrl.forward();
   }
 
   Future<void> _export() async {
@@ -88,16 +101,43 @@ class _ListReportPageState extends State<ListReportPage> {
     await showDialog<void>(
       context: context,
       builder: (dialogContext) {
+        final tokens = dialogContext.tokens;
         return AlertDialog(
-          title: Text(item.title),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+          titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+          contentPadding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
+          actionsPadding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+          title: Row(
+            children: <Widget>[
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: tokens.brand.withValues(alpha: dialogContext.isDarkMode ? 0.22 : 0.10),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(Icons.photo_library_rounded, color: tokens.brand, size: 18),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  item.title,
+                  style: dialogContext.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
           content: ClipRRect(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(16),
             child: Image.network(url, fit: BoxFit.cover),
           ),
+          actionsAlignment: MainAxisAlignment.center,
           actions: <Widget>[
-            FilledButton(
+            FilledButton.icon(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Tutup'),
+              icon: const Icon(Icons.close_rounded, size: 18),
+              label: const Text('Tutup'),
             ),
           ],
         );
@@ -129,6 +169,7 @@ class _ListReportPageState extends State<ListReportPage> {
       actions: <Widget>[
         IconButton(
           onPressed: _items.isEmpty ? null : _export,
+          tooltip: 'Ekspor Excel',
           icon: const Icon(Icons.download_rounded),
         ),
       ],
@@ -140,45 +181,54 @@ class _ListReportPageState extends State<ListReportPage> {
                   message: 'Tidak ada data transaksi inspeksi pada filter yang dipilih.',
                   icon: Icons.description_outlined,
                 )
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    // ── summary bar ──
-                    Row(
-                      children: <Widget>[
-                        _SummaryChip(
-                          icon: Icons.calendar_today_rounded,
-                          label: '${grouped.length} tanggal',
-                          color: tokens.brand,
-                          tokens: tokens,
-                          isDark: context.isDarkMode,
+              : FadeTransition(
+                  opacity: _fadeAnim,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      // ── summary bar ──
+                      AppStaggeredItem(
+                        index: 0,
+                        child: Row(
+                          children: <Widget>[
+                            _SummaryChip(
+                              icon: Icons.calendar_today_rounded,
+                              label: '${grouped.length} tanggal',
+                              color: tokens.brand,
+                              tokens: tokens,
+                              isDark: context.isDarkMode,
+                            ),
+                            const SizedBox(width: 8),
+                            _SummaryChip(
+                              icon: Icons.directions_car_rounded,
+                              label: '$totalVehicles kendaraan',
+                              color: tokens.accent,
+                              tokens: tokens,
+                              isDark: context.isDarkMode,
+                            ),
+                            const SizedBox(width: 8),
+                            _SummaryChip(
+                              icon: Icons.checklist_rounded,
+                              label: '${_items.length} item',
+                              color: tokens.success,
+                              tokens: tokens,
+                              isDark: context.isDarkMode,
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 8),
-                        _SummaryChip(
-                          icon: Icons.directions_car_rounded,
-                          label: '$totalVehicles kendaraan',
-                          color: tokens.accent,
-                          tokens: tokens,
-                          isDark: context.isDarkMode,
-                        ),
-                        const SizedBox(width: 8),
-                        _SummaryChip(
-                          icon: Icons.checklist_rounded,
-                          label: '${_items.length} item',
-                          color: tokens.success,
-                          tokens: tokens,
-                          isDark: context.isDarkMode,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
+                      ),
+                      const SizedBox(height: 14),
 
-                    // ── grouped list ──
-                    ...grouped.entries.map((dateEntry) {
-                      final dateKey = dateEntry.key;
-                      final vehicles = dateEntry.value;
+                      // ── grouped list ──
+                      ...grouped.entries.toList().asMap().entries.map((mapEntry) {
+                        final groupIndex = mapEntry.key;
+                        final dateEntry = mapEntry.value;
+                        final dateKey = dateEntry.key;
+                        final vehicles = dateEntry.value;
 
-                      return Padding(
+                      return AppStaggeredItem(
+                        index: groupIndex + 1,
+                        child: Padding(
                         padding: const EdgeInsets.only(bottom: 14),
                         child: AppSurfaceCard(
                           padding: const EdgeInsets.all(0),
@@ -350,9 +400,11 @@ class _ListReportPageState extends State<ListReportPage> {
                             ),
                           ),
                         ),
+                        ),
                       );
                     }),
                   ],
+                  ),
                 ),
     );
   }
@@ -377,25 +429,31 @@ class _SummaryChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: isDark ? 0.16 : 0.08),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: color.withValues(alpha: 0.18)),
-        ),
-        child: Column(
-          children: <Widget>[
-            Icon(icon, size: 16, color: color),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: context.textTheme.labelSmall?.copyWith(
-                color: color,
-                fontWeight: FontWeight.w600,
+      child: TweenAnimationBuilder<double>(
+        tween: Tween<double>(begin: 0.92, end: 1.0),
+        duration: AppMotion.normal,
+        curve: AppMotion.enter,
+        builder: (context, scale, child) => Transform.scale(scale: scale, child: child),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: isDark ? 0.16 : 0.08),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: color.withValues(alpha: 0.18)),
+          ),
+          child: Column(
+            children: <Widget>[
+              Icon(icon, size: 18, color: color),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: context.textTheme.labelSmall?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

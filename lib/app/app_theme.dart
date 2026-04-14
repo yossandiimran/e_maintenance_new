@@ -129,6 +129,20 @@ class AppTokens extends ThemeExtension<AppTokens> {
   }
 }
 
+/// Shared animation durations & curves for consistent motion.
+class AppMotion {
+  const AppMotion._();
+
+  static const Duration fast = Duration(milliseconds: 200);
+  static const Duration normal = Duration(milliseconds: 320);
+  static const Duration slow = Duration(milliseconds: 480);
+  static const Duration stagger = Duration(milliseconds: 60);
+
+  static const Curve standard = Curves.easeOutCubic;
+  static const Curve enter = Curves.easeOutBack;
+  static const Curve exit = Curves.easeInCubic;
+}
+
 class AppTheme {
   const AppTheme._();
 
@@ -235,39 +249,45 @@ class AppTheme {
     final textTheme = TextTheme(
       displayLarge: TextStyle(
         fontFamily: 'Nunito',
-        fontSize: 30,
-        fontWeight: FontWeight.w600,
-        height: 1.08,
-        letterSpacing: -1.0,
+        fontSize: 28,
+        fontWeight: FontWeight.w700,
+        height: 1.1,
+        letterSpacing: -0.8,
         color: tokens.textPrimary,
       ),
       displayMedium: TextStyle(
         fontFamily: 'Nunito',
-        fontSize: 24,
-        fontWeight: FontWeight.w600,
-        height: 1.1,
-        letterSpacing: -0.7,
+        fontSize: 22,
+        fontWeight: FontWeight.w700,
+        height: 1.12,
+        letterSpacing: -0.5,
         color: tokens.textPrimary,
       ),
       headlineMedium: TextStyle(
         fontFamily: 'Nunito',
-        fontSize: 20,
-        fontWeight: FontWeight.w600,
+        fontSize: 18,
+        fontWeight: FontWeight.w700,
         height: 1.15,
-        letterSpacing: -0.3,
+        letterSpacing: -0.2,
         color: tokens.textPrimary,
       ),
       titleLarge: TextStyle(
         fontFamily: 'Nunito',
-        fontSize: 17,
-        fontWeight: FontWeight.w600,
+        fontSize: 16,
+        fontWeight: FontWeight.w700,
         height: 1.2,
-        letterSpacing: -0.2,
+        letterSpacing: -0.15,
         color: tokens.textPrimary,
       ),
       titleMedium: TextStyle(
         fontFamily: 'Nunito',
-        fontSize: 15,
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: tokens.textPrimary,
+      ),
+      titleSmall: TextStyle(
+        fontFamily: 'Nunito',
+        fontSize: 13,
         fontWeight: FontWeight.w600,
         color: tokens.textPrimary,
       ),
@@ -283,16 +303,31 @@ class AppTheme {
         height: 1.5,
         color: tokens.textSecondary,
       ),
+      bodySmall: TextStyle(
+        fontFamily: 'Lato',
+        fontSize: 12,
+        height: 1.45,
+        color: tokens.textMuted,
+      ),
       labelLarge: TextStyle(
         fontFamily: 'Lato',
         fontSize: 13,
         fontWeight: FontWeight.w700,
+        letterSpacing: 0.15,
         color: tokens.textPrimary,
       ),
       labelMedium: TextStyle(
         fontFamily: 'Lato',
         fontSize: 11,
         fontWeight: FontWeight.w700,
+        letterSpacing: 0.15,
+        color: tokens.textMuted,
+      ),
+      labelSmall: TextStyle(
+        fontFamily: 'Lato',
+        fontSize: 10,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.2,
         color: tokens.textMuted,
       ),
     );
@@ -311,6 +346,16 @@ class AppTheme {
       textTheme: textTheme,
       extensions: <ThemeExtension<dynamic>>[tokens],
       dividerColor: tokens.borderSoft,
+      // Smoother page transitions
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: <TargetPlatform, PageTransitionsBuilder>{
+          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.windows: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.linux: CupertinoPageTransitionsBuilder(),
+        },
+      ),
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
         foregroundColor: tokens.textPrimary,
@@ -325,16 +370,20 @@ class AppTheme {
         elevation: 0,
         shadowColor: tokens.shadow,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(20),
           side: BorderSide(color: tokens.borderSoft),
         ),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: tokens.surface,
+        elevation: 8,
+        shadowColor: tokens.shadow,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(26),
+          borderRadius: BorderRadius.circular(24),
           side: BorderSide(color: tokens.borderSoft),
         ),
+        titleTextStyle: textTheme.titleLarge,
+        contentTextStyle: textTheme.bodyMedium,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -344,13 +393,13 @@ class AppTheme {
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         enabledBorder: outlineInputBorder,
         focusedBorder: outlineInputBorder.copyWith(
-          borderSide: BorderSide(color: tokens.brand, width: 1.4),
+          borderSide: BorderSide(color: tokens.brand, width: 1.6),
         ),
         errorBorder: outlineInputBorder.copyWith(
           borderSide: BorderSide(color: tokens.danger),
         ),
         focusedErrorBorder: outlineInputBorder.copyWith(
-          borderSide: BorderSide(color: tokens.danger, width: 1.4),
+          borderSide: BorderSide(color: tokens.danger, width: 1.6),
         ),
         border: outlineInputBorder,
       ),
@@ -358,8 +407,9 @@ class AppTheme {
         backgroundColor: tokens.surfaceElevated,
         contentTextStyle: textTheme.bodyMedium?.copyWith(color: tokens.textPrimary),
         behavior: SnackBarBehavior.floating,
+        elevation: 6,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(16),
           side: BorderSide(color: tokens.borderSoft),
         ),
       ),
@@ -367,9 +417,10 @@ class AppTheme {
         style: FilledButton.styleFrom(
           backgroundColor: tokens.brand,
           foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
+          elevation: 0,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          textStyle: textTheme.labelLarge,
+          textStyle: textTheme.labelLarge?.copyWith(color: Colors.white),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -383,26 +434,30 @@ class AppTheme {
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: tokens.surface,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        height: 62,
         indicatorColor: tokens.brandSoft,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return textTheme.labelMedium?.copyWith(color: tokens.brand);
+            return textTheme.labelMedium?.copyWith(color: tokens.brand, fontWeight: FontWeight.w800);
           }
           return textTheme.labelMedium?.copyWith(color: tokens.textMuted);
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return IconThemeData(color: tokens.brand);
+            return IconThemeData(color: tokens.brand, size: 22);
           }
-          return IconThemeData(color: tokens.textMuted);
+          return IconThemeData(color: tokens.textMuted, size: 22);
         }),
       ),
       popupMenuTheme: PopupMenuThemeData(
         color: tokens.surface,
         surfaceTintColor: Colors.transparent,
+        elevation: 8,
+        shadowColor: tokens.shadow,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(16),
           side: BorderSide(color: tokens.borderSoft),
         ),
       ),
@@ -422,15 +477,73 @@ class AppTheme {
               side: BorderSide(color: tokens.borderSoft),
             ),
           ),
-          elevation: const WidgetStatePropertyAll<double>(6),
+          elevation: const WidgetStatePropertyAll<double>(8),
+          shadowColor: WidgetStatePropertyAll<Color>(tokens.shadow),
         ),
       ),
       datePickerTheme: DatePickerThemeData(
         backgroundColor: tokens.surface,
         surfaceTintColor: Colors.transparent,
+        headerBackgroundColor: tokens.brand.withValues(alpha: 0.08),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(26),
+          borderRadius: BorderRadius.circular(24),
         ),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: tokens.surfaceMuted,
+        selectedColor: tokens.brand,
+        secondarySelectedColor: tokens.brand,
+        labelStyle: textTheme.labelLarge?.copyWith(color: tokens.textPrimary),
+        secondaryLabelStyle: textTheme.labelLarge?.copyWith(color: Colors.white),
+        side: BorderSide(color: tokens.borderSoft),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        showCheckmark: true,
+        checkmarkColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: tokens.brand,
+          textStyle: textTheme.labelLarge,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: tokens.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 12,
+        shadowColor: tokens.shadow,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+      ),
+      dividerTheme: DividerThemeData(
+        color: tokens.borderSoft,
+        thickness: 1,
+        space: 1,
+      ),
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: tokens.brand,
+        linearTrackColor: tokens.borderSoft,
+        circularTrackColor: tokens.borderSoft,
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: tokens.brand,
+        foregroundColor: Colors.white,
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+      tooltipTheme: TooltipThemeData(
+        decoration: BoxDecoration(
+          color: tokens.surfaceElevated,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: tokens.borderSoft),
+          boxShadow: <BoxShadow>[
+            BoxShadow(color: tokens.shadow, blurRadius: 8, offset: const Offset(0, 4)),
+          ],
+        ),
+        textStyle: textTheme.bodySmall?.copyWith(color: tokens.textPrimary),
       ),
     );
   }

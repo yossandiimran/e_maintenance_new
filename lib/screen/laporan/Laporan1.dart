@@ -45,14 +45,10 @@ class _Laporan1State extends State<Laporan1> {
 
   Future<void> _loadLocations() async {
     final session = context.read<SessionController>().session;
-    if (session == null) {
-      return;
-    }
+    if (session == null) return;
 
     final result = await context.read<ReportService>().fetchStorageLocations(session);
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
 
     if (!result.isSuccess || result.data == null) {
       setState(() => _loadingLocations = false);
@@ -66,16 +62,12 @@ class _Laporan1State extends State<Laporan1> {
       _loadingLocations = false;
     });
 
-    if (_selectedLocation != null) {
-      await _loadVehicles(_selectedLocation!);
-    }
+    if (_selectedLocation != null) await _loadVehicles(_selectedLocation!);
   }
 
   Future<void> _loadVehicles(StorageLocation location) async {
     final session = context.read<SessionController>().session;
-    if (session == null) {
-      return;
-    }
+    if (session == null) return;
 
     setState(() {
       _loadingVehicles = true;
@@ -88,9 +80,7 @@ class _Laporan1State extends State<Laporan1> {
           location: location.code,
         );
 
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
 
     if (!result.isSuccess || result.data == null) {
       setState(() => _loadingVehicles = false);
@@ -111,11 +101,7 @@ class _Laporan1State extends State<Laporan1> {
       firstDate: DateTime(2018),
       lastDate: DateTime(2101),
     );
-
-    if (picked == null) {
-      return;
-    }
-
+    if (picked == null) return;
     controller.text = AppDateUtils.formatApi(picked);
   }
 
@@ -152,220 +138,239 @@ class _Laporan1State extends State<Laporan1> {
 
     return AppPageScaffold(
       title: 'Laporan transaksi',
-      subtitle: 'Filter laporan kendaraan dengan alur yang lebih jelas dan konsisten untuk layar mobile.',
+      subtitle: 'Filter histori inspeksi kendaraan.',
       child: _loadingLocations
           ? const SizedBox(height: 320, child: AppLoadingView())
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                AppSurfaceCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text('Filter laporan', style: context.textTheme.titleLarge),
-                      const SizedBox(height: 10),
-                      DropdownButtonFormField<InspectionKind>(
-                        value: _inspectionKind,
-                        isExpanded: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Jenis pengecekan',
-                          prefixIcon: Icon(Icons.fact_check_outlined),
-                        ),
-                        items: InspectionKind.values
-                            .map((item) => DropdownMenuItem<InspectionKind>(value: item, child: Text(item.label)))
-                            .toList(),
-                        onChanged: (value) {
-                          if (value != null) {
-                            setState(() => _inspectionKind = value);
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 10),
-                      DropdownButtonFormField<VehicleType>(
-                        value: _vehicleType,
-                        isExpanded: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Jenis kendaraan',
-                          prefixIcon: Icon(Icons.directions_car_outlined),
-                        ),
-                        items: VehicleType.values
-                            .map((item) => DropdownMenuItem<VehicleType>(value: item, child: Text(item.label)))
-                            .toList(),
-                        onChanged: (value) {
-                          if (value != null) {
-                            setState(() => _vehicleType = value);
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 10),
-
-                      // ── Lokasi aset & Kendaraan (grouped card) ──
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: tokens.surfaceMuted.withValues(alpha: context.isDarkMode ? 0.4 : 0.55),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: tokens.borderSoft),
-                        ),
-                        child: Column(
+                AppStaggeredItem(
+                  index: 0,
+                  child: AppSurfaceCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Row(
                           children: <Widget>[
-                            DropdownButtonFormField<StorageLocation>(
-                              value: _selectedLocation,
-                              isExpanded: true,
-                              decoration: const InputDecoration(
-                                labelText: 'Lokasi aset',
-                                prefixIcon: Icon(Icons.location_on_outlined),
-                                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: tokens.brand.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(10),
                               ),
-                              selectedItemBuilder: (context) {
-                                return _locations.map((item) {
-                                  return Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: Text(
-                                      '${item.code}  —  ${item.name}',
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  );
-                                }).toList();
-                              },
-                              items: _locations
-                                  .map((item) => DropdownMenuItem<StorageLocation>(
-                                        value: item,
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(vertical: 2),
-                                          child: Row(
-                                            children: <Widget>[
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                                decoration: BoxDecoration(
-                                                  color: tokens.brand.withValues(alpha: 0.12),
-                                                  borderRadius: BorderRadius.circular(6),
-                                                ),
-                                                child: Text(
-                                                  item.code,
-                                                  style: context.textTheme.labelMedium?.copyWith(
-                                                    color: tokens.brand,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                              ),
-                                              const SizedBox(width: 10),
-                                              Expanded(
-                                                child: Text(
-                                                  item.name,
-                                                  overflow: TextOverflow.ellipsis,
-                                                  style: context.textTheme.bodyMedium,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ))
-                                  .toList(),
-                              onChanged: (value) {
-                                if (value == null) {
-                                  return;
-                                }
-                                setState(() => _selectedLocation = value);
-                                _loadVehicles(value);
-                              },
+                              child: Icon(Icons.filter_alt_outlined, size: 18, color: tokens.brand),
                             ),
-                            const SizedBox(height: 10),
-                            DropdownButtonFormField<VehicleCatalogItem>(
-                              value: _selectedVehicle,
-                              isExpanded: true,
-                              decoration: InputDecoration(
-                                labelText: 'Kendaraan spesifik',
-                                prefixIcon: const Icon(Icons.precision_manufacturing_outlined),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                helperText: _loadingVehicles ? 'Memuat kendaraan...' : 'Boleh dikosongkan untuk semua kendaraan.',
-                                helperStyle: context.textTheme.bodySmall?.copyWith(color: tokens.textMuted),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  Text('Filter laporan', style: context.textTheme.titleMedium),
+                                  Text(
+                                    'Pilih parameter untuk menampilkan data.',
+                                    style: context.textTheme.bodySmall?.copyWith(color: tokens.textMuted),
+                                  ),
+                                ],
                               ),
-                              selectedItemBuilder: (context) {
-                                return _vehicles.map((item) {
-                                  return Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: Text(
-                                      item.name,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  );
-                                }).toList();
-                              },
-                              items: _vehicles
-                                  .map((item) => DropdownMenuItem<VehicleCatalogItem>(
-                                        value: item,
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(vertical: 2),
-                                          child: Row(
-                                            children: <Widget>[
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                                decoration: BoxDecoration(
-                                                  color: tokens.accent.withValues(alpha: 0.12),
-                                                  borderRadius: BorderRadius.circular(6),
-                                                ),
-                                                child: Text(
-                                                  item.serialNumber,
-                                                  style: context.textTheme.labelSmall?.copyWith(
-                                                    color: tokens.accent,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                              ),
-                                              const SizedBox(width: 10),
-                                              Expanded(
-                                                child: Text(
-                                                  item.name,
-                                                  overflow: TextOverflow.ellipsis,
-                                                  style: context.textTheme.bodyMedium,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ))
-                                  .toList(),
-                              onChanged: _loadingVehicles
-                                  ? null
-                                  : (value) {
-                                      setState(() => _selectedVehicle = value);
-                                    },
                             ),
                           ],
                         ),
-                      ),
+                        const SizedBox(height: 14),
 
-                      const SizedBox(height: 10),
-                      TextFormField(
-                        controller: _startDateController,
-                        readOnly: true,
-                        onTap: () => _pickDate(_startDateController),
-                        decoration: const InputDecoration(
-                          labelText: 'Tanggal awal',
-                          prefixIcon: Icon(Icons.date_range_outlined),
+                        // Jenis pengecekan
+                        DropdownButtonFormField<InspectionKind>(
+                          value: _inspectionKind,
+                          isExpanded: true,
+                          decoration: const InputDecoration(
+                            labelText: 'Jenis pengecekan',
+                            prefixIcon: Icon(Icons.fact_check_outlined),
+                          ),
+                          items: InspectionKind.values
+                              .map((item) => DropdownMenuItem<InspectionKind>(value: item, child: Text(item.label)))
+                              .toList(),
+                          onChanged: (value) {
+                            if (value != null) setState(() => _inspectionKind = value);
+                          },
                         ),
-                      ),
-                      const SizedBox(height: 10),
-                      TextFormField(
-                        controller: _endDateController,
-                        readOnly: true,
-                        onTap: () => _pickDate(_endDateController),
-                        decoration: const InputDecoration(
-                          labelText: 'Tanggal akhir',
-                          prefixIcon: Icon(Icons.event_note_outlined),
+                        const SizedBox(height: 10),
+
+                        // Jenis kendaraan
+                        DropdownButtonFormField<VehicleType>(
+                          value: _vehicleType,
+                          isExpanded: true,
+                          decoration: const InputDecoration(
+                            labelText: 'Jenis kendaraan',
+                            prefixIcon: Icon(Icons.directions_car_outlined),
+                          ),
+                          items: VehicleType.values
+                              .map((item) => DropdownMenuItem<VehicleType>(value: item, child: Text(item.label)))
+                              .toList(),
+                          onChanged: (value) {
+                            if (value != null) setState(() => _vehicleType = value);
+                          },
                         ),
-                      ),
-                      const SizedBox(height: 14),
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton.icon(
-                          onPressed: _openReport,
-                          icon: const Icon(Icons.travel_explore_outlined),
-                          label: const Text('Lihat laporan'),
+                        const SizedBox(height: 12),
+
+                        // ── Lokasi & Kendaraan group ──
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: tokens.surfaceMuted.withValues(alpha: context.isDarkMode ? 0.3 : 0.45),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: tokens.borderSoft.withValues(alpha: 0.6)),
+                          ),
+                          child: Column(
+                            children: <Widget>[
+                              DropdownButtonFormField<StorageLocation>(
+                                value: _selectedLocation,
+                                isExpanded: true,
+                                decoration: const InputDecoration(
+                                  labelText: 'Lokasi aset',
+                                  prefixIcon: Icon(Icons.location_on_outlined),
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                ),
+                                selectedItemBuilder: (context) {
+                                  return _locations.map((item) {
+                                    return Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: Text('${item.code}  —  ${item.name}', overflow: TextOverflow.ellipsis),
+                                    );
+                                  }).toList();
+                                },
+                                items: _locations
+                                    .map((item) => DropdownMenuItem<StorageLocation>(
+                                          value: item,
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(vertical: 2),
+                                            child: Row(
+                                              children: <Widget>[
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                                  decoration: BoxDecoration(
+                                                    color: tokens.brand.withValues(alpha: 0.1),
+                                                    borderRadius: BorderRadius.circular(6),
+                                                  ),
+                                                  child: Text(
+                                                    item.code,
+                                                    style: context.textTheme.labelMedium?.copyWith(
+                                                      color: tokens.brand,
+                                                      fontWeight: FontWeight.w700,
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 10),
+                                                Expanded(child: Text(item.name, overflow: TextOverflow.ellipsis, style: context.textTheme.bodyMedium)),
+                                              ],
+                                            ),
+                                          ),
+                                        ))
+                                    .toList(),
+                                onChanged: (value) {
+                                  if (value == null) return;
+                                  setState(() => _selectedLocation = value);
+                                  _loadVehicles(value);
+                                },
+                              ),
+                              const SizedBox(height: 10),
+                              DropdownButtonFormField<VehicleCatalogItem>(
+                                value: _selectedVehicle,
+                                isExpanded: true,
+                                decoration: InputDecoration(
+                                  labelText: 'Kendaraan spesifik',
+                                  prefixIcon: const Icon(Icons.precision_manufacturing_outlined),
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  helperText: _loadingVehicles ? 'Memuat…' : 'Boleh dikosongkan.',
+                                  helperStyle: context.textTheme.bodySmall?.copyWith(color: tokens.textMuted),
+                                ),
+                                selectedItemBuilder: (context) {
+                                  return _vehicles.map((item) {
+                                    return Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(item.name, overflow: TextOverflow.ellipsis),
+                                    );
+                                  }).toList();
+                                },
+                                items: _vehicles
+                                    .map((item) => DropdownMenuItem<VehicleCatalogItem>(
+                                          value: item,
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(vertical: 2),
+                                            child: Row(
+                                              children: <Widget>[
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                                  decoration: BoxDecoration(
+                                                    color: tokens.accent.withValues(alpha: 0.1),
+                                                    borderRadius: BorderRadius.circular(6),
+                                                  ),
+                                                  child: Text(
+                                                    item.serialNumber,
+                                                    style: context.textTheme.labelSmall?.copyWith(
+                                                      color: tokens.accent,
+                                                      fontWeight: FontWeight.w700,
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 10),
+                                                Expanded(child: Text(item.name, overflow: TextOverflow.ellipsis, style: context.textTheme.bodyMedium)),
+                                              ],
+                                            ),
+                                          ),
+                                        ))
+                                    .toList(),
+                                onChanged: _loadingVehicles
+                                    ? null
+                                    : (value) => setState(() => _selectedVehicle = value),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 12),
+
+                        // Dates
+                        Row(
+                          children: <Widget>[
+                            Expanded(
+                              child: TextFormField(
+                                controller: _startDateController,
+                                readOnly: true,
+                                onTap: () => _pickDate(_startDateController),
+                                decoration: const InputDecoration(
+                                  labelText: 'Mulai',
+                                  prefixIcon: Icon(Icons.date_range_outlined),
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: TextFormField(
+                                controller: _endDateController,
+                                readOnly: true,
+                                onTap: () => _pickDate(_endDateController),
+                                decoration: const InputDecoration(
+                                  labelText: 'Sampai',
+                                  prefixIcon: Icon(Icons.event_note_outlined),
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+
+                        SizedBox(
+                          width: double.infinity,
+                          height: 48,
+                          child: FilledButton.icon(
+                            onPressed: _openReport,
+                            icon: const Icon(Icons.travel_explore_outlined, size: 18),
+                            label: const Text('Lihat laporan'),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],

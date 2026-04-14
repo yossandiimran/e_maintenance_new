@@ -20,12 +20,39 @@ class Alert {
     }
 
     final tokens = context.tokens;
+    final icon = isError ? Icons.error_outline_rounded : Icons.check_circle_rounded;
+    final color = isError ? tokens.danger : tokens.success;
+
     ScaffoldMessenger.of(context)
       ..clearSnackBars()
       ..showSnackBar(
         SnackBar(
-          content: Text(message),
-          backgroundColor: isError ? tokens.danger : tokens.surfaceElevated,
+          content: Row(
+            children: <Widget>[
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, size: 16, color: color),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  message,
+                  style: context.textTheme.bodyMedium?.copyWith(
+                    color: tokens.textPrimary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: tokens.surfaceElevated,
+          duration: const Duration(seconds: 3),
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
         ),
       );
   }
@@ -37,22 +64,42 @@ class Alert {
     bool isError = false,
   }) {
     final tokens = context.tokens;
+    final color = isError ? tokens.danger : tokens.brand;
+
     return showDialog<void>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
+          icon: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(
+              isError ? Icons.warning_amber_rounded : Icons.info_outline_rounded,
+              color: color,
+              size: 24,
+            ),
+          ),
           title: Text(title),
           content: Text(
             message,
             style: dialogContext.textTheme.bodyMedium?.copyWith(color: tokens.textSecondary),
+            textAlign: TextAlign.center,
           ),
+          actionsAlignment: MainAxisAlignment.center,
           actions: <Widget>[
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              style: FilledButton.styleFrom(
-                backgroundColor: isError ? tokens.danger : tokens.brand,
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                style: FilledButton.styleFrom(
+                  backgroundColor: isError ? tokens.danger : tokens.brand,
+                ),
+                child: const Text('Tutup'),
               ),
-              child: const Text('Tutup'),
             ),
           ],
         );
@@ -69,23 +116,48 @@ class Alert {
     bool destructive = false,
   }) async {
     final tokens = context.tokens;
+    final accentColor = destructive ? tokens.danger : tokens.brand;
+
     final result = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: Text(title),
-          content: Text(message),
-          actions: <Widget>[
-            OutlinedButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: Text(cancelLabel),
+          icon: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: accentColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(14),
             ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              style: FilledButton.styleFrom(
-                backgroundColor: destructive ? tokens.danger : tokens.brand,
-              ),
-              child: Text(confirmLabel),
+            child: Icon(
+              destructive ? Icons.warning_amber_rounded : Icons.help_outline_rounded,
+              color: accentColor,
+              size: 24,
+            ),
+          ),
+          title: Text(title),
+          content: Text(message, textAlign: TextAlign.center),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: <Widget>[
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(false),
+                    child: Text(cancelLabel),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(true),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: accentColor,
+                    ),
+                    child: Text(confirmLabel),
+                  ),
+                ),
+              ],
             ),
           ],
         );
@@ -104,17 +176,26 @@ class Alert {
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
-        return AlertDialog(
-          content: Row(
-            children: <Widget>[
-              const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2.4),
-              ),
-              const SizedBox(width: 18),
-              Expanded(child: Text(message)),
-            ],
+        final tokens = dialogContext.tokens;
+        return PopScope(
+          canPop: false,
+          child: AlertDialog(
+            content: Row(
+              children: <Widget>[
+                SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(strokeWidth: 2.2, color: tokens.brand),
+                ),
+                const SizedBox(width: 18),
+                Expanded(
+                  child: Text(
+                    message,
+                    style: dialogContext.textTheme.bodyMedium?.copyWith(color: tokens.textSecondary),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },

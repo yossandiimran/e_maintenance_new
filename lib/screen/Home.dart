@@ -44,9 +44,7 @@ class _HomeState extends State<Home> {
     final authService = context.read<AuthService>();
     final settingsController = context.read<AppSettingsController>();
     final result = await authService.fetchOperationalSettings();
-    if (!result.isSuccess || result.data == null) {
-      return;
-    }
+    if (!result.isSuccess || result.data == null) return;
 
     await authService.cacheOperationalSettings(result.data!);
     await settingsController.syncRemoteSettings(result.data!);
@@ -61,9 +59,7 @@ class _HomeState extends State<Home> {
       destructive: true,
     );
 
-    if (!confirmed || !mounted) {
-      return;
-    }
+    if (!confirmed || !mounted) return;
 
     final sessionController = context.read<SessionController>();
     final authService = context.read<AuthService>();
@@ -71,7 +67,7 @@ class _HomeState extends State<Home> {
 
     await Alert.runWithLoading(
       context: context,
-      message: 'Menutup sesi...',
+      message: 'Menutup sesi…',
       task: () async {
         if (currentSession != null) {
           await authService.unregisterDevice(userId: currentSession.id);
@@ -80,10 +76,7 @@ class _HomeState extends State<Home> {
       },
     );
 
-    if (!mounted) {
-      return;
-    }
-
+    if (!mounted) return;
     await AppRouter.replaceWithLogin(context);
   }
 
@@ -104,9 +97,7 @@ class _HomeState extends State<Home> {
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) {
-          Alert.confirmExit(context);
-        }
+        if (!didPop) Alert.confirmExit(context);
       },
       child: Scaffold(
         backgroundColor: tokens.pageBackground,
@@ -114,34 +105,40 @@ class _HomeState extends State<Home> {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
+              end: const Alignment(0, 0.3),
               colors: <Color>[
-                tokens.heroEnd.withValues(alpha: context.isDarkMode ? 0.35 : 0.16),
+                tokens.heroStart.withValues(alpha: context.isDarkMode ? 0.3 : 0.6),
                 tokens.pageBackground,
               ],
             ),
           ),
           child: SafeArea(
-            child: IndexedStack(
-              index: _selectedIndex,
-              children: pages,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 280),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              child: IndexedStack(
+                key: ValueKey<int>(_selectedIndex),
+                index: _selectedIndex,
+                children: pages,
+              ),
             ),
           ),
         ),
         bottomNavigationBar: SafeArea(
           top: false,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: tokens.surface,
+                color: tokens.surface.withValues(alpha: 0.95),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: tokens.borderSoft),
+                border: Border.all(color: tokens.borderSoft.withValues(alpha: 0.6)),
                 boxShadow: <BoxShadow>[
                   BoxShadow(
-                    color: tokens.shadow,
-                    blurRadius: 16,
-                    offset: const Offset(0, 10),
+                    color: tokens.shadow.withValues(alpha: 0.08),
+                    blurRadius: 24,
+                    offset: const Offset(0, -4),
                   ),
                 ],
               ),
