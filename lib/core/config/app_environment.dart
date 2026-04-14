@@ -2,7 +2,7 @@ class AppEnvironment {
   const AppEnvironment._();
 
   static const String appName = 'E-Maintenance';
-  static const String appVersion = '2.1.0';
+  static const String appVersion = '3.0.0';
 
   static const String defaultApiHost = String.fromEnvironment(
     'EMAINTENANCE_API_HOST',
@@ -24,5 +24,5 @@ class AppEnvironment {
     defaultValue: 'http://202.138.230.51:8080/eReset/ResetWar?APPNAME=emaintenance',
   );
 
-  static const String launcherIconAsset = 'assets/icon_new.png';
+  static const String launcherIconAsset = 'assets/icon.png';
 }

@@ -3,7 +3,7 @@ description: E-Maintenance mobile app for vehicle inspection and reporting.
 
 publish_to: 'none'
 
-version: 2.1.0+11
+version: 3.0.0+12
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -44,11 +44,16 @@ dependency_overrides:
 flutter_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/icon_new.png"
+  image_path: "assets/icon.png"
   min_sdk_android: 21
   adaptive_icon_background: "#FA520F"
-  adaptive_icon_foreground: "assets/icon_new.png"
+  adaptive_icon_foreground: "assets/icon.png"
   remove_alpha_ios: true
+  web:
+    generate: true
+    image_path: "assets/icon.png"
+    background_color: "#FA520F"
+    theme_color: "#FA520F"
 
 flutter:
 
@@ -63,4 +68,4 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/icon_new.png
+    - assets/icon.png

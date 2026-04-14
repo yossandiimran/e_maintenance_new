@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:e_maintenance/controllers/session_controller.dart';
-import 'package:e_maintenance/core/config/app_environment.dart';
 import 'package:e_maintenance/route.dart';
 import 'package:e_maintenance/widget/Alert.dart';
 import 'package:e_maintenance/widget/CustomWidget.dart';
@@ -87,12 +86,25 @@ class _SplashScreenState extends State<SplashScreen> {
                           child: Container(
                             width: 88,
                             height: 88,
-                            padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              gradient: tokens.brandGradient,
                               borderRadius: BorderRadius.circular(26),
+                              boxShadow: <BoxShadow>[
+                                BoxShadow(
+                                  color: tokens.brand.withValues(alpha: 0.25),
+                                  blurRadius: 24,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
                             ),
-                            child: Image.asset(AppEnvironment.launcherIconAsset),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(26),
+                              child: Image.asset(
+                                'assets/icon.png',
+                                width: 88,
+                                height: 88,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 16),

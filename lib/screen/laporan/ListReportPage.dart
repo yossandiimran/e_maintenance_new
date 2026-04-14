@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:e_maintenance/app/app_theme.dart';
 import 'package:e_maintenance/core/network/app_api_client.dart';
 import 'package:e_maintenance/helper/global.dart';
 import 'package:e_maintenance/model/app_models.dart';
@@ -120,10 +121,11 @@ class _ListReportPageState extends State<ListReportPage> {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final grouped = _groupedItems();
+    final totalVehicles = grouped.values.fold<int>(0, (sum, v) => sum + v.length);
 
     return AppPageScaffold(
       title: 'Detail laporan',
-      subtitle: 'Data checklist disusun per tanggal dan serial kendaraan agar lebih mudah dipindai.',
+      subtitle: 'Data checklist disusun per tanggal dan serial kendaraan.',
       actions: <Widget>[
         IconButton(
           onPressed: _items.isEmpty ? null : _export,
@@ -140,87 +142,262 @@ class _ListReportPageState extends State<ListReportPage> {
                 )
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: grouped.entries.map((dateEntry) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: AppSurfaceCard(
-                        child: Theme(
-                          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                          child: ExpansionTile(
-                            tilePadding: EdgeInsets.zero,
-                            childrenPadding: EdgeInsets.zero,
-                            initiallyExpanded: true,
-                            title: Text(
-                              AppDateUtils.formatDisplay(dateEntry.key),
-                              style: context.textTheme.titleLarge,
-                            ),
-                            subtitle: Text(
-                              '${dateEntry.value.length} kendaraan tercatat',
-                              style: context.textTheme.bodyMedium?.copyWith(color: tokens.textMuted),
-                            ),
-                            children: dateEntry.value.entries.map((vehicleEntry) {
-                              final first = vehicleEntry.value.first;
-                              return Padding(
-                                padding: const EdgeInsets.only(top: 12),
-                                child: AppSurfaceCard(
-                                  color: tokens.surfaceElevated.withValues(alpha: context.isDarkMode ? 0.72 : 0.94),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: <Widget>[
-                                      Text(first.vehicleName, style: context.textTheme.titleLarge),
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        'SN: ${first.serialNumber}  •  PIC: ${first.userName}  •  Lokasi: ${first.location}',
-                                        style: context.textTheme.bodyMedium?.copyWith(color: tokens.textMuted),
-                                      ),
-                                      const SizedBox(height: 14),
-                                      ...vehicleEntry.value.map((item) {
-                                        return Padding(
-                                          padding: const EdgeInsets.only(bottom: 10),
+                  children: <Widget>[
+                    // ── summary bar ──
+                    Row(
+                      children: <Widget>[
+                        _SummaryChip(
+                          icon: Icons.calendar_today_rounded,
+                          label: '${grouped.length} tanggal',
+                          color: tokens.brand,
+                          tokens: tokens,
+                          isDark: context.isDarkMode,
+                        ),
+                        const SizedBox(width: 8),
+                        _SummaryChip(
+                          icon: Icons.directions_car_rounded,
+                          label: '$totalVehicles kendaraan',
+                          color: tokens.accent,
+                          tokens: tokens,
+                          isDark: context.isDarkMode,
+                        ),
+                        const SizedBox(width: 8),
+                        _SummaryChip(
+                          icon: Icons.checklist_rounded,
+                          label: '${_items.length} item',
+                          color: tokens.success,
+                          tokens: tokens,
+                          isDark: context.isDarkMode,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+
+                    // ── grouped list ──
+                    ...grouped.entries.map((dateEntry) {
+                      final dateKey = dateEntry.key;
+                      final vehicles = dateEntry.value;
+
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 14),
+                        child: AppSurfaceCard(
+                          padding: const EdgeInsets.all(0),
+                          child: Theme(
+                            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                            child: ExpansionTile(
+                              tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                              childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+                              initiallyExpanded: grouped.keys.first == dateKey,
+                              leading: Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: tokens.brand.withValues(alpha: context.isDarkMode ? 0.22 : 0.10),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(Icons.event_note_rounded, color: tokens.brand, size: 20),
+                              ),
+                              title: Text(
+                                AppDateUtils.formatDisplay(dateKey),
+                                style: context.textTheme.titleLarge,
+                              ),
+                              subtitle: Text(
+                                '${vehicles.length} kendaraan  •  ${vehicles.values.fold<int>(0, (s, v) => s + v.length)} checklist',
+                                style: context.textTheme.bodySmall?.copyWith(color: tokens.textMuted),
+                              ),
+                              children: vehicles.entries.map((vehicleEntry) {
+                                final first = vehicleEntry.value.first;
+                                final doneCount = vehicleEntry.value.where((i) => i.isDone).length;
+                                final total = vehicleEntry.value.length;
+                                final allDone = doneCount == total;
+
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 10),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: tokens.surfaceElevated.withValues(alpha: context.isDarkMode ? 0.65 : 0.92),
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(color: tokens.borderSoft),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: <Widget>[
+                                        // ── vehicle header ──
+                                        Container(
+                                          padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+                                          decoration: BoxDecoration(
+                                            color: (allDone ? tokens.success : tokens.warning).withValues(alpha: context.isDarkMode ? 0.12 : 0.06),
+                                            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                                          ),
                                           child: Row(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
                                             children: <Widget>[
-                                              Icon(
-                                                item.isDone ? Icons.check_circle_rounded : Icons.cancel_outlined,
-                                                color: item.isDone ? tokens.success : tokens.danger,
+                                              Container(
+                                                width: 36,
+                                                height: 36,
+                                                decoration: BoxDecoration(
+                                                  color: (allDone ? tokens.success : tokens.warning).withValues(alpha: 0.16),
+                                                  borderRadius: BorderRadius.circular(10),
+                                                ),
+                                                child: Icon(
+                                                  allDone ? Icons.verified_rounded : Icons.pending_rounded,
+                                                  size: 18,
+                                                  color: allDone ? tokens.success : tokens.warning,
+                                                ),
                                               ),
-                                              const SizedBox(width: 12),
+                                              const SizedBox(width: 10),
                                               Expanded(
                                                 child: Column(
                                                   crossAxisAlignment: CrossAxisAlignment.start,
                                                   children: <Widget>[
-                                                    Text(item.title, style: context.textTheme.titleMedium),
-                                                    const SizedBox(height: 4),
                                                     Text(
-                                                      item.isDone ? 'Checklist dilakukan.' : 'Checklist belum dilakukan.',
-                                                      style: context.textTheme.bodyMedium?.copyWith(color: tokens.textMuted),
+                                                      first.vehicleName,
+                                                      style: context.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
+                                                    const SizedBox(height: 2),
+                                                    Text(
+                                                      '${first.userName}  •  ${first.location}',
+                                                      style: context.textTheme.bodySmall?.copyWith(color: tokens.textMuted),
                                                     ),
                                                   ],
                                                 ),
                                               ),
-                                              IconButton(
-                                                onPressed: () => _showImage(item),
-                                                icon: Icon(
-                                                  item.photoFileName.isNotEmpty && item.photoFileName != 'null'
-                                                      ? Icons.image_outlined
-                                                      : Icons.broken_image_outlined,
+                                              // ── progress badge ──
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                decoration: BoxDecoration(
+                                                  color: (allDone ? tokens.success : tokens.warning).withValues(alpha: 0.14),
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                child: Text(
+                                                  '$doneCount/$total',
+                                                  style: context.textTheme.labelSmall?.copyWith(
+                                                    color: allDone ? tokens.success : tokens.warning,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
                                                 ),
                                               ),
                                             ],
                                           ),
-                                        );
-                                      }),
-                                    ],
+                                        ),
+
+                                        // ── progress bar ──
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(4),
+                                            child: LinearProgressIndicator(
+                                              value: total > 0 ? doneCount / total : 0,
+                                              minHeight: 3,
+                                              backgroundColor: tokens.borderSoft,
+                                              valueColor: AlwaysStoppedAnimation<Color>(
+                                                allDone ? tokens.success : tokens.warning,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+
+                                        // ── checklist items ──
+                                        Padding(
+                                          padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
+                                          child: Column(
+                                            children: vehicleEntry.value.map((item) {
+                                              final hasPhoto = item.photoFileName.isNotEmpty && item.photoFileName != 'null';
+                                              return InkWell(
+                                                onTap: hasPhoto ? () => _showImage(item) : null,
+                                                borderRadius: BorderRadius.circular(10),
+                                                child: Padding(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
+                                                  child: Row(
+                                                    children: <Widget>[
+                                                      Container(
+                                                        width: 28,
+                                                        height: 28,
+                                                        decoration: BoxDecoration(
+                                                          color: (item.isDone ? tokens.success : tokens.danger).withValues(alpha: 0.12),
+                                                          borderRadius: BorderRadius.circular(8),
+                                                        ),
+                                                        child: Icon(
+                                                          item.isDone ? Icons.check_rounded : Icons.close_rounded,
+                                                          size: 16,
+                                                          color: item.isDone ? tokens.success : tokens.danger,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 10),
+                                                      Expanded(
+                                                        child: Text(
+                                                          item.title,
+                                                          style: context.textTheme.bodyMedium?.copyWith(
+                                                            decoration: item.isDone ? null : TextDecoration.lineThrough,
+                                                            color: item.isDone ? tokens.textPrimary : tokens.textMuted,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      if (hasPhoto)
+                                                        Icon(Icons.photo_library_outlined, size: 16, color: tokens.textMuted),
+                                                    ],
+                                                  ),
+                                                ),
+                                              );
+                                            }).toList(),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              );
-                            }).toList(),
+                                );
+                              }).toList(),
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  }).toList(),
+                      );
+                    }),
+                  ],
                 ),
+    );
+  }
+}
+
+// ── small summary chip for the top bar ──
+class _SummaryChip extends StatelessWidget {
+  const _SummaryChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.tokens,
+    required this.isDark,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final AppTokens tokens;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: isDark ? 0.16 : 0.08),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withValues(alpha: 0.18)),
+        ),
+        child: Column(
+          children: <Widget>[
+            Icon(icon, size: 16, color: color),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: context.textTheme.labelSmall?.copyWith(
+                color: color,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

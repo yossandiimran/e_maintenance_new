@@ -20,9 +20,17 @@ import 'package:e_maintenance/core/network/app_api_client.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    // On web with invalid/placeholder appId, Firebase init may fail.
+    // Allow the app to continue — push notifications won't work but
+    // the rest of the app remains functional.
+    debugPrint('[e-maintenance] Firebase init error (non-fatal): $e');
+  }
 
   final preferences = await AppPreferences.create();
   final settingsController = AppSettingsController(preferences);
@@ -33,7 +41,12 @@ Future<void> main() async {
 
   final apiClient = AppApiClient(preferences: preferences);
   final messagingHelper = FirebaseMessagingHelper();
-  await messagingHelper.initialize(onPayloadOpen: AppRouter.handleNotificationPayload);
+
+  try {
+    await messagingHelper.initialize(onPayloadOpen: AppRouter.handleNotificationPayload);
+  } catch (e) {
+    debugPrint('[e-maintenance] Messaging init error (non-fatal): $e');
+  }
 
   runApp(
     MultiProvider(

@@ -1,102 +1,167 @@
 # E-Maintenance
 
-E-Maintenance adalah aplikasi Flutter untuk inspeksi kendaraan, pelaporan transaksi, pelaporan user, dan administrasi akun internal Central Springbed.
+> Aplikasi inspeksi kendaraan, pelaporan transaksi, pelaporan user, dan administrasi akun internal — dibangun dengan Flutter dan Material 3.
 
-## Perubahan Utama
+## Daftar Isi
 
-- UI/UX diseragamkan ulang mengikuti [DESIGN.md](./DESIGN.md) dengan arah warm Mistral-inspired.
-- Aplikasi sekarang mendukung `light mode` dan `dark mode` dengan toggle di menu pengaturan.
-- Arsitektur `part of` monolitik dihapus dari app code aktif dan diganti dengan screen, service, controller, dan theme yang terpisah.
-- Global state lama dipindah ke controller typed:
-  - `AppSettingsController`
-  - `SessionController`
-- Navigasi utama sekarang typed lewat `AppRouter`.
-- Service layer tidak lagi memanggil dialog, snackbar, atau navigation secara langsung.
-- Launcher icon diganti memakai `assets/icon_new.png`.
-- Asset dan dependency yang tidak dipakai dibersihkan.
+- [Fitur](#fitur)
+- [Screenshot](#screenshot)
+- [Prasyarat](#prasyarat)
+- [Instalasi](#instalasi)
+- [Menjalankan Aplikasi](#menjalankan-aplikasi)
+- [Build Produksi](#build-produksi)
+- [Konfigurasi](#konfigurasi)
+- [Struktur Proyek](#struktur-proyek)
+- [Tech Stack](#tech-stack)
+- [Pengujian](#pengujian)
+- [Arsitektur](#arsitektur)
+- [Lisensi](#lisensi)
 
-## Modul Utama
+## Fitur
 
-- `Splash` dan `Login`
-- `Home` dengan `Dashboard` dan `Profile`
-- `Config Setting` untuk host, koneksi, dan toggle theme
-- `QR Scanner`
-- `Insert Page` untuk checklist inspeksi kendaraan
-- `Laporan Transaksi`
-- `Laporan User`
-- `Manajemen User`
+| Modul | Deskripsi |
+|---|---|
+| **Login** | Autentikasi user dengan sesi 6 jam dan default password |
+| **QR Scanner** | Scan barcode kendaraan dengan dialog preview sebelum lanjut |
+| **Checklist Inspeksi** | Input harian/mingguan/bulanan/tutup pabrik + foto bukti |
+| **Laporan Transaksi** | Filter berdasarkan lokasi, kendaraan, dan periode — hasil dalam grouped list |
+| **Laporan User** | Pantau aktivitas user lapangan dalam tabel ringkas dengan detail tanggal bolos |
+| **Manajemen User** | CRUD akun internal dengan role badge dan aksi kompak |
+| **Pengaturan** | Ganti host backend, tes koneksi, dark/light mode, sync setting server |
+| **Ekspor Excel** | Unduh laporan transaksi dan user ke file `.xlsx` |
+| **Push Notification** | Firebase Cloud Messaging (opsional, graceful fallback di web) |
 
-## Stack
+## Screenshot
 
-- Flutter + Material 3
-- Provider
-- Shared Preferences
-- Firebase Core + Firebase Messaging
-- HTTP
-- QR Code Scanner
-- Image Picker
-- Excel export
-- Permission Handler
+> Tampilan menggunakan warm surface palette (orange-gold) dengan dukungan **light mode** dan **dark mode**.
 
-## Struktur Penting
+## Prasyarat
 
-- `lib/main.dart` bootstrap provider, theme, dan messaging
-- `lib/route.dart` router typed
-- `lib/app/app_theme.dart` design tokens dan theme light/dark
-- `lib/controllers/` state global aplikasi
-- `lib/core/` config, logging, result, dan API client
-- `lib/service/` service layer tanpa side-effect UI
-- `lib/screen/` seluruh halaman aplikasi
-- `lib/widget/` komponen visual bersama
-- `updateuiux.md` pedoman UI/UX yang sesuai implementasi terbaru
+- [Flutter SDK](https://docs.flutter.dev/get-started/install) ≥ 3.0.0
+- Dart SDK ≥ 3.0.0
+- Android Studio / VS Code
+- Android SDK (untuk build Android)
+- Chrome (untuk build web)
+
+## Instalasi
+
+```bash
+git clone <repository-url>
+cd e_maintenance_new
+flutter pub get
+```
+
+## Menjalankan Aplikasi
+
+```bash
+# Android (device / emulator)
+flutter run
+
+# Web (Chrome)
+flutter run -d chrome
+
+# Web tanpa CORS (development only)
+flutter run -d chrome --web-browser-flag "--disable-web-security"
+```
+
+## Build Produksi
+
+```bash
+# APK
+flutter build apk --release
+
+# App Bundle
+flutter build appbundle --release
+
+# Web
+flutter build web --release
+```
 
 ## Konfigurasi
 
-Default konfigurasi operasional sekarang tersentral di `AppEnvironment` dan bisa dioverride via `dart-define`:
+Konfigurasi default tersentral di `lib/core/config/app_environment.dart` dan dapat di-override via `dart-define`:
 
-```powershell
-flutter run `
-  --dart-define=EMAINTENANCE_API_HOST=10.0.0.2 `
-  --dart-define=EMAINTENANCE_API_BASE_PATH=/e_maintenance_v2/public/ `
+```bash
+flutter run \
+  --dart-define=EMAINTENANCE_API_HOST=10.0.0.2 \
+  --dart-define=EMAINTENANCE_API_BASE_PATH=/e_maintenance_v2/public/ \
   --dart-define=EMAINTENANCE_ASSET_BASE_PATH=/e_maintenance/public/
 ```
 
-Host aktif juga bisa diubah langsung dari screen pengaturan tanpa edit source code.
+| Variable | Default | Keterangan |
+|---|---|---|
+| `EMAINTENANCE_API_HOST` | `210.210.165.197` | IP / hostname backend |
+| `EMAINTENANCE_API_BASE_PATH` | `/e_maintenance_v2/public/` | Base path API |
+| `EMAINTENANCE_ASSET_BASE_PATH` | `/e_maintenance/public/` | Base path asset/foto |
 
-## Menjalankan Proyek
+Host aktif juga bisa diubah langsung dari halaman **Pengaturan** tanpa mengedit source code.
 
-```powershell
-flutter pub get
-flutter run
+## Struktur Proyek
+
+```
+lib/
+├── main.dart                  # Bootstrap provider, theme, messaging
+├── route.dart                 # Typed router (AppRouter)
+├── app/
+│   └── app_theme.dart         # Design tokens, light/dark theme
+├── controllers/               # Global state (AppSettingsController, SessionController)
+├── core/
+│   ├── config/                # AppEnvironment, constants
+│   ├── network/               # AppApiClient (HTTP)
+│   └── result/                # Result wrapper
+├── helper/                    # Utilities, preferences, date formatting
+├── model/                     # Data models (UserSession, AppUser, dll.)
+├── screen/
+│   ├── SplashScreen.dart
+│   ├── Login.dart
+│   ├── Home.dart
+│   ├── Dashboard.dart
+│   ├── ConfigSetting.dart
+│   ├── QrScanner.dart
+│   ├── cek_kendaraan/         # InsertPage (checklist inspeksi)
+│   ├── laporan/               # Laporan1, Laporan2, ListReportPage
+│   ├── menu/                  # Profile
+│   └── user/                  # User management (CRUD)
+├── service/                   # Service layer (tanpa side-effect UI)
+└── widget/                    # Shared components (AppSurfaceCard, Alert, dll.)
 ```
 
-## Verifikasi Lokal
+## Tech Stack
 
-```powershell
+| Kategori | Library |
+|---|---|
+| Framework | Flutter 3 + Material 3 |
+| State Management | Provider |
+| Persistence | Shared Preferences |
+| Networking | HTTP |
+| Push Notification | Firebase Core + Firebase Messaging |
+| Scanner | QR Code Scanner |
+| Camera | Image Picker |
+| Export | Excel (syncfusion / dart) |
+| Permissions | Permission Handler |
+
+## Pengujian
+
+```bash
+# Static analysis
 flutter analyze
+
+# Unit & widget tests
 flutter test
-cd android
-.\gradlew app:assembleDebug
+
+# Android build verification
+cd android && ./gradlew app:assembleDebug
 ```
 
-## Status Verifikasi Terbaru
+## Arsitektur
 
-- `flutter analyze` lulus
-- `flutter test` lulus
-- Widget test sudah mencakup:
-  - validasi login kosong
-  - toggle light/dark mode di settings
+- **Provider** untuk dependency injection dan state management.
+- **Service layer** murni — tidak memanggil dialog, snackbar, atau navigation.
+- **Typed routing** via `AppRouter` — tanpa string-based route atau dynamic arguments.
+- **Design tokens** (`AppTokens`) untuk konsistensi visual di seluruh screen.
+- **Session expiry** otomatis setelah 6 jam.
+- **Firebase Messaging** bersifat opsional dan non-blocking (graceful fallback jika gagal init).
 
-## Catatan Desain
+## Lisensi
 
-- Referensi visual utama ada di [DESIGN.md](./DESIGN.md).
-- Checklist implementasi UI ada di [updateuiux.md](./updateuiux.md).
-- Implementasi sekarang memakai warm surfaces, orange-gold block identity, dan layout mobile-first yang konsisten di seluruh screen aktif.
-
-## Catatan Arsitektur
-
-- `part of` tidak lagi dipakai di alur aplikasi aktif.
-- Routing string-based dan argument dynamic sudah diganti di flow utama.
-- Logging `print()` pada kode aplikasi aktif sudah dibersihkan.
-- Hardcoded config yang sebelumnya tersebar dipusatkan ke config dan storage.
-- Launcher icon dan asset bundle sudah dirapikan.
+Internal — Central Springbed. Tidak untuk distribusi publik.

@@ -406,6 +406,25 @@ class AppTheme {
           side: BorderSide(color: tokens.borderSoft),
         ),
       ),
+      dropdownMenuTheme: DropdownMenuThemeData(
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: tokens.surfaceElevated,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          border: outlineInputBorder,
+        ),
+        menuStyle: MenuStyle(
+          backgroundColor: WidgetStatePropertyAll<Color>(tokens.surface),
+          surfaceTintColor: const WidgetStatePropertyAll<Color>(Colors.transparent),
+          shape: WidgetStatePropertyAll<OutlinedBorder>(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: tokens.borderSoft),
+            ),
+          ),
+          elevation: const WidgetStatePropertyAll<double>(6),
+        ),
+      ),
       datePickerTheme: DatePickerThemeData(
         backgroundColor: tokens.surface,
         surfaceTintColor: Colors.transparent,

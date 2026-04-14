@@ -129,11 +129,14 @@ class _Laporan1State extends State<Laporan1> {
       return;
     }
 
+    final session = context.read<SessionController>().session;
+
     Navigator.of(context).push(
       AppRouter.transactionReportList(
         TransactionReportFilter(
           inspectionKind: _inspectionKind,
           vehicleType: _vehicleType,
+          werks: session?.werks ?? '',
           storageLocation: _selectedLocation!.code,
           vehicleSerialNumber: _selectedVehicle == null ? '' : AppHelpers.serialForReport(_selectedVehicle!.serialNumber),
           startDate: _startDateController.text,
@@ -195,45 +198,144 @@ class _Laporan1State extends State<Laporan1> {
                         },
                       ),
                       const SizedBox(height: 10),
-                      DropdownButtonFormField<StorageLocation>(
-                        value: _selectedLocation,
-                        isExpanded: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Lokasi aset',
-                          prefixIcon: Icon(Icons.location_on_outlined),
+
+                      // ── Lokasi aset & Kendaraan (grouped card) ──
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: tokens.surfaceMuted.withValues(alpha: context.isDarkMode ? 0.4 : 0.55),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: tokens.borderSoft),
                         ),
-                        items: _locations
-                            .map((item) => DropdownMenuItem<StorageLocation>(value: item, child: Text(item.name)))
-                            .toList(),
-                        onChanged: (value) {
-                          if (value == null) {
-                            return;
-                          }
-                          setState(() => _selectedLocation = value);
-                          _loadVehicles(value);
-                        },
-                      ),
-                      const SizedBox(height: 10),
-                      DropdownButtonFormField<VehicleCatalogItem>(
-                        value: _selectedVehicle,
-                        isExpanded: true,
-                        decoration: InputDecoration(
-                          labelText: 'Kendaraan spesifik',
-                          prefixIcon: const Icon(Icons.precision_manufacturing_outlined),
-                          helperText: _loadingVehicles ? 'Memuat kendaraan...' : 'Boleh dikosongkan untuk semua kendaraan.',
-                        ),
-                        items: _vehicles
-                            .map((item) => DropdownMenuItem<VehicleCatalogItem>(
-                                  value: item,
-                                  child: Text(item.name, overflow: TextOverflow.ellipsis),
-                                ))
-                            .toList(),
-                        onChanged: _loadingVehicles
-                            ? null
-                            : (value) {
-                                setState(() => _selectedVehicle = value);
+                        child: Column(
+                          children: <Widget>[
+                            DropdownButtonFormField<StorageLocation>(
+                              value: _selectedLocation,
+                              isExpanded: true,
+                              decoration: const InputDecoration(
+                                labelText: 'Lokasi aset',
+                                prefixIcon: Icon(Icons.location_on_outlined),
+                                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              ),
+                              selectedItemBuilder: (context) {
+                                return _locations.map((item) {
+                                  return Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      '${item.code}  —  ${item.name}',
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  );
+                                }).toList();
                               },
+                              items: _locations
+                                  .map((item) => DropdownMenuItem<StorageLocation>(
+                                        value: item,
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 2),
+                                          child: Row(
+                                            children: <Widget>[
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                decoration: BoxDecoration(
+                                                  color: tokens.brand.withValues(alpha: 0.12),
+                                                  borderRadius: BorderRadius.circular(6),
+                                                ),
+                                                child: Text(
+                                                  item.code,
+                                                  style: context.textTheme.labelMedium?.copyWith(
+                                                    color: tokens.brand,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 10),
+                                              Expanded(
+                                                child: Text(
+                                                  item.name,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: context.textTheme.bodyMedium,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ))
+                                  .toList(),
+                              onChanged: (value) {
+                                if (value == null) {
+                                  return;
+                                }
+                                setState(() => _selectedLocation = value);
+                                _loadVehicles(value);
+                              },
+                            ),
+                            const SizedBox(height: 10),
+                            DropdownButtonFormField<VehicleCatalogItem>(
+                              value: _selectedVehicle,
+                              isExpanded: true,
+                              decoration: InputDecoration(
+                                labelText: 'Kendaraan spesifik',
+                                prefixIcon: const Icon(Icons.precision_manufacturing_outlined),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                helperText: _loadingVehicles ? 'Memuat kendaraan...' : 'Boleh dikosongkan untuk semua kendaraan.',
+                                helperStyle: context.textTheme.bodySmall?.copyWith(color: tokens.textMuted),
+                              ),
+                              selectedItemBuilder: (context) {
+                                return _vehicles.map((item) {
+                                  return Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      item.name,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  );
+                                }).toList();
+                              },
+                              items: _vehicles
+                                  .map((item) => DropdownMenuItem<VehicleCatalogItem>(
+                                        value: item,
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 2),
+                                          child: Row(
+                                            children: <Widget>[
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                decoration: BoxDecoration(
+                                                  color: tokens.accent.withValues(alpha: 0.12),
+                                                  borderRadius: BorderRadius.circular(6),
+                                                ),
+                                                child: Text(
+                                                  item.serialNumber,
+                                                  style: context.textTheme.labelSmall?.copyWith(
+                                                    color: tokens.accent,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 10),
+                                              Expanded(
+                                                child: Text(
+                                                  item.name,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: context.textTheme.bodyMedium,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ))
+                                  .toList(),
+                              onChanged: _loadingVehicles
+                                  ? null
+                                  : (value) {
+                                      setState(() => _selectedVehicle = value);
+                                    },
+                            ),
+                          ],
+                        ),
                       ),
+
                       const SizedBox(height: 10),
                       TextFormField(
                         controller: _startDateController,
@@ -262,25 +364,6 @@ class _Laporan1State extends State<Laporan1> {
                           icon: const Icon(Icons.travel_explore_outlined),
                           label: const Text('Lihat laporan'),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                AppSurfaceCard(
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: <Widget>[
-                      AppStatusChip(
-                        label: _inspectionKind.label,
-                        icon: Icons.fact_check_outlined,
-                        color: tokens.brand,
-                      ),
-                      AppStatusChip(
-                        label: _vehicleType.label,
-                        icon: Icons.directions_car_filled_outlined,
-                        color: tokens.accent,
                       ),
                     ],
                   ),

@@ -91,6 +91,7 @@ class ReportService {
         body: <String, String>{
           'jenis_cek': filter.inspectionKind.id,
           'jenis_kendaraan': filter.vehicleType.id,
+          'werks': filter.werks,
           'asloc': filter.storageLocation,
           'kendaraan': filter.vehicleSerialNumber,
           'tgl_awal': filter.startDate,

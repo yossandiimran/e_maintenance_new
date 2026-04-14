@@ -286,15 +286,19 @@ class QRViewControllerWeb implements QRViewController {
   bool get hasPermissions => throw UnimplementedError();
 
   @override
-  Future<void> pauseCamera() {
-    // TODO: implement pauseCamera
-    throw UnimplementedError();
+  Future<void> pauseCamera() async {
+    _state._frameIntervall?.cancel();
+    _state.video.pause();
   }
 
   @override
-  Future<void> resumeCamera() {
-    // TODO: implement resumeCamera
-    throw UnimplementedError();
+  Future<void> resumeCamera() async {
+    await _state.video.play();
+    _state._frameIntervall?.cancel();
+    _state._frameIntervall =
+        Timer.periodic(const Duration(milliseconds: 200), (timer) {
+      _state._captureFrame2();
+    });
   }
 
   @override

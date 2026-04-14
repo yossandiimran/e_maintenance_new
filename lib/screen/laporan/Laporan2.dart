@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:e_maintenance/app/app_theme.dart';
 import 'package:e_maintenance/controllers/session_controller.dart';
 import 'package:e_maintenance/helper/global.dart';
 import 'package:e_maintenance/model/app_models.dart';
@@ -123,6 +124,91 @@ class _Laporan2State extends State<Laporan2> {
     Alert.showSuccessSnackBar(context, 'File tersimpan di ${result.data}');
   }
 
+  Widget _buildResultTable(BuildContext context) {
+    final tokens = context.tokens;
+    final allDates = AppDateUtils.buildDateRange(_startDateController.text, _endDateController.text);
+
+    return AppSurfaceCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          // ── table header ──
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: tokens.brand.withValues(alpha: context.isDarkMode ? 0.14 : 0.06),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+            ),
+            child: Row(
+              children: <Widget>[
+                const SizedBox(width: 34),
+                Expanded(
+                  flex: 4,
+                  child: Text(
+                    'Nama',
+                    style: context.textTheme.labelMedium?.copyWith(
+                      color: tokens.textMuted,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Cek',
+                    textAlign: TextAlign.center,
+                    style: context.textTheme.labelMedium?.copyWith(
+                      color: tokens.textMuted,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Bolos',
+                    textAlign: TextAlign.center,
+                    style: context.textTheme.labelMedium?.copyWith(
+                      color: tokens.textMuted,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 28),
+              ],
+            ),
+          ),
+          Divider(height: 1, color: tokens.borderSoft),
+
+          // ── rows ──
+          ...List.generate(_items.length, (index) {
+            final entry = _items[index];
+            final missingDates = allDates.where((d) => !entry.performedDates.contains(d)).toList();
+            final isComplete = missingDates.isEmpty;
+            final doneCount = entry.performedDates.length;
+            final missCount = missingDates.length;
+
+            return Column(
+              children: <Widget>[
+                _UserReportRow(
+                  index: index,
+                  entry: entry,
+                  doneCount: doneCount,
+                  missCount: missCount,
+                  isComplete: isComplete,
+                  missingDates: missingDates,
+                  tokens: tokens,
+                ),
+                if (index < _items.length - 1) Divider(height: 1, indent: 14, endIndent: 14, color: tokens.borderSoft),
+              ],
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return AppPageScaffold(
@@ -219,50 +305,172 @@ class _Laporan2State extends State<Laporan2> {
               icon: Icons.group_outlined,
             )
           else
-            Column(
-              children: _items.map((entry) {
-                final allDates = AppDateUtils.buildDateRange(_startDateController.text, _endDateController.text);
-                final missingDates = allDates.where((date) => !entry.performedDates.contains(date)).toList();
-
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: AppSurfaceCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(entry.name, style: context.textTheme.titleLarge),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Lokasi ${entry.location}  •  Dilakukan ${entry.performedDates.length} kali',
-                          style: context.textTheme.bodyMedium,
-                        ),
-                        const SizedBox(height: 14),
-                        if (missingDates.isEmpty)
-                          const AppStatusChip(
-                            label: 'Semua tanggal terisi',
-                            icon: Icons.check_circle_outline_rounded,
-                          )
-                        else
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: missingDates
-                                .map(
-                                  (date) => AppStatusChip(
-                                    label: AppDateUtils.formatDisplay(date),
-                                    icon: Icons.event_busy_outlined,
-                                  ),
-                                )
-                                .toList(),
-                          ),
-                      ],
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
+            _buildResultTable(context),
         ],
       ),
+    );
+  }
+}
+
+// ── Expandable row widget for user report table ──
+class _UserReportRow extends StatefulWidget {
+  const _UserReportRow({
+    required this.index,
+    required this.entry,
+    required this.doneCount,
+    required this.missCount,
+    required this.isComplete,
+    required this.missingDates,
+    required this.tokens,
+  });
+
+  final int index;
+  final UserReportEntry entry;
+  final int doneCount;
+  final int missCount;
+  final bool isComplete;
+  final List<String> missingDates;
+  final AppTokens tokens;
+
+  @override
+  State<_UserReportRow> createState() => _UserReportRowState();
+}
+
+class _UserReportRowState extends State<_UserReportRow> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = widget.tokens;
+    final entry = widget.entry;
+
+    return Column(
+      children: <Widget>[
+        InkWell(
+          onTap: widget.missingDates.isNotEmpty ? () => setState(() => _expanded = !_expanded) : null,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: Row(
+              children: <Widget>[
+                // ── number badge ──
+                Container(
+                  width: 26,
+                  height: 26,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: (widget.isComplete ? tokens.success : tokens.warning).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '${widget.index + 1}',
+                    style: context.textTheme.labelSmall?.copyWith(
+                      color: widget.isComplete ? tokens.success : tokens.warning,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+
+                // ── name + location ──
+                Expanded(
+                  flex: 4,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        entry.name,
+                        style: context.textTheme.titleMedium,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        entry.location,
+                        style: context.textTheme.labelSmall?.copyWith(color: tokens.textMuted),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // ── done count ──
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    '${widget.doneCount}',
+                    textAlign: TextAlign.center,
+                    style: context.textTheme.titleMedium?.copyWith(
+                      color: tokens.success,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+
+                // ── miss count ──
+                Expanded(
+                  flex: 2,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: widget.missCount > 0
+                        ? BoxDecoration(
+                            color: tokens.danger.withValues(alpha: 0.10),
+                            borderRadius: BorderRadius.circular(6),
+                          )
+                        : null,
+                    child: Text(
+                      widget.missCount > 0 ? '${widget.missCount}' : '—',
+                      textAlign: TextAlign.center,
+                      style: context.textTheme.titleMedium?.copyWith(
+                        color: widget.missCount > 0 ? tokens.danger : tokens.textMuted,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+
+                // ── expand chevron ──
+                SizedBox(
+                  width: 28,
+                  child: widget.missingDates.isNotEmpty
+                      ? Icon(
+                          _expanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+                          size: 18,
+                          color: tokens.textMuted,
+                        )
+                      : Icon(Icons.check_rounded, size: 16, color: tokens.success),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // ── expanded missing dates ──
+        if (_expanded && widget.missingDates.isNotEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(48, 0, 14, 10),
+            child: Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: widget.missingDates
+                  .map(
+                    (date) => Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: tokens.danger.withValues(alpha: context.isDarkMode ? 0.18 : 0.08),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: tokens.danger.withValues(alpha: 0.15)),
+                      ),
+                      child: Text(
+                        AppDateUtils.formatDisplay(date),
+                        style: context.textTheme.labelSmall?.copyWith(
+                          color: tokens.danger,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
+      ],
     );
   }
 }

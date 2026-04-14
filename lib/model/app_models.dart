@@ -246,6 +246,7 @@ class TransactionReportFilter {
     required this.vehicleSerialNumber,
     required this.startDate,
     required this.endDate,
+    this.werks = '',
   });
 
   final InspectionKind inspectionKind;
@@ -254,6 +255,7 @@ class TransactionReportFilter {
   final String vehicleSerialNumber;
   final String startDate;
   final String endDate;
+  final String werks;
 }
 
 class TransactionReportItem {

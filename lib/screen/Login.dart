@@ -83,63 +83,122 @@ class _LoginState extends State<Login> {
     await AppRouter.replaceWithHome(context);
   }
 
-  Future<void> _showHostDialog() async {
+  void _openSettingsSheet() {
     final settingsController = context.read<AppSettingsController>();
     _hostController.text = settingsController.activeHost;
 
-    final saved = await showDialog<bool>(
+    showModalBottomSheet<void>(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Host API'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                'Ubah host backend jika perangkat perlu memakai VPN, staging, atau server lokal.',
-                style: dialogContext.textTheme.bodyMedium,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (sheetContext, setSheetState) {
+            final tokens = sheetContext.tokens;
+            final isDark = settingsController.themeMode == ThemeMode.dark;
+
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                20,
+                16,
+                20,
+                16 + MediaQuery.of(sheetContext).viewInsets.bottom,
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _hostController,
-                decoration: const InputDecoration(
-                  labelText: 'Host / IP',
-                  hintText: '210.210.165.197',
-                  prefixIcon: Icon(Icons.dns_outlined),
-                ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  // ── drag handle ──
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: tokens.border,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text('Pengaturan', style: sheetContext.textTheme.titleLarge),
+                  const SizedBox(height: 18),
+
+                  // ── dark / light toggle ──
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: tokens.surfaceMuted,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: tokens.borderSoft),
+                    ),
+                    child: Row(
+                      children: <Widget>[
+                        Icon(
+                          isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                          size: 20,
+                          color: tokens.brand,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            isDark ? 'Mode gelap' : 'Mode terang',
+                            style: sheetContext.textTheme.bodyMedium,
+                          ),
+                        ),
+                        Switch.adaptive(
+                          value: isDark,
+                          activeColor: tokens.brand,
+                          onChanged: (value) async {
+                            final newMode = value ? ThemeMode.dark : ThemeMode.light;
+                            await settingsController.setThemeMode(newMode);
+                            setSheetState(() {});
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // ── host API ──
+                  TextFormField(
+                    controller: _hostController,
+                    decoration: const InputDecoration(
+                      labelText: 'Host / IP',
+                      hintText: '210.210.165.197',
+                      prefixIcon: Icon(Icons.dns_outlined),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // ── save button ──
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: () async {
+                        await settingsController.setHostOverride(_hostController.text);
+                        if (!mounted) return;
+                        Navigator.of(sheetContext).pop();
+                        Alert.showSuccessSnackBar(context, 'Pengaturan disimpan.');
+                      },
+                      icon: const Icon(Icons.save_rounded, size: 18),
+                      label: const Text('Simpan Host'),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
               ),
-            ],
-          ),
-          actions: <Widget>[
-            OutlinedButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Batal'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Simpan'),
-            ),
-          ],
+            );
+          },
         );
       },
     );
-
-    if (saved != true) {
-      return;
-    }
-
-    await settingsController.setHostOverride(_hostController.text);
-    if (!mounted) {
-      return;
-    }
-    Alert.showSuccessSnackBar(context, 'Host aktif berhasil diperbarui.');
   }
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final host = context.watch<AppSettingsController>().activeHost;
+    final settingsCtrl = context.watch<AppSettingsController>();
+    final host = settingsCtrl.activeHost;
+    final isDark = settingsCtrl.themeMode == ThemeMode.dark;
 
     return PopScope(
       canPop: false,
@@ -172,7 +231,7 @@ class _LoginState extends State<Login> {
                       const Expanded(child: AppBrandBlocks()),
                       const SizedBox(width: 8),
                       IconButton(
-                        onPressed: _showHostDialog,
+                        onPressed: _openSettingsSheet,
                         icon: const Icon(Icons.settings_outlined, size: 20),
                       ),
                     ],
@@ -185,14 +244,27 @@ class _LoginState extends State<Login> {
                         Row(
                           children: <Widget>[
                             Container(
-                              width: 64,
-                              height: 64,
-                              padding: const EdgeInsets.all(10),
+                              width: 56,
+                              height: 56,
                               decoration: BoxDecoration(
-                                gradient: tokens.brandGradient,
-                                borderRadius: BorderRadius.circular(20),
+                                borderRadius: BorderRadius.circular(18),
+                                boxShadow: <BoxShadow>[
+                                  BoxShadow(
+                                    color: tokens.brand.withValues(alpha: 0.2),
+                                    blurRadius: 16,
+                                    offset: const Offset(0, 6),
+                                  ),
+                                ],
                               ),
-                              child: Image.asset(AppEnvironment.launcherIconAsset),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(18),
+                                child: Image.asset(
+                                  'assets/icon.png',
+                                  width: 56,
+                                  height: 56,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -220,9 +292,9 @@ class _LoginState extends State<Login> {
                               icon: Icons.dns_rounded,
                               color: tokens.accent,
                             ),
-                            const AppStatusChip(
-                              label: 'Tema light/dark',
-                              icon: Icons.light_mode_outlined,
+                            AppStatusChip(
+                              label: isDark ? 'Mode gelap' : 'Mode terang',
+                              icon: isDark ? Icons.dark_mode_rounded : Icons.light_mode_outlined,
                             ),
                           ],
                         ),

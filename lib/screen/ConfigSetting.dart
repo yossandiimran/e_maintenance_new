@@ -141,36 +141,37 @@ class _ConfigSettingPageState extends State<ConfigSettingPage> {
     final settingsController = context.watch<AppSettingsController>();
     final tokens = context.tokens;
     final isRestricted = session?.isRestrictedOperator ?? true;
+    final isDark = settingsController.themeMode == ThemeMode.dark;
 
     return AppPageScaffold(
       title: 'Pengaturan',
       subtitle: 'Kontrol host aktif, mode light/dark, dan utilitas operasional aplikasi.',
+      actions: <Widget>[
+        // ── compact dark-mode toggle (like login settings icon) ──
+        IconButton(
+          onPressed: () {
+            settingsController.setThemeMode(isDark ? ThemeMode.light : ThemeMode.dark);
+          },
+          tooltip: isDark ? 'Beralih ke mode terang' : 'Beralih ke mode gelap',
+          icon: Icon(isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded, size: 20),
+        ),
+      ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
+          // ── status chips + operasional header (moved to top) ──
           AppSurfaceCard(
+            padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text('Preferensi tampilan', style: context.textTheme.titleLarge),
-                const SizedBox(height: 6),
-                SwitchListTile.adaptive(
-                  value: settingsController.themeMode == ThemeMode.dark,
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Dark mode'),
-                  subtitle: const Text('Aktifkan tema gelap untuk penggunaan area kerja yang redup.'),
-                  onChanged: (value) {
-                    settingsController.setThemeMode(value ? ThemeMode.dark : ThemeMode.light);
-                  },
+                Text('Operasional', style: context.textTheme.titleLarge),
+                const SizedBox(height: 4),
+                Text(
+                  'Kontrol penting dirapikan dalam satu panel.',
+                  style: context.textTheme.bodyMedium?.copyWith(color: tokens.textMuted),
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          AppSurfaceCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
+                const SizedBox(height: 12),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -185,14 +186,11 @@ class _ConfigSettingPageState extends State<ConfigSettingPage> {
                       icon: isRestricted ? Icons.lock_outline_rounded : Icons.verified_user_outlined,
                       color: isRestricted ? tokens.warning : tokens.success,
                     ),
+                    AppStatusChip(
+                      label: isDark ? 'Mode gelap' : 'Mode terang',
+                      icon: isDark ? Icons.dark_mode_rounded : Icons.light_mode_outlined,
+                    ),
                   ],
-                ),
-                const SizedBox(height: 12),
-                Text('Operasional', style: context.textTheme.titleLarge),
-                const SizedBox(height: 4),
-                Text(
-                  'Kontrol penting dirapikan dalam satu panel.',
-                  style: context.textTheme.bodyMedium?.copyWith(color: tokens.textMuted),
                 ),
               ],
             ),
@@ -221,39 +219,24 @@ class _ConfigSettingPageState extends State<ConfigSettingPage> {
             onTap: _syncServerSettings,
             accentColor: tokens.brand,
           ),
-          const SizedBox(height: 10),
-          AppActionCard(
-            icon: Icons.restart_alt_rounded,
-            title: 'Restart koneksi backend',
-            subtitle: isRestricted
-                ? 'Aksi ini khusus admin atau supervisor.'
-                : 'Reset koneksi backend jika SAP atau integrasi operasional sedang timeout.',
-            onTap: () {
-              if (isRestricted) {
-                Alert.showErrorSnackBar(context, 'Anda tidak memiliki akses ke menu restart koneksi.');
-                return;
-              }
-              _restartConnection();
-            },
-            accentColor: tokens.warning,
-          ),
-          const SizedBox(height: 10),
-          AppActionCard(
-            icon: Icons.manage_accounts_outlined,
-            title: 'Kelola user',
-            subtitle: isRestricted
-                ? 'Aksi ini hanya tersedia untuk admin atau supervisor.'
-                : 'Masuk ke modul pengelolaan akun dan hak akses user.',
-            onTap: () {
-              if (isRestricted) {
-                Alert.showErrorSnackBar(context, 'Anda tidak memiliki akses ke manajemen user.');
-                return;
-              }
-
-              Navigator.of(context).push(AppRouter.userManagement());
-            },
-            accentColor: tokens.danger,
-          ),
+          if (!isRestricted) ...<Widget>[
+            const SizedBox(height: 10),
+            AppActionCard(
+              icon: Icons.restart_alt_rounded,
+              title: 'Restart koneksi backend',
+              subtitle: 'Reset koneksi backend jika SAP atau integrasi operasional sedang timeout.',
+              onTap: _restartConnection,
+              accentColor: tokens.warning,
+            ),
+            const SizedBox(height: 10),
+            AppActionCard(
+              icon: Icons.manage_accounts_outlined,
+              title: 'Kelola user',
+              subtitle: 'Masuk ke modul pengelolaan akun dan hak akses user.',
+              onTap: () => Navigator.of(context).push(AppRouter.userManagement()),
+              accentColor: tokens.danger,
+            ),
+          ],
         ],
       ),
     );
