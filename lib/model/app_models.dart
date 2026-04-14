@@ -186,12 +186,14 @@ class VehicleInfo {
   bool get hasError => message.toUpperCase().contains('DATA TIDAK DITEMUKAN') || message.toUpperCase().contains('RFC_LOGON_FAILURE');
 
   factory VehicleInfo.fromJson(Map<String, dynamic> json) {
+    // Try multiple case variants the backend might return
+    final werksValue = '${json['WERKS'] ?? json['Werks'] ?? json['werks'] ?? json['PLANT'] ?? json['plant'] ?? ''}'.trim();
     return VehicleInfo(
       materialDescription: '${json['MAKTX'] ?? ''}',
       flag: '${json['FLAG'] ?? ''}',
       materialNumber: '${json['MATNR'] ?? ''}',
       message: '${json['MSG'] ?? ''}'.trim(),
-      werks: '${json['WERKS'] ?? json['werks'] ?? ''}',
+      werks: werksValue,
     );
   }
 }

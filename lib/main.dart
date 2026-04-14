@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import 'package:e_maintenance/controllers/app_settings_controller.dart';
 import 'package:e_maintenance/controllers/session_controller.dart';
+import 'package:e_maintenance/firebase_options.dart';
 import 'package:e_maintenance/helper/firebaseMessagingHelper.dart';
 import 'package:e_maintenance/helper/preference.dart';
 import 'package:e_maintenance/route.dart';
@@ -19,7 +20,9 @@ import 'package:e_maintenance/core/network/app_api_client.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   final preferences = await AppPreferences.create();
   final settingsController = AppSettingsController(preferences);

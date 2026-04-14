@@ -71,26 +71,27 @@ class _InsertPageState extends State<InsertPage> {
       return;
     }
 
+    final vehicleInfo = result.data!;
+
     setState(() {
-      _vehicleInfo = result.data;
+      _vehicleInfo = vehicleInfo;
       _loadingVehicle = false;
     });
 
     // Validate plant/werks match between user session and asset
-    final currentSession = context.read<SessionController>().session;
-    if (currentSession != null && result.data!.werks.isNotEmpty && currentSession.werks.isNotEmpty) {
-      if (result.data!.werks != currentSession.werks) {
-        if (mounted) {
-          Alert.showMessage(
-            context: context,
-            title: 'Lokasi tidak sesuai',
-            message:
-                'Lokasi aset (${result.data!.werks}) tidak sesuai dengan lokasi user Anda (${currentSession.werks}). '
-                'Anda tetap bisa melanjutkan inspeksi, tetapi harap pastikan kendaraan ini sesuai penugasan.',
-            isError: true,
-          );
-        }
-      }
+    if (!mounted) return;
+    final assetWerks = vehicleInfo.werks.trim();
+    final userWerks = session.werks.trim();
+
+    if (assetWerks.isNotEmpty && userWerks.isNotEmpty && assetWerks != userWerks) {
+      await Alert.showMessage(
+        context: context,
+        title: 'Lokasi tidak sesuai',
+        message:
+            'Lokasi aset (WERKS: $assetWerks) tidak sesuai dengan lokasi user Anda ($userWerks). '
+            'Harap pastikan kendaraan ini sesuai dengan penugasan Anda sebelum melanjutkan.',
+        isError: true,
+      );
     }
   }
 

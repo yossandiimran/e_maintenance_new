@@ -49,6 +49,8 @@ class InputService {
       ).timeout(const Duration(seconds: 15));
 
       final data = jsonDecode(response.body) as Map<String, dynamic>;
+      AppLogger.debug('fetchVehicleInfo raw response keys', data.keys.toList());
+      AppLogger.debug('fetchVehicleInfo WERKS field', data['WERKS'] ?? data['werks'] ?? data['Werks'] ?? '(not found)');
       final vehicleInfo = VehicleInfo.fromJson(data);
       if (vehicleInfo.hasError || vehicleInfo.materialDescription.isEmpty) {
         return AppResult<VehicleInfo>.failure(
