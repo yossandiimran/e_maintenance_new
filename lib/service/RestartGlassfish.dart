@@ -1,38 +1,46 @@
-// ignore_for_file: file_names, prefer_typing_uninitialized_variables, avoid_print, prefer_interpolation_to_compose_strings, curly_braces_in_flow_control_structures
-part of '../header.dart';
+import 'dart:convert';
+import 'dart:io';
 
-class RestartGlassfish {
-  final context, obj;
-  RestartGlassfish({required BuildContext this.context, required var this.obj});
+import 'package:http/http.dart' as http;
 
-  Future<void> restartConnection() async {
-    // var url = await global.getMainServiceUrl('server/restart');
-    var data;
+import 'package:e_maintenance/core/config/app_environment.dart';
+import 'package:e_maintenance/core/logging/app_logger.dart';
+import 'package:e_maintenance/core/utils/app_result.dart';
+
+class RestartGlassfishService {
+  const RestartGlassfishService();
+
+  Future<AppResult<bool>> checkConnection(String host) async {
+    final sanitized = host.split(':').first.trim();
+    if (sanitized.isEmpty) {
+      return const AppResult<bool>.failure('Host belum diisi.');
+    }
+
     try {
-      await http.get(Uri.parse("http://202.138.230.51:8080/eReset/ResetWar?APPNAME=emaintenance")).then((res) {
-        var rawData = json.decode(res.body);
-        if (res.statusCode == 200) {
-          bool hasError = rawData.containsKey("ERROR");
-          if (hasError) if (rawData["ERROR"] != "Unregister Destination Failed!") {
-            return global.errorResponsePop(context, rawData["ERROR"]);
-          }
-          var error = rawData["ERROR"];
-          var success = rawData["SUCCESS_RESET"];
-          data = {"ERROR": error.toString(), "SUCCESS": success.toString()};
-          print(data);
-          global.successResponseNoPop(context, "Koneksi Berhasil Di Reset !");
-        } else if (res.statusCode == 400) {
-          global.errorResponseNoPop(context, data["message"]);
-        } else if (res.statusCode == 401) {
-          global.errorResponseNoPop(context, "Sesi Anda Habis, Silahkan Login Ulang !");
-        }
-      }).catchError((err1) {
-        print(err1);
-        global.errorResponseNoPop(context, "Gagal Saat Restart Koneksi !");
-      });
-    } catch (err2) {
-      print(err2);
-      global.errorResponsePop(context, err2.toString());
+      final socket = await Socket.connect(sanitized, 80, timeout: const Duration(seconds: 5));
+      socket.destroy();
+      return const AppResult<bool>.success(true);
+    } catch (error) {
+      AppLogger.error('Host connectivity check failed', error);
+      return const AppResult<bool>.failure('Host tidak dapat dijangkau. Pastikan VPN atau jaringan aktif.');
+    }
+  }
+
+  Future<AppResult<String>> restartConnection() async {
+    try {
+      final response = await http.get(Uri.parse(AppEnvironment.resetConnectionUrl)).timeout(
+            const Duration(seconds: 15),
+          );
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final error = '${decoded['ERROR'] ?? ''}';
+      if (error.isNotEmpty && error != 'Unregister Destination Failed!') {
+        return AppResult<String>.failure(error);
+      }
+
+      return const AppResult<String>.success('Koneksi backend berhasil di-reset.');
+    } catch (error) {
+      AppLogger.error('Restart connection request failed', error);
+      return const AppResult<String>.failure('Restart koneksi belum berhasil.');
     }
   }
 }

@@ -1,144 +1,86 @@
-// ignore_for_file: unused_local_variable, avoid_print, prefer_interpolation_to_compose_strings, curly_braces_in_flow_control_structures, file_names
+import 'dart:io';
 
-part of "../../../header.dart";
+import 'package:excel/excel.dart' as xl;
+import 'package:path/path.dart' as path;
+import 'package:permission_handler/permission_handler.dart';
+
+import 'package:e_maintenance/core/utils/app_result.dart';
+import 'package:e_maintenance/helper/global.dart';
+import 'package:e_maintenance/model/app_models.dart';
 
 class ExcelReportTransaksi {
-  final BuildContext context;
-  ExcelReportTransaksi({required this.context});
-  exportTransaksiReport({required data, Map? obj}) async {
-    var status = await Permission.storage.status;
+  Future<AppResult<String>> exportTransaksiReport({
+    required List<TransactionReportItem> data,
+    required TransactionReportFilter filter,
+  }) async {
+    final status = await Permission.storage.request();
     if (!status.isGranted) {
-      await Permission.storage.request();
+      return const AppResult<String>.failure('Izin penyimpanan dibutuhkan untuk mengekspor file.');
     }
 
-    var excel = xl.Excel.createExcel();
-    xl.CellIndex start = xl.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0);
-    xl.CellIndex end = xl.CellIndex.indexByColumnRow(columnIndex: 8, rowIndex: 1);
-    excel.merge("Sheet1", start, end);
-    //Header
-    excel.appendRow("Sheet1", _textRow([
-      "Laporan Cek Kendaraan",
-    ]));
-    excel.appendRow("Sheet1", _textRow([
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-    ]));
-    excel.appendRow("Sheet1", _textRow([
-      "Jenis Cek : " + obj?["jenisCek"],
-    ]));
-    // excel.appendRow("Sheet1", [
-    //   "Jenis Cek : " + obj?["kendaraan"],
-    // ]);
-    excel.appendRow("Sheet1", _textRow([
-      "Periode Tanggal : " +
-          global.convertDate(obj?["tglAwal"]).toString() +
-          "-" +
-          global.convertDate(obj?["tglAkhir"]).toString(),
-    ]));
-    excel.appendRow("Sheet1", _textRow([
-      "NO",
-      "Tanggal",
-      "NAMA USER",
-      "LOKASI",
-      "Dilakukan",
-      "Tidak",
-    ]));
-    //Styling Excel
-    xl.Sheet sheetObject = excel['Sheet1'];
+    final excel = xl.Excel.createExcel();
+    excel.delete('Sheet1');
+    excel['Sheet1'];
 
-    xl.CellStyle cellStyle3 = xl.CellStyle(
-      fontFamily: xl.getFontFamily(xl.FontFamily.Calibri),
-      verticalAlign: xl.VerticalAlign.Center,
-      bold: true,
-      fontSize: 14,
-    );
-    xl.CellStyle cellStyle31 = xl.CellStyle(
-      fontFamily: xl.getFontFamily(xl.FontFamily.Calibri),
-      verticalAlign: xl.VerticalAlign.Center,
-      bold: true,
-    );
-    xl.CellStyle cellStyle4 = xl.CellStyle(
-      fontFamily: xl.getFontFamily(xl.FontFamily.Calibri),
-      horizontalAlign: xl.HorizontalAlign.Center,
-      verticalAlign: xl.VerticalAlign.Center,
-      bold: true,
+    excel.merge(
+      'Sheet1',
+      xl.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0),
+      xl.CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: 1),
     );
 
-    sheetObject.cell(xl.CellIndex.indexByString("A1")).cellStyle = cellStyle3;
-    sheetObject.cell(xl.CellIndex.indexByString("A3")).cellStyle = cellStyle31;
-    sheetObject.cell(xl.CellIndex.indexByString("A4")).cellStyle = cellStyle31;
-    sheetObject.cell(xl.CellIndex.indexByString("A5")).cellStyle = cellStyle4;
-    sheetObject.cell(xl.CellIndex.indexByString("B5")).cellStyle = cellStyle4;
-    sheetObject.cell(xl.CellIndex.indexByString("C5")).cellStyle = cellStyle4;
-    sheetObject.cell(xl.CellIndex.indexByString("D5")).cellStyle = cellStyle4;
-    sheetObject.cell(xl.CellIndex.indexByString("E5")).cellStyle = cellStyle4;
-    sheetObject.cell(xl.CellIndex.indexByString("F5")).cellStyle = cellStyle4;
-    sheetObject.cell(xl.CellIndex.indexByString("G5")).cellStyle = cellStyle4;
-    sheetObject.cell(xl.CellIndex.indexByString("H5")).cellStyle = cellStyle4;
-    sheetObject.cell(xl.CellIndex.indexByString("I5")).cellStyle = cellStyle4;
+    excel.appendRow('Sheet1', _row(<dynamic>['Laporan Cek Kendaraan']));
+    excel.appendRow('Sheet1', _row(<dynamic>['']));
+    excel.appendRow('Sheet1', _row(<dynamic>['Jenis Cek : ${filter.inspectionKind.label}']));
+    excel.appendRow(
+      'Sheet1',
+      _row(<dynamic>[
+        'Periode Tanggal : ${AppDateUtils.formatDisplay(filter.startDate)} - ${AppDateUtils.formatDisplay(filter.endDate)}',
+      ]),
+    );
+    excel.appendRow(
+      'Sheet1',
+      _row(<dynamic>[
+        'NO',
+        'Tanggal',
+        'Nama User',
+        'Lokasi',
+        'Kendaraan',
+        'Checklist',
+        'Status',
+      ]),
+    );
 
-    // for (var j = 0; j < data.length; j++) {
-    //   excel.appendRow("Sheet1", getData(data[j]["todo"], data[j], j, obj));
-    // }
-
-    var name = obj?["tglAwal"] + "-" + obj?["tglAkhir"];
-    var times = DateTime.now().millisecondsSinceEpoch;
-    final String outputFile = '/storage/emulated/0/Download/Report($name)CekKendaraan.xlsx';
-    print(outputFile);
-    var fileBytes = excel.save();
-
-    if (fileBytes != null) {
-      File(path.join(outputFile))
-        ..createSync(recursive: true)
-        ..writeAsBytesSync(fileBytes);
+    for (var index = 0; index < data.length; index++) {
+      final item = data[index];
+      excel.appendRow(
+        'Sheet1',
+        _row(<dynamic>[
+          index + 1,
+          AppDateUtils.formatDisplay(item.date),
+          item.userName,
+          item.location,
+          '${item.vehicleName} (${item.serialNumber})',
+          item.title,
+          item.isDone ? 'OK' : 'Belum',
+        ]),
+      );
     }
-    if (!context.mounted) return;
-    alert.alertSuccess(context: context, text: "File saved to $outputFile");
+
+    final outputFile =
+        '/storage/emulated/0/Download/Report(${filter.startDate}-${filter.endDate})CekKendaraan.xlsx';
+    final fileBytes = excel.save();
+    if (fileBytes == null) {
+      return const AppResult<String>.failure('File Excel tidak berhasil dibuat.');
+    }
+
+    File(path.join(outputFile))
+      ..createSync(recursive: true)
+      ..writeAsBytesSync(fileBytes);
+
+    return AppResult<String>.success(outputFile);
   }
 
-  List<xl.CellValue?> getData(todo, data, index, obj) {
-    List ret = [];
-    ret.add((index + 1).toString());
-    ret.add(data["name"]);
-    ret.add(data["werks"]);
-
-    var listFilter = List<String>.filled(obj["dateList"].length, '-');
-
-    for (var i = 0; i < todo.length; i++) {
-      var tgl = todo[i];
-      var num = tgl['tanggal'];
-
-      if (obj["dateList"].contains(num)) {
-        var index = obj["dateList"].indexOf(num);
-        listFilter[index] = num;
-      }
-    }
-
-    var dilakukan = 0, tidakDilakukan = 0;
-
-    for (var element in listFilter) {
-      if (element != "-") {
-        dilakukan++;
-        ret.add("OK");
-      } else {
-        tidakDilakukan++;
-        ret.add("X");
-      }
-    }
-    ret.add(dilakukan);
-    ret.add(tidakDilakukan);
-
-    return _textRow(ret);
-  }
-
-  List<xl.CellValue?> _textRow(List<dynamic> values) {
+  List<xl.CellValue?> _row(List<dynamic> values) {
     return values.map((value) => xl.TextCellValue('${value ?? ''}')).toList();
   }
 }

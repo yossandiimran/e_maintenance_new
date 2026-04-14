@@ -1,56 +1,87 @@
-// ignore_for_file: prefer_interpolation_to_compose_strings, avoid_print, file_names, prefer_typing_uninitialized_variables
-part of '../header.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
+import 'package:e_maintenance/core/logging/app_logger.dart';
+
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  AppLogger.debug('Handled background push message', message.messageId ?? 'unknown');
+}
 
 class FirebaseMessagingHelper {
-  final context;
-  FirebaseMessagingHelper({this.context});
+  FirebaseMessagingHelper({
+    FlutterLocalNotificationsPlugin? notificationsPlugin,
+  }) : _notificationsPlugin = notificationsPlugin ?? FlutterLocalNotificationsPlugin();
 
-  initFirebase({required context}) {
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-      RemoteNotification? notification = message.notification;
-      AndroidNotification? android = message.notification?.android;
+  final FlutterLocalNotificationsPlugin _notificationsPlugin;
 
-      if (notification != null && android != null && !kIsWeb) {
-        flutterLocalNotificationsPlugin?.show(
-          notification.hashCode,
-          notification.title,
-          notification.body,
-          NotificationDetails(
-            android: AndroidNotificationDetails(
-              channel!.id,
-              channel!.name,
-              icon: 'launch_background',
-            ),
+  AndroidNotificationChannel? _channel;
+
+  Future<void> initialize({
+    required void Function(Map<String, dynamic> payload) onPayloadOpen,
+  }) async {
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+    if (!kIsWeb) {
+      _channel = const AndroidNotificationChannel(
+        'e_maintenance_alerts',
+        'E-Maintenance Alerts',
+        importance: Importance.high,
+      );
+
+      await _notificationsPlugin
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(_channel!);
+
+      await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+    }
+
+    FirebaseMessaging.onMessage.listen((message) async {
+      final notification = message.notification;
+      final android = message.notification?.android;
+
+      if (notification == null || android == null || kIsWeb || _channel == null) {
+        return;
+      }
+
+      await _notificationsPlugin.show(
+        notification.hashCode,
+        notification.title,
+        notification.body,
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            _channel!.id,
+            _channel!.name,
+            icon: 'launcher_icon',
           ),
-        );
-      }
+        ),
+      );
     });
 
-    //Kalo App Mati
-    FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
-      if (message != null) {
-        print("DATA Z 2 : " + message.data.toString());
-        return Navigator.pushNamed(context, message.data["screen"]);
-      }
+    FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      AppLogger.debug('Push tapped from background', message.data);
+      onPayloadOpen(message.data);
     });
 
-    FirebaseMessaging.onBackgroundMessage(
-        (RemoteMessage? message) => Navigator.pushNamed(context, message?.data["screen"]));
+    final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+    if (initialMessage != null) {
+      AppLogger.debug('Push opened app from terminated state', initialMessage.data);
+      onPayloadOpen(initialMessage.data);
+    }
+  }
 
-    //Kalo App Lagi Run Di Dalem Background
-    FirebaseMessaging.onMessage.listen((RemoteMessage? message) async {
-      if (message != null && message.data.isNotEmpty) {
-        print("DATA Z 3 : " + message.data.toString());
-        // Navigator.pushNamed(context, message.data["screen"]);
-      }
-    });
-
-    //Kalo App Lagi Run Di Luar Background
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage? message) {
-      if (message != null) {
-        print("DATA Z 4: " + message.data.toString());
-        Navigator.pushNamed(context, message.data["screen"]);
-      }
-    });
+  Future<String?> getDeviceToken() async {
+    try {
+      return FirebaseMessaging.instance.getToken();
+    } catch (error) {
+      AppLogger.error('Failed to read Firebase device token', error);
+      return null;
+    }
   }
 }

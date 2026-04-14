@@ -1,174 +1,318 @@
-// ignore_for_file: file_names, prefer_const_constructors, avoid_print, use_build_context_synchronously
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-part of '../header.dart';
+import 'package:e_maintenance/controllers/app_settings_controller.dart';
+import 'package:e_maintenance/controllers/session_controller.dart';
+import 'package:e_maintenance/core/config/app_environment.dart';
+import 'package:e_maintenance/helper/firebaseMessagingHelper.dart';
+import 'package:e_maintenance/route.dart';
+import 'package:e_maintenance/service/AuthService.dart';
+import 'package:e_maintenance/widget/Alert.dart';
+import 'package:e_maintenance/widget/CustomWidget.dart';
+import 'package:e_maintenance/widget/TextStyling.dart';
 
 class Login extends StatefulWidget {
-  const Login({Key? key}) : super(key: key);
+  const Login({super.key});
 
   @override
-  LoginState createState() => LoginState();
+  State<Login> createState() => _LoginState();
 }
 
-class LoginState extends State<Login> {
+class _LoginState extends State<Login> {
+  final _formKey = GlobalKey<FormState>();
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController(text: 'centr@l1001');
+  final _hostController = TextEditingController();
+
+  bool _obscurePassword = true;
+
   @override
-  void initState() {
-    super.initState();
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    _hostController.dispose();
+    super.dispose();
   }
 
-  bool obsText = false;
-  final addressIpController = TextEditingController();
-  TextEditingController email = TextEditingController();
-  TextEditingController password = TextEditingController(text: "centr@l1001");
+  Future<void> _login() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    final authService = context.read<AuthService>();
+    final messagingHelper = context.read<FirebaseMessagingHelper>();
+    final sessionController = context.read<SessionController>();
+    final settingsController = context.read<AppSettingsController>();
+
+    final result = await Alert.runWithLoading(
+      context: context,
+      message: 'Memverifikasi akun...',
+      task: () async {
+        final deviceToken = await messagingHelper.getDeviceToken();
+        final loginResult = await authService.login(
+          username: _usernameController.text,
+          password: _passwordController.text,
+          deviceToken: deviceToken,
+        );
+        if (!loginResult.isSuccess || loginResult.data == null) {
+          return loginResult;
+        }
+
+        await sessionController.setSession(loginResult.data!);
+
+        final settingsResult = await authService.fetchOperationalSettings();
+        if (settingsResult.isSuccess && settingsResult.data != null) {
+          await authService.cacheOperationalSettings(settingsResult.data!);
+          await settingsController.syncRemoteSettings(settingsResult.data!);
+        }
+
+        return loginResult;
+      },
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (!result.isSuccess) {
+      Alert.showErrorSnackBar(context, result.errorMessage ?? 'Login gagal.');
+      return;
+    }
+
+    Alert.showSuccessSnackBar(context, 'Login berhasil. Selamat bekerja.');
+    await AppRouter.replaceWithHome(context);
+  }
+
+  Future<void> _showHostDialog() async {
+    final settingsController = context.read<AppSettingsController>();
+    _hostController.text = settingsController.activeHost;
+
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Host API'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                'Ubah host backend jika perangkat perlu memakai VPN, staging, atau server lokal.',
+                style: dialogContext.textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _hostController,
+                decoration: const InputDecoration(
+                  labelText: 'Host / IP',
+                  hintText: '210.210.165.197',
+                  prefixIcon: Icon(Icons.dns_outlined),
+                ),
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            OutlinedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Batal'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Simpan'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (saved != true) {
+      return;
+    }
+
+    await settingsController.setHostOverride(_hostController.text);
+    if (!mounted) {
+      return;
+    }
+    Alert.showSuccessSnackBar(context, 'Host aktif berhasil diperbarui.');
+  }
+
   @override
   Widget build(BuildContext context) {
-    final ui = CustomWidget();
+    final tokens = context.tokens;
+    final host = context.watch<AppSettingsController>().activeHost;
+
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return;
-        alert.alertConfirmExit(context);
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          Alert.confirmExit(context);
+        }
       },
       child: Scaffold(
-        resizeToAvoidBottomInset: true,
-        backgroundColor: linearBg,
-        body: Container(
-          decoration: BoxDecoration(gradient: global.heroGradient),
+        backgroundColor: tokens.pageBackground,
+        body: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: <Color>[
+                tokens.heroEnd.withValues(alpha: context.isDarkMode ? 0.6 : 0.22),
+                tokens.pageBackground,
+              ],
+            ),
+          ),
           child: SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: IconButton(
-                      onPressed: () async {
-                        var globalIp = await preference.getData("globalIp") ?? global.baseIp;
-                        addressIpController.text = globalIp.toString();
-                        changeIPAddress();
-                      },
-                      style: IconButton.styleFrom(
-                        backgroundColor: global.surfaceL1,
-                        side: BorderSide(color: global.borderSubtle),
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      const Expanded(child: AppBrandBlocks()),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        onPressed: _showHostDialog,
+                        icon: const Icon(Icons.settings_outlined, size: 20),
                       ),
-                      icon: Icon(Icons.settings_rounded, color: linearTextPrimary),
-                    ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(28),
-                    decoration: ui.linearHeroDecoration(),
+                  const SizedBox(height: 12),
+                  AppSurfaceCard(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 72,
-                          height: 72,
-                          padding: const EdgeInsets.all(14),
-                          decoration: ui.linearCardDecoration(
-                            radius: 22,
-                            color: linearAccent.withValues(alpha: 0.12),
-                          ),
-                          child: Image.asset("assets/icon.png"),
-                        ),
-                        const SizedBox(height: 22),
-                        Text("Masuk ke E-Maintenance", style: textStyling.linearDisplay(30)),
-                        const SizedBox(height: 10),
-                        Text(
-                          "Lanjutkan pekerjaan inspeksi, pengelolaan laporan, dan administrasi kendaraan dengan workspace yang lebih fokus.",
-                          style: textStyling.linearBody(15, color: linearTextSecondary, height: 1.65),
-                        ),
-                        const SizedBox(height: 18),
-                        Wrap(
-                          spacing: 10,
-                          runSpacing: 10,
-                          children: [
-                            ui.linearPill(icon: Icons.qr_code_2_rounded, label: "QR inspection"),
-                            ui.linearPill(icon: Icons.print_rounded, label: "Zebra printer"),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(24),
-                    decoration: ui.linearPanelDecoration(),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text("Login", style: textStyling.linearTitle(20, strong: true)),
-                        const SizedBox(height: 6),
-                        Text(
-                          "Gunakan akun yang sudah didaftarkan oleh administrator.",
-                          style: textStyling.linearBody(14, color: linearTextTertiary),
-                        ),
-                        const SizedBox(height: 20),
-                        TextField(
-                          keyboardType: TextInputType.emailAddress,
-                          controller: email,
-                          style: textStyling.linearBody(15, color: linearTextPrimary),
-                          decoration: ui.linearInputDecoration(
-                            label: 'Username',
-                            hint: 'Masukkan username',
-                            icon: Icons.person_outline_rounded,
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        TextField(
-                          controller: password,
-                          obscureText: obsText,
-                          style: textStyling.linearBody(15, color: linearTextPrimary),
-                          decoration: ui.linearInputDecoration(
-                            label: 'Password',
-                            hint: 'Masukkan password',
-                            icon: Icons.lock_outline_rounded,
-                            suffix: IconButton(
-                              onPressed: () {
-                                setState(() {
-                                  obsText = !obsText;
-                                });
-                              },
-                              icon: Icon(
-                                !obsText ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                                color: linearTextTertiary,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        SizedBox(
-                          width: double.infinity,
-                          child: FilledButton.icon(
-                            onPressed: () async {
-                              var obj = {"username": email.text, "password": password.text};
-                              await AuthService(context: context, objParam: obj).login();
-                            },
-                            style: ui.linearPrimaryButtonStyle(),
-                            icon: const Icon(Icons.login_rounded),
-                            label: const Text("Masuk Aplikasi"),
-                          ),
-                        ),
-                        const SizedBox(height: 14),
+                      children: <Widget>[
                         Row(
-                          children: [
-                            Text("Version $appVersion", style: textStyling.linearCaption(12)),
-                            const Spacer(),
-                            TextButton(
-                              onPressed: () => alert.alertSuccess(
-                                context: context,
-                                text: "Silakan hubungi admin",
+                          children: <Widget>[
+                            Container(
+                              width: 64,
+                              height: 64,
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                gradient: tokens.brandGradient,
+                                borderRadius: BorderRadius.circular(20),
                               ),
-                              child: Text(
-                                "Lupa password?",
-                                style: textStyling.linearBody(13, color: linearAccent, emphasis: true),
+                              child: Image.asset(AppEnvironment.launcherIconAsset),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  Text('Masuk ke workspace', style: context.textTheme.displayMedium),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Satu tempat untuk scan, inspeksi, laporan, dan pengelolaan user.',
+                                    style: context.textTheme.bodyMedium?.copyWith(color: tokens.textMuted),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
+                        const SizedBox(height: 14),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: <Widget>[
+                            AppStatusChip(
+                              label: 'Host $host',
+                              icon: Icons.dns_rounded,
+                              color: tokens.accent,
+                            ),
+                            const AppStatusChip(
+                              label: 'Tema light/dark',
+                              icon: Icons.light_mode_outlined,
+                            ),
+                          ],
+                        ),
                       ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  AppSurfaceCard(
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text('Login akun', style: context.textTheme.titleLarge),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Gunakan username dan password yang sudah diatur administrator.',
+                            style: context.textTheme.bodyMedium?.copyWith(color: tokens.textMuted),
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _usernameController,
+                            textInputAction: TextInputAction.next,
+                            decoration: const InputDecoration(
+                              labelText: 'Username',
+                              hintText: 'Masukkan username',
+                              prefixIcon: Icon(Icons.person_outline_rounded),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Username wajib diisi.';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 10),
+                          TextFormField(
+                            controller: _passwordController,
+                            obscureText: _obscurePassword,
+                            textInputAction: TextInputAction.done,
+                            decoration: InputDecoration(
+                              labelText: 'Password',
+                              hintText: 'Masukkan password',
+                              prefixIcon: const Icon(Icons.lock_outline_rounded),
+                              suffixIcon: IconButton(
+                                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                                icon: Icon(
+                                  _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                                ),
+                              ),
+                            ),
+                            onFieldSubmitted: (_) => _login(),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Password wajib diisi.';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 14),
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton.icon(
+                              onPressed: _login,
+                              icon: const Icon(Icons.login_rounded),
+                              label: const Text('Masuk aplikasi'),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: <Widget>[
+                              Text(
+                                'Version ${AppEnvironment.appVersion}',
+                                style: context.textTheme.labelMedium?.copyWith(color: tokens.textMuted),
+                              ),
+                              const Spacer(),
+                              TextButton(
+                                onPressed: () {
+                                  Alert.showMessage(
+                                    context: context,
+                                    title: 'Butuh bantuan?',
+                                    message: 'Silakan hubungi admin internal untuk reset password akun.',
+                                  );
+                                },
+                                child: const Text('Lupa password?'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -178,69 +322,5 @@ class LoginState extends State<Login> {
         ),
       ),
     );
-  }
-
-  changeIPAddress() async {
-    return showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
-          content: SizedBox(
-            width: 280,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Pengaturan host",
-                  style: textStyling.linearTitle(18, color: linearTextPrimary, strong: true),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  "Ubah alamat IP backend jika dibutuhkan untuk koneksi VPN atau server lokal.",
-                  style: textStyling.linearBody(13, color: linearTextTertiary),
-                ),
-                const SizedBox(height: 18),
-                TextField(
-                  controller: addressIpController,
-                  style: textStyling.linearBody(15, color: linearTextPrimary),
-                  decoration: CustomWidget().linearInputDecoration(
-                    label: "Host / IP",
-                    hint: global.baseIp,
-                    icon: Icons.http_rounded,
-                  ),
-                ),
-                const SizedBox(height: 18),
-                Row(
-                  children: [
-                    Expanded(
-                      child: FilledButton(
-                        onPressed: () async {
-                          await preference.setString("globalIp", addressIpController.text);
-                          global.successResponsePop(context, "Berhasil Menyimpan Pengaturan");
-                        },
-                        style: CustomWidget().linearPrimaryButtonStyle(),
-                        child: const Text("Simpan"),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: CustomWidget().linearGhostButtonStyle(),
-                        child: const Text("Batal"),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    ).then((value) {
-      setState(() {});
-    });
   }
 }

@@ -1,136 +1,138 @@
-// ignore_for_file: file_names, prefer_const_constructors, avoid_print
+import 'dart:async';
 
-part of '../header.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import 'package:e_maintenance/controllers/session_controller.dart';
+import 'package:e_maintenance/core/config/app_environment.dart';
+import 'package:e_maintenance/route.dart';
+import 'package:e_maintenance/widget/Alert.dart';
+import 'package:e_maintenance/widget/CustomWidget.dart';
+import 'package:e_maintenance/widget/TextStyling.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({Key? key}) : super(key: key);
+  const SplashScreen({super.key});
 
   @override
-  SplashScreenState createState() => SplashScreenState();
+  State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    checkSplashScreen();
-    fbmessaging.initFirebase(context: context);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _redirect());
   }
 
-  checkSplashScreen() async {
-    try {
-      await preference.initialization();
-      var name = await preference.getData("id");
-      if (name != null) {
-        if (mounted) Navigator.pushNamed(context, "/home");
-      } else {
-        if (mounted) Navigator.pushNamed(context, "/login");
-      }
-    } catch (err) {
-      // print(err);
+  Future<void> _redirect() async {
+    await Future<void>.delayed(const Duration(milliseconds: 850));
+    if (!mounted) {
+      return;
     }
+
+    final sessionController = context.read<SessionController>();
+    if (sessionController.isLoggedIn) {
+      final session = sessionController.session!;
+      if (session.isSessionExpired) {
+        await sessionController.logout();
+        if (!mounted) return;
+        Alert.showErrorSnackBar(context, 'Sesi login sudah kedaluwarsa (6 jam). Silakan login kembali.');
+        await AppRouter.replaceWithLogin(context);
+        return;
+      }
+      await AppRouter.replaceWithHome(context);
+      return;
+    }
+
+    await AppRouter.replaceWithLogin(context);
   }
 
   @override
   Widget build(BuildContext context) {
-    final ui = CustomWidget();
+    final tokens = context.tokens;
+
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return;
-        alert.alertConfirmExit(context);
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          Alert.confirmExit(context);
+        }
       },
       child: Scaffold(
-        resizeToAvoidBottomInset: true,
-        backgroundColor: linearBg,
-        body: Container(
-          decoration: BoxDecoration(gradient: global.heroGradient),
+        backgroundColor: tokens.pageBackground,
+        body: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: <Color>[
+                tokens.heroEnd.withValues(alpha: context.isDarkMode ? 0.65 : 0.28),
+                tokens.pageBackground,
+              ],
+            ),
+          ),
           child: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
-              child: TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0, end: 1),
-                duration: const Duration(milliseconds: 650),
-                curve: Curves.easeOutCubic,
-                builder: (context, value, child) {
-                  return Opacity(
-                    opacity: value,
-                    child: Transform.translate(
-                      offset: Offset(0, 24 * (1 - value)),
-                      child: child,
-                    ),
-                  );
-                },
-                child: Column(
-                  children: [
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: ui.linearPill(
-                        icon: Icons.directions_car_filled_rounded,
-                        label: "Vehicle routine monitoring",
-                        color: global.surfaceL1,
-                      ),
-                    ),
-                    const Spacer(),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(28),
-                      decoration: ui.linearHeroDecoration(),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Center(
-                            child: Container(
-                              width: 108,
-                              height: 108,
-                              padding: const EdgeInsets.all(18),
-                              decoration: ui.linearCardDecoration(
-                                radius: 30,
-                                color: linearAccent.withValues(alpha: 0.12),
-                              ),
-                              child: Image.asset("assets/icon.png"),
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  const AppBrandBlocks(),
+                  const Spacer(),
+                  AppSurfaceCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Center(
+                          child: Container(
+                            width: 88,
+                            height: 88,
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              gradient: tokens.brandGradient,
+                              borderRadius: BorderRadius.circular(26),
                             ),
+                            child: Image.asset(AppEnvironment.launcherIconAsset),
                           ),
-                          const SizedBox(height: 28),
-                          Text(
-                            "E-Maintenance",
-                            style: textStyling.linearDisplay(34),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            "Pusat kerja lapangan untuk inspeksi kendaraan, pelaporan, dan kontrol akses pengguna dalam satu alur yang lebih rapi.",
-                            style: textStyling.linearBody(16, color: linearTextSecondary, height: 1.65),
-                          ),
-                          const SizedBox(height: 22),
-                          Wrap(
-                            spacing: 10,
-                            runSpacing: 10,
-                            children: [
-                              ui.linearPill(icon: Icons.qr_code_scanner_rounded, label: "Scan serial kendaraan"),
-                              ui.linearPill(icon: Icons.inventory_2_rounded, label: "Checklist inspeksi"),
-                              ui.linearPill(icon: Icons.assessment_rounded, label: "Laporan transaksi"),
-                            ],
-                          ),
-                        ],
+                        ),
+                        const SizedBox(height: 16),
+                        Text('E-Maintenance', style: context.textTheme.displayLarge),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Pusat kerja inspeksi kendaraan yang kini lebih rapi, hangat, dan nyaman dipakai di layar Android.',
+                          style: context.textTheme.bodyLarge?.copyWith(color: tokens.textSecondary),
+                        ),
+                        const SizedBox(height: 14),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: const <Widget>[
+                            AppStatusChip(label: 'Scan serial', icon: Icons.qr_code_scanner_rounded),
+                            AppStatusChip(label: 'Checklist', icon: Icons.fact_check_outlined),
+                            AppStatusChip(label: 'Laporan', icon: Icons.description_outlined),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Spacer(),
+                  Row(
+                    children: <Widget>[
+                      const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2.6),
                       ),
-                    ),
-                    const Spacer(),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.icon(
-                        onPressed: () => Navigator.pushNamed(context, '/login'),
-                        style: ui.linearPrimaryButtonStyle(),
-                        icon: const Icon(Icons.arrow_forward_rounded),
-                        label: const Text("Mulai Sekarang"),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Text(
+                          'Menyiapkan workspace...',
+                          style: context.textTheme.bodyMedium?.copyWith(color: tokens.textMuted),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      "Version $appVersion",
-                      style: textStyling.linearCaption(12),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),

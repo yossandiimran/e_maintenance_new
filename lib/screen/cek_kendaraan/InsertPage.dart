@@ -1,527 +1,443 @@
-// ignore_for_file: file_names, prefer_const_constructors_in_immutables, library_private_types_in_public_api, non_constant_identifier_names, prefer_final_fields, prefer_const_constructors, avoid_unnecessary_containers, unnecessary_null_comparison, prefer_const_literals_to_create_immutables, prefer_typing_uninitialized_variables, no_logic_in_create_state, invalid_use_of_visible_for_testing_member, avoid_print
-part of "../../header.dart";
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+
+import 'package:e_maintenance/controllers/session_controller.dart';
+import 'package:e_maintenance/helper/global.dart';
+import 'package:e_maintenance/model/app_models.dart';
+import 'package:e_maintenance/service/InputService.dart';
+import 'package:e_maintenance/widget/Alert.dart';
+import 'package:e_maintenance/widget/CustomWidget.dart';
+import 'package:e_maintenance/widget/TextStyling.dart';
 
 class InsertPage extends StatefulWidget {
-  final barcode;
-  InsertPage({Key? key, this.barcode = ''}) : super(key: key);
+  const InsertPage({
+    super.key,
+    required this.barcode,
+  });
+
+  final String barcode;
 
   @override
-  _InsertPageState createState() => _InsertPageState(barcode);
+  State<InsertPage> createState() => _InsertPageState();
 }
 
 class _InsertPageState extends State<InsertPage> {
-  final String barcode;
-  _InsertPageState(this.barcode);
-  bool indikatorKondisi = false;
-  bool loading = true;
-  late File _image;
-  String fileName = "";
-  List data = [];
-  String FLAG = "", MAKTX = "", MATNR = "", MSG = "", sn = "";
-  String username = "", nama = "", usap = "", psap = "", werks = "";
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final TextEditingController _textKeteranganController = TextEditingController();
+  final ImagePicker _imagePicker = ImagePicker();
 
-  final name = TextEditingController();
-  final desc = TextEditingController();
-  final jenis_todo = TextEditingController();
-  final nrp_pengemudi = TextEditingController();
-  final nama_pengemudi = TextEditingController();
-  final kendaraan = TextEditingController();
-  final TodoBloc bloc = TodoBloc();
-  static final DateTime now = DateTime.now();
-  static final DateFormat formatter = DateFormat('yyyy-MM-dd');
-  final String tglSekarang = formatter.format(now);
-  int _valJP = 0;
-  final client = http.Client();
-  DateTime _date = DateTime.now();
-
-  getTodo(String jeniscek, String urls) async {
-    Map obj = {"jenisCek": jeniscek};
-    var response = await InputService(context: context, objParam: obj).getTodoList(urls: urls);
-    data = json.decode(response);
-    indikatorKondisi = false;
-    setState(() {});
-  }
-
-  Future<String> getDataKendaraan() async {
-    print("Tahap 1");
-    var resp;
-    try {
-      Map obj = {
-        'SERNR': barcode.toString(),
-        'WERKS': preference.getData("werks").toString(),
-        'ASHOST': preference.getData("ashost").toString(),
-        'CLIENT': preference.getData("client").toString(),
-        'SYSNR': preference.getData("sysnr").toString(),
-        'USAP': preference.getData("usap").toString(),
-        'PASS': preference.getData("pass").toString(),
-        'USERID': preference.getData("id").toString(),
-      };
-      print(obj);
-      var response = await InputService(context: context, objParam: obj).getDataKendaraan();
-      loading = false;
-      resp = jsonDecode(response);
-      MAKTX = resp['MAKTX'];
-      FLAG = resp['FLAG'];
-      MATNR = resp['MATNR'];
-      MSG = resp['MSG'];
-      sn = barcode.substring(barcode.length - 5);
-      if (!mounted) return "Success!";
-      setState(() {});
-      return "Success!";
-    } catch (err) {
-      print(err);
-      if (!mounted) return "failed";
-      global.errorResponsePop(
-        context,
-        resp,
-      );
-      return "failed";
-    }
-  }
-
-  getCekKondisi(String jeniscek) {
-    setState(() {
-      if (MSG ==
-          "Data Tidak Ditemukan                                                                                                                ") {
-        showDialog<String>(
-          barrierDismissible: false,
-          context: context,
-          builder: (BuildContext context) => AlertDialog(
-            title: const Text('Peringatan!'),
-            content: const Text('Data Tidak Ditemukan! Mungkin barcode serial number salah/bukan serial number.'),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context, 'OK');
-                  Navigator.popAndPushNamed(context, '/');
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
-      } else if (MSG == "RFC_LOGON_FAILURE::USER ATAU KATA SANDI SALAH..!!!") {
-        showDialog<String>(
-          barrierDismissible: false,
-          context: context,
-          builder: (BuildContext context) => AlertDialog(
-            title: const Text('Peringatan!'),
-            content: const Text('USER ATAU KATA SANDI SALAH..!!!'),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context, 'OK');
-                  Navigator.pop(context);
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
-      } else {
-        if (FLAG == "X") {
-          getTodo(jeniscek, "getDataTodoForklip");
-        } else if (FLAG == "") {
-          getTodo(jeniscek, "getDataTodoMobil");
-        } else {
-          Navigator.pop(context);
-          showDialog<String>(
-            barrierDismissible: false,
-            context: context,
-            builder: (BuildContext context) => AlertDialog(
-              title: const Text('Peringatan!'),
-              content: const Text('KONEKSI SAP TIMEOUT, HARAP RESTART KONEKSI SAP MELALUI MENU SETTING APLIKASI !'),
-              actions: <Widget>[
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context, 'OK');
-                    Navigator.pop(context);
-                  },
-                  child: const Text('OK'),
-                ),
-              ],
-            ),
-          );
-        }
-      }
-    });
-  }
-
-  getPref() async {
-    setState(() {
-      username = preference.getData("username");
-      nama = preference.getData("nama");
-      usap = preference.getData("usap");
-      psap = preference.getData("psap");
-      werks = preference.getData("werks");
-    });
-    getDataKendaraan();
-  }
+  VehicleInfo? _vehicleInfo;
+  InspectionKind? _selectedKind;
+  List<ChecklistItem> _items = <ChecklistItem>[];
+  bool _loadingVehicle = true;
+  bool _loadingChecklist = false;
 
   @override
   void initState() {
     super.initState();
-    getPref();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadVehicleInfo());
+  }
+
+  Future<void> _loadVehicleInfo() async {
+    final session = context.read<SessionController>().session;
+    if (session == null) {
+      return;
+    }
+
+    final result = await Alert.runWithLoading(
+      context: context,
+      message: 'Mengambil data kendaraan...',
+      task: () => context.read<InputService>().fetchVehicleInfo(
+            barcode: widget.barcode,
+            session: session,
+          ),
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (!result.isSuccess || result.data == null) {
+      await Alert.showMessage(
+        context: context,
+        title: 'Data kendaraan tidak tersedia',
+        message: result.errorMessage ?? 'Kendaraan tidak berhasil ditemukan di backend.',
+        isError: true,
+      );
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+      return;
+    }
+
+    setState(() {
+      _vehicleInfo = result.data;
+      _loadingVehicle = false;
+    });
+
+    // Validate plant/werks match between user session and asset
+    final currentSession = context.read<SessionController>().session;
+    if (currentSession != null && result.data!.werks.isNotEmpty && currentSession.werks.isNotEmpty) {
+      if (result.data!.werks != currentSession.werks) {
+        if (mounted) {
+          Alert.showMessage(
+            context: context,
+            title: 'Lokasi tidak sesuai',
+            message:
+                'Lokasi aset (${result.data!.werks}) tidak sesuai dengan lokasi user Anda (${currentSession.werks}). '
+                'Anda tetap bisa melanjutkan inspeksi, tetapi harap pastikan kendaraan ini sesuai penugasan.',
+            isError: true,
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _selectInspectionKind(InspectionKind kind) async {
+    if (_vehicleInfo == null) {
+      return;
+    }
+
+    setState(() {
+      _selectedKind = kind;
+      _loadingChecklist = true;
+    });
+
+    final result = await context.read<InputService>().fetchChecklist(
+          inspectionKind: kind,
+          isForklift: _vehicleInfo!.isForklift,
+        );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (!result.isSuccess || result.data == null) {
+      setState(() => _loadingChecklist = false);
+      Alert.showErrorSnackBar(context, result.errorMessage ?? 'Checklist tidak berhasil dimuat.');
+      return;
+    }
+
+    setState(() {
+      _items = result.data!;
+      _loadingChecklist = false;
+    });
+  }
+
+  Future<void> _attachEvidence(int index) async {
+    final image = await _imagePicker.pickImage(
+      source: ImageSource.camera,
+      maxWidth: 1392,
+      maxHeight: 1856,
+      imageQuality: 30,
+    );
+
+    if (image == null || !mounted) {
+      return;
+    }
+
+    final file = File(image.path);
+    final note = await _askForNote(file, _items[index].note);
+    if (note == null || note.trim().isEmpty || !mounted) {
+      return;
+    }
+
+    final uploadResult = await Alert.runWithLoading(
+      context: context,
+      message: 'Mengunggah foto inspeksi...',
+      task: () => context.read<InputService>().uploadPhoto(file),
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (!uploadResult.isSuccess || uploadResult.data == null) {
+      Alert.showErrorSnackBar(context, uploadResult.errorMessage ?? 'Foto inspeksi gagal diunggah.');
+      return;
+    }
+
+    setState(() {
+      _items[index] = _items[index].copyWith(
+        isDone: true,
+        note: note.trim(),
+        photoFileName: uploadResult.data!,
+      );
+    });
+
+    Alert.showSuccessSnackBar(context, 'Bukti inspeksi tersimpan.');
+  }
+
+  Future<String?> _askForNote(File imageFile, String currentValue) {
+    final controller = TextEditingController(text: currentValue);
+    String? errorText;
+
+    return showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: const Text('Catatan inspeksi'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(18),
+                      child: Image.file(imageFile, height: 180, width: double.infinity, fit: BoxFit.cover),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: controller,
+                      minLines: 3,
+                      maxLines: 4,
+                      decoration: InputDecoration(
+                        labelText: 'Keterangan',
+                        hintText: 'Contoh: Kondisi baik, baut aman, tidak ada kebocoran.',
+                        errorText: errorText,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                OutlinedButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Batal'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    if (controller.text.trim().isEmpty) {
+                      setStateDialog(() => errorText = 'Keterangan wajib diisi.');
+                      return;
+                    }
+                    Navigator.of(dialogContext).pop(controller.text.trim());
+                  },
+                  child: const Text('Simpan'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _submitInspection() async {
+    final session = context.read<SessionController>().session;
+    if (session == null || _vehicleInfo == null || _selectedKind == null) {
+      return;
+    }
+
+    if (_items.isEmpty) {
+      Alert.showErrorSnackBar(context, 'Checklist inspeksi belum tersedia.');
+      return;
+    }
+
+    final result = await Alert.runWithLoading(
+      context: context,
+      message: 'Menyimpan checklist inspeksi...',
+      task: () => context.read<InputService>().submitInspection(
+            items: _items,
+            inspectionKind: _selectedKind!,
+            barcode: widget.barcode,
+            vehicleName: _vehicleInfo!.materialDescription,
+            userName: session.name,
+            location: session.werks,
+            inspectionDate: DateTime.now(),
+          ),
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (!result.isSuccess) {
+      Alert.showErrorSnackBar(context, result.errorMessage ?? 'Checklist inspeksi gagal disimpan.');
+      return;
+    }
+
+    Alert.showSuccessSnackBar(context, result.data ?? 'Checklist inspeksi berhasil disimpan.');
+    Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
-    final ui = CustomWidget();
-    return Scaffold(
-      backgroundColor: linearBg,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: linearBg,
-        title: Text("Tambah Pengecekan", style: textStyling.linearTitle(18, color: linearTextPrimary, strong: true)),
-        centerTitle: false,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: linearTextPrimary, size: 18),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+    final session = context.watch<SessionController>().session;
+    final tokens = context.tokens;
+
+    return AppPageScaffold(
+      title: 'Tambah pengecekan',
+      subtitle: 'Data kendaraan, jenis inspeksi, dan bukti lapangan disusun dalam satu alur yang lebih aman.',
+      actions: <Widget>[
+        IconButton(
+          onPressed: _items.isEmpty ? null : _submitInspection,
+          icon: const Icon(Icons.save_rounded),
         ),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.save_rounded, color: linearAccent),
-            onPressed: () {
-              print(_valJP);
-              try {
-                if (_valJP != 0) {
-                  alert.loadingAlert(context: context, text: "Menimpan Data", isPop: false);
-                  String date = "${_date.year}-${_date.month}-${_date.day}";
-                  bloc.addTodo(
-                      context, data, data[0]["jenis_cek"], date, _valJP.toString(), barcode, MAKTX, nama, werks);
-                } else {
-                  alert.alertWarning(context: context, text: "Jenis Pengecekan Belum Dipilih !");
-                }
-              } catch (err) {
-                alert.alertWarning(context: context, text: "Terjadi Kesalahan Sistem !");
-              }
-            },
-          ),
-        ],
-      ),
-      body: Stack(
-        children: [
-          Positioned(
-            child: Container(
-              decoration: BoxDecoration(gradient: global.heroGradient),
-              height: kToolbarHeight * 6,
-            ),
-          ),
-          loading == true
-              ? Container(
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      color: linearAccent,
-                    ),
-                  ),
-                )
-              : Container(
+      ],
+      child: _loadingVehicle || session == null
+          ? const SizedBox(height: 320, child: AppLoadingView())
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                AppSurfaceCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Container(
-                        margin: EdgeInsets.symmetric(horizontal: 10),
-                        padding: EdgeInsets.all(15),
-                        decoration: ui.linearPanelDecoration(radius: 24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            RichText(
-                              text: TextSpan(
-                                style: TextStyle(
-                                  fontSize: 14.0,
-                                  color: linearTextSecondary,
-                                ),
-                                children: <TextSpan>[
-                                  TextSpan(text: 'NRP/Nama : '),
-                                  TextSpan(
-                                    text: nama,
-                                    style: TextStyle(fontWeight: FontWeight.bold, color: linearTextPrimary),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            SizedBox(height: 10.0),
-                            RichText(
-                              text: TextSpan(
-                                style: TextStyle(
-                                  fontSize: 14.0,
-                                  color: linearTextSecondary,
-                                ),
-                                children: <TextSpan>[
-                                  TextSpan(text: 'Lokasi : '),
-                                  TextSpan(
-                                    text: werks,
-                                    style: TextStyle(fontWeight: FontWeight.bold, color: linearTextPrimary),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            SizedBox(height: 10.0),
-                            RichText(
-                              text: TextSpan(
-                                style: TextStyle(
-                                  fontSize: 14.0,
-                                  color: linearTextSecondary,
-                                ),
-                                children: <TextSpan>[
-                                  TextSpan(text: 'Kendaraan : '),
-                                  TextSpan(
-                                    text: MAKTX,
-                                    style: TextStyle(fontWeight: FontWeight.bold, color: linearTextPrimary),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            SizedBox(height: 10.0),
-                            RichText(
-                              text: TextSpan(
-                                style: TextStyle(
-                                  fontSize: 14.0,
-                                  color: linearTextSecondary,
-                                ),
-                                children: <TextSpan>[
-                                  TextSpan(text: 'Serial No : '),
-                                  TextSpan(
-                                    text: sn,
-                                    style: TextStyle(fontWeight: FontWeight.bold, color: linearTextPrimary),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            SizedBox(height: 10.0),
-                            RichText(
-                              text: TextSpan(
-                                style: TextStyle(
-                                  fontSize: 14.0,
-                                  color: linearTextSecondary,
-                                ),
-                                children: <TextSpan>[
-                                  TextSpan(text: 'Tanggal : '),
-                                  TextSpan(
-                                    text: global.convertDate(tglSekarang).toString(),
-                                    style: TextStyle(fontWeight: FontWeight.bold, color: linearTextPrimary),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            SizedBox(height: 10.0),
-                          ],
-                        ),
-                      ),
-                      SizedBox(height: 10.0),
-                      Container(
-                        decoration: ui.linearPanelDecoration(radius: 24),
-                        margin: EdgeInsets.symmetric(horizontal: 5),
-                        child: Column(
-                          children: [
-                            Text(
-                              "\nJenis Pengecekan:",
-                              style: textStyling.linearTitle(16, color: linearTextPrimary, strong: true),
-                            ),
-                            RadioGroup<int>(
-                              groupValue: _valJP,
-                              onChanged: (value) {
-                                if (value == null) return;
-                                setState(() {
-                                  _valJP = value;
-                                  indikatorKondisi = true;
-                                  getCekKondisi(value.toString());
-                                });
-                              },
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Radio(value: 1, activeColor: linearAccent),
-                                  Text("Harian", style: textStyling.linearCaption(11, color: linearTextSecondary)),
-                                  Radio(value: 2, activeColor: linearAccent),
-                                  Text("Mingguan", style: textStyling.linearCaption(11, color: linearTextSecondary)),
-                                  Radio(value: 3, activeColor: linearAccent),
-                                  Text("Bulanan", style: textStyling.linearCaption(11, color: linearTextSecondary)),
-                                  Radio(value: 4, activeColor: linearAccent),
-                                  Text("Tutup Pabrik", style: textStyling.linearCaption(11, color: linearTextSecondary)),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(height: 10.0),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: Text(
-                          "Daftar pengecekan",
-                          style: textStyling.linearTitle(16, color: linearTextPrimary, strong: true),
-                        ),
-                      ),
-                      SizedBox(height: 10.0),
-                      ListView(
-                        shrinkWrap: true,
-                        children: [
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Visibility(
-                                visible: indikatorKondisi,
-                                child: CircularProgressIndicator(color: linearAccent),
-                              ),
-                            ],
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: <Widget>[
+                          AppStatusChip(
+                            label: _vehicleInfo!.isForklift ? 'Forklip' : 'Mobil',
+                            icon: _vehicleInfo!.isForklift
+                                ? Icons.local_shipping_rounded
+                                : Icons.directions_car_filled_rounded,
+                            color: tokens.accent,
                           ),
-                          data == null
-                              ? Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      '"Silahkan pilih jenis pengecekan."',
-                                      style: textStyling.linearBody(14, color: linearTextTertiary),
-                                    ),
-                                  ],
-                                )
-                              : data.isNotEmpty
-                                  ? SizedBox(
-                                      height: global.getHeight(context) / 1.98,
-                                      child: SingleChildScrollView(
-                                        physics: BouncingScrollPhysics(),
-                                        controller: ScrollController(),
-                                        child: Column(
-                                          children: [
-                                            for (var index = 0; index < data.length; index++)
-                                              Container(
-                                                padding: EdgeInsets.all(10),
-                                                margin: EdgeInsets.only(left: 10, right: 10, bottom: 10),
-                                                decoration: ui.linearCardDecoration(
-                                                  radius: 20,
-                                                  color: data[index]["_is_done"]
-                                                      ? linearSuccess.withValues(alpha: 0.16)
-                                                      : linearAccent.withValues(alpha: 0.12),
-                                                ),
-                                                child: Column(
-                                                  children: [
-                                                    CheckboxListTile(
-                                                      value: data[index]["_is_done"],
-                                                      title: Text(
-                                                        data[index]["title"],
-                                                        style: textStyling.linearBody(14, color: linearTextPrimary, emphasis: true),
-                                                      ),
-                                                      onChanged: (Value) {
-                                                        setState(() {
-                                                          if (data[index]["_is_done"] != true) {
-                                                            _imgFromCamera(index);
-                                                          } else {
-                                                            _imgFromCamera(index);
-                                                          }
-                                                        });
-                                                      },
-                                                      dense: false,
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                          ],
-                                        ),
-                                      ),
-                                    )
-                                  : Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          "Belum ada daftar pengecekan !.",
-                                          style: textStyling.linearBody(13, color: linearTextTertiary),
-                                        ),
-                                      ],
-                                    ),
+                          AppStatusChip(
+                            label: AppDateUtils.formatDisplay(AppDateUtils.todayApiString()),
+                            icon: Icons.calendar_today_outlined,
+                            color: tokens.brand,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 14,
+                        runSpacing: 14,
+                        children: <Widget>[
+                          AppSummaryItem(label: 'PIC', value: session.name),
+                          AppSummaryItem(label: 'Lokasi', value: session.werks),
+                          AppSummaryItem(label: 'Kendaraan', value: _vehicleInfo!.materialDescription),
+                          AppSummaryItem(label: 'Serial', value: widget.barcode),
                         ],
                       ),
                     ],
                   ),
                 ),
-        ],
-      ),
-    );
-  }
-
-  _imgFromCamera(int index) async {
-    final image = await ImagePicker().pickImage(
-      source: ImageSource.camera,
-      maxWidth: 1392.00,
-      maxHeight: 1856.00,
-      imageQuality: 30,
-    );
-    if (!mounted || image == null) return;
-
-    setState(() {
-      _textKeteranganController.text = "";
-      _image = File(image.path);
-      data[index]["_is_done"] = true;
-    });
-
-    showDialog(
-      barrierDismissible: false,
-      context: context,
-      builder: (BuildContext context) => AlertDialog(
-        scrollable: true,
-        title: const Text('Photo dan Keterangan'),
-        content: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                _image == null ? Text('No image selected.') : Image.file(_image),
-                TextFormField(
-                  controller: _textKeteranganController,
-                  validator: (value) {
-                    return value!.isNotEmpty ? null : "Enter any text";
-                  },
-                  decoration: InputDecoration(hintText: "Isi keterangan"),
+                const SizedBox(height: 12),
+                AppSurfaceCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text('Jenis pengecekan', style: context.textTheme.titleLarge),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: InspectionKind.values.map((kind) {
+                          final selected = _selectedKind == kind;
+                          return ChoiceChip(
+                            selected: selected,
+                            label: Text(kind.label),
+                            onSelected: (_) => _selectInspectionKind(kind),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
                 ),
-              ],
-            )),
-        actions: <Widget>[
-          TextButton(
-              onPressed: () {
-                Navigator.pop(context, 'Upload Photo');
-                setState(() {
-                  data[index]["_is_done"] = false;
-                });
-              },
-              child: const Text("Ulangi")),
-          TextButton(
-            onPressed: () {
-              fileName = (_image != null ? _image.path.split('/').last : "");
-              if (_textKeteranganController.text == "") {
-                final snackBar = SnackBar(
-                  content: Text('Keterangan belum di isi!.'),
-                  behavior: SnackBarBehavior.floating,
-                );
-                ScaffoldMessenger.of(context).showSnackBar(snackBar);
-              } else if (fileName.toString() == "") {
-                final snackBar = SnackBar(
-                  content: Text('Photo belum di isi!.'),
-                  behavior: SnackBarBehavior.floating,
-                );
-                ScaffoldMessenger.of(context).showSnackBar(snackBar);
-              } else {
-                Navigator.pop(context, 'Upload Photo');
-                setState(() {
-                  data[index]["keterangan"] = _textKeteranganController.text;
-                  data[index]["photo"] = fileName.toString();
-                });
-                _uploadFile(_image);
-              }
-            },
-            child: const Text('Upload Photo'),
-          ),
-        ],
-      ),
-    );
-  }
+                const SizedBox(height: 12),
+                if (_loadingChecklist)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: AppLoadingView(),
+                  )
+                else if (_selectedKind == null)
+                  const AppEmptyState(
+                    title: 'Pilih jenis pengecekan',
+                    message: 'Checklist akan dimuat setelah Anda menentukan jenis inspeksi yang sedang dikerjakan.',
+                    icon: Icons.fact_check_outlined,
+                  )
+                else if (_items.isEmpty)
+                  const AppEmptyState(
+                    title: 'Checklist kosong',
+                    message: 'Belum ada item inspeksi yang tersedia untuk jenis pengecekan ini.',
+                    icon: Icons.rule_folder_outlined,
+                  )
+                else
+                  Column(
+                    children: _items.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final item = entry.value;
+                      final accentColor = item.isDone ? tokens.success : tokens.brand;
 
-  _uploadFile(File file) async {
-    print(file);
-    InputService(context: context).uploadFoto(image: file);
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: AppSurfaceCard(
+                          color: accentColor.withValues(alpha: context.isDarkMode ? 0.14 : 0.08),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Row(
+                                children: <Widget>[
+                                  Icon(
+                                    item.isDone ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+                                    color: accentColor,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(item.title, style: context.textTheme.titleMedium),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                item.isDone
+                                    ? 'Catatan: ${item.note}\nFoto: ${item.photoFileName}'
+                                    : 'Belum ada bukti inspeksi yang diunggah untuk item ini.',
+                                style: context.textTheme.bodyMedium?.copyWith(color: tokens.textMuted),
+                              ),
+                              const SizedBox(height: 14),
+                              Row(
+                                children: <Widget>[
+                                  Expanded(
+                                    child: FilledButton.icon(
+                                      onPressed: () => _attachEvidence(index),
+                                      icon: Icon(item.isDone ? Icons.camera_alt_outlined : Icons.add_a_photo_outlined),
+                                      label: Text(item.isDone ? 'Ubah bukti' : 'Tambah bukti'),
+                                    ),
+                                  ),
+                                  if (item.isDone) ...<Widget>[
+                                    const SizedBox(width: 12),
+                                    OutlinedButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          _items[index] = item.copyWith(
+                                            isDone: false,
+                                            note: '',
+                                            photoFileName: '',
+                                          );
+                                        });
+                                      },
+                                      child: const Text('Reset'),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                if (_items.isNotEmpty) ...<Widget>[
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: _submitInspection,
+                      icon: const Icon(Icons.save_rounded),
+                      label: const Text('Simpan checklist'),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+    );
   }
 }

@@ -1,250 +1,226 @@
-// ignore_for_file: prefer_typing_uninitialized_variables, non_ant_identifier_names, prefer__ructors, unnecessary_null_comparison, prefer_interpolation_to_compose_strings, prefer_const_constructors, file_names, non_constant_identifier_names, duplicate_ignore, prefer_const_constructors_in_immutables, library_private_types_in_public_api, unused_field, prefer_final_fields, prefer_if_null_operators, unused_local_variable, avoid_print, no_logic_in_create_state, prefer_const_literals_to_create_immutables
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-part of "../../header.dart";
+import 'package:e_maintenance/core/network/app_api_client.dart';
+import 'package:e_maintenance/helper/global.dart';
+import 'package:e_maintenance/model/app_models.dart';
+import 'package:e_maintenance/screen/laporan/excel/ExcelReportTransaksi.dart';
+import 'package:e_maintenance/service/ReportService.dart';
+import 'package:e_maintenance/widget/Alert.dart';
+import 'package:e_maintenance/widget/CustomWidget.dart';
+import 'package:e_maintenance/widget/TextStyling.dart';
 
 class ListReportPage extends StatefulWidget {
-  final jenis_cek, jenis_kendaraan, asloc, kendaraan, tgl_awal, tgl_akhir;
-  ListReportPage(
-      {Key? key, this.jenis_cek, this.jenis_kendaraan, this.asloc, this.kendaraan, this.tgl_awal, this.tgl_akhir})
-      : super(key: key);
+  const ListReportPage({
+    super.key,
+    required this.filter,
+  });
+
+  final TransactionReportFilter filter;
 
   @override
-  _ListReportPageState createState() => _ListReportPageState(
-        jenis_cek,
-        jenis_kendaraan,
-        asloc,
-        kendaraan,
-        tgl_awal,
-        tgl_akhir,
-      );
+  State<ListReportPage> createState() => _ListReportPageState();
 }
 
 class _ListReportPageState extends State<ListReportPage> {
-  final jenis_cek, jenis_kendaraan, asloc, kendaraan, tgl_awal, tgl_akhir;
-  _ListReportPageState(this.jenis_cek, this.jenis_kendaraan, this.asloc, this.kendaraan, this.tgl_awal, this.tgl_akhir);
-  final String url = 'public/api/getReportCekKendaraan';
-  String _tanggal = "";
-  Map<String, dynamic> data = {};
-  Map groupedData = {};
-  Map grupSnKendaraan = {};
-
-  bool loading = true;
-
-  // Csv exportToCsv =  Csv();
+  bool _loading = true;
+  List<TransactionReportItem> _items = <TransactionReportItem>[];
 
   @override
   void initState() {
     super.initState();
-    _kirim(url);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadData());
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.blueGrey.shade50,
-      appBar: AppBar(
-        iconTheme: IconThemeData(
-          color: Colors.black54,
-        ),
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: Icon(Icons.arrow_back_ios_rounded, color: defWhite),
-        ),
-        title: FittedBox(
-          fit: BoxFit.fitWidth,
-          child: Text("Data Laporan", style: TextStyle(color: defWhite)),
-        ),
-        backgroundColor: defBlack1,
-        elevation: 0,
-        actions: <Widget>[
-          data == null
-              ? Text("")
-              : IconButton(
-                  icon: Icon(Icons.file_download, color: defWhite),
-                  tooltip: "Download Excel",
-                  onPressed: () {
-                    downloadExcel();
-                  },
-                ),
-        ],
-      ),
-      body: (loading == true
-          ? Container() //Loading Card
-          : SingleChildScrollView(
-              child: Container(
-                margin: EdgeInsets.fromLTRB(5, 0, 5, 0),
-                child: (data == null ? Text("Data tidak ditemukan") : Column(children: getDataChildern())),
-              ),
-            )),
-    );
-  }
-
-  downloadExcel() {
-    if (data.isEmpty) return alert.alertWarning(context: context, text: "Data tidak ditemukan !");
-    Map obj = {
-      "tglAwal": tgl_awal,
-      "tglAkhir": tgl_akhir,
-      "jenisCek": (jenis_cek == "1"
-          ? "Harian"
-          : (jenis_cek == "2" ? "Mingguan" : (jenis_cek == "3" ? "Bulanan" : "Tutup Pabrik"))),
-    };
-    ExcelReportTransaksi(context: context).exportTransaksiReport(data: data, obj: obj);
-  }
-
-  List<Widget> getDataChildern() {
-    List<Widget> dataColumn = <Widget>[];
-
-    groupedData.forEach((snKendaraan, dataTanggal) {
-      dataColumn.add(
-        ExpansionTile(
-          initiallyExpanded: true,
-          title: Text(
-            'Tanggal   : $snKendaraan',
-            style: textStyling.customColorBold(16, defBlack2),
-          ),
-          children: getDataChildernChild(snKendaraan, dataTanggal),
-        ),
-      );
-    });
-
-    return dataColumn;
-  }
-
-  List<Widget> getDataChildernChild(snKendaraan, dataTanggal) {
-    List<Widget> dataColumn = <Widget>[];
-    dataTanggal.forEach((tanggal, data) {
-      dataColumn.add(
-        Container(
-          decoration: widget.decCont(defBlack1, 10, 10, 10, 10),
-          margin: EdgeInsets.all(5),
-          child: ExpansionTile(
-            title: Text('${data[0]["kendaraan"] ?? "-"}', style: textStyling.customColor(15, defWhite)),
-            subtitle: Text(
-              "SN    :  " + data[0]["sn_kendaraan"] + "\nPIC   : " + data[0]["nama"],
-              style: textStyling.customColor(14, defWhite),
-            ),
-            children: getDetailChildern(data),
-          ),
-        ),
-      );
-    });
-    return dataColumn;
-  }
-
-  List<Widget> getDetailChildern(data) {
-    List<Widget> dataColumn = <Widget>[];
-    data.forEach((element) {
-      grupSnKendaraan[{element['sn_kendaraan']}] = (element['kendaraan'] ?? "-");
-
-      dataColumn.add(
-        ListTile(
-          trailing: IconButton(
-            onPressed: () {
-              element['photo'] != "null"
-                  ? showImg(element['nama'], element['photo'])
-                  : alert.alertWarning(
-                      context: context,
-                      text: "Data Cek tidak ditemukan ! ",
-                    );
-            },
-            icon: element["photo"] != "null"
-                ? Icon(Icons.image_rounded, color: defGreen)
-                : Icon(Icons.broken_image_rounded, color: defRed),
-          ),
-          title: Text(element["title"], style: textStyling.defaultWhite(16)),
-          // subtitle: Text("Pic : ${element['nama']}", style: textStyling.defaultWhite(16)),
-          leading: !element["_is_done"]
-              ? Icon(Icons.remove_circle_outline_rounded, color: defRed)
-              : Icon(Icons.check_circle, color: defGreen),
-        ),
-      );
-    });
-    return dataColumn;
-  }
-
-  Future<String> _kirim(String url) async {
-    Map obj = {
-      "jenis_cek": jenis_cek,
-      "jenis_kendaraan": jenis_kendaraan,
-      "asloc": asloc,
-      "kendaraan": kendaraan,
-      "tgl_awal": tgl_awal,
-      "tgl_akhir": tgl_akhir
-    };
-    Map res = await ReportService(context: context, objParam: obj).getTransaksiReportNew();
-    setState(() {
-      if (res['hasil'] is String) {
-        data = {};
-      } else {
-        data = {"hasil": res['hasil']};
-      }
-      print(data["hasil"]);
-
-      var groupedDataSn = groupBySnKendaraan(res["hasil"]);
-      groupedData = groupByTanggal(groupedDataSn);
-
-      loading = false;
-    });
-    return 'success!';
-  }
-
-  groupBySnKendaraan(data) {
-    final groupedData = {};
-
-    for (final item in data) {
-      final snKendaraan = item['tanggal'] as String;
-
-      if (!groupedData.containsKey(snKendaraan)) {
-        groupedData[snKendaraan] = [];
-      }
-
-      groupedData[snKendaraan]!.add(item);
+  Future<void> _loadData() async {
+    final result = await context.read<ReportService>().fetchTransactionReport(widget.filter);
+    if (!mounted) {
+      return;
     }
 
-    return groupedData;
-  }
+    if (!result.isSuccess || result.data == null) {
+      setState(() => _loading = false);
+      Alert.showErrorSnackBar(context, result.errorMessage ?? 'Laporan transaksi gagal dimuat.');
+      return;
+    }
 
-  groupByTanggal(dataBySnKendaraan) {
-    final groupedData = {};
-
-    dataBySnKendaraan.forEach((snKendaraan, data) {
-      final dataTanggal = {};
-
-      for (final item in data) {
-        final tanggal = item['sn_kendaraan'] as String;
-
-        if (!dataTanggal.containsKey(tanggal)) {
-          dataTanggal[tanggal] = [];
-        }
-
-        dataTanggal[tanggal]!.add(item);
-      }
-
-      groupedData[snKendaraan] = dataTanggal;
+    setState(() {
+      _items = result.data!;
+      _loading = false;
     });
-
-    return groupedData;
   }
 
-  showImg(String asset, String img) async {
-    return showDialog(
-      barrierDismissible: true,
+  Future<void> _export() async {
+    if (_items.isEmpty) {
+      Alert.showErrorSnackBar(context, 'Tidak ada data untuk diekspor.');
+      return;
+    }
+
+    final result = await Alert.runWithLoading(
       context: context,
-      builder: (context) {
+      message: 'Membuat file Excel...',
+      task: () => ExcelReportTransaksi().exportTransaksiReport(
+        data: _items,
+        filter: widget.filter,
+      ),
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (!result.isSuccess) {
+      Alert.showErrorSnackBar(context, result.errorMessage ?? 'Ekspor Excel gagal.');
+      return;
+    }
+
+    Alert.showSuccessSnackBar(context, 'File tersimpan di ${result.data}');
+  }
+
+  Future<void> _showImage(TransactionReportItem item) async {
+    if (item.photoFileName.isEmpty || item.photoFileName == 'null') {
+      Alert.showErrorSnackBar(context, 'Foto checklist tidak tersedia untuk item ini.');
+      return;
+    }
+
+    final url = context.read<AppApiClient>().photoUrl('photo/${item.photoFileName}');
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
         return AlertDialog(
-          title: Text(asset),
-          content: Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Image.network(global.getFotoServiceUrl("photo/${img == null ? 'no-image.png' : img}")),
+          title: Text(item.title),
+          content: ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: Image.network(url, fit: BoxFit.cover),
           ),
           actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.pop(context, 'OK'),
-              child: Text('Ok'),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Tutup'),
             ),
           ],
         );
       },
+    );
+  }
+
+  Map<String, Map<String, List<TransactionReportItem>>> _groupedItems() {
+    final grouped = <String, Map<String, List<TransactionReportItem>>>{};
+
+    for (final item in _items) {
+      grouped.putIfAbsent(item.date, () => <String, List<TransactionReportItem>>{});
+      grouped[item.date]!.putIfAbsent(item.serialNumber, () => <TransactionReportItem>[]);
+      grouped[item.date]![item.serialNumber]!.add(item);
+    }
+
+    return grouped;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final grouped = _groupedItems();
+
+    return AppPageScaffold(
+      title: 'Detail laporan',
+      subtitle: 'Data checklist disusun per tanggal dan serial kendaraan agar lebih mudah dipindai.',
+      actions: <Widget>[
+        IconButton(
+          onPressed: _items.isEmpty ? null : _export,
+          icon: const Icon(Icons.download_rounded),
+        ),
+      ],
+      child: _loading
+          ? const SizedBox(height: 320, child: AppLoadingView())
+          : _items.isEmpty
+              ? const AppEmptyState(
+                  title: 'Laporan kosong',
+                  message: 'Tidak ada data transaksi inspeksi pada filter yang dipilih.',
+                  icon: Icons.description_outlined,
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: grouped.entries.map((dateEntry) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: AppSurfaceCard(
+                        child: Theme(
+                          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                          child: ExpansionTile(
+                            tilePadding: EdgeInsets.zero,
+                            childrenPadding: EdgeInsets.zero,
+                            initiallyExpanded: true,
+                            title: Text(
+                              AppDateUtils.formatDisplay(dateEntry.key),
+                              style: context.textTheme.titleLarge,
+                            ),
+                            subtitle: Text(
+                              '${dateEntry.value.length} kendaraan tercatat',
+                              style: context.textTheme.bodyMedium?.copyWith(color: tokens.textMuted),
+                            ),
+                            children: dateEntry.value.entries.map((vehicleEntry) {
+                              final first = vehicleEntry.value.first;
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 12),
+                                child: AppSurfaceCard(
+                                  color: tokens.surfaceElevated.withValues(alpha: context.isDarkMode ? 0.72 : 0.94),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: <Widget>[
+                                      Text(first.vehicleName, style: context.textTheme.titleLarge),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        'SN: ${first.serialNumber}  •  PIC: ${first.userName}  •  Lokasi: ${first.location}',
+                                        style: context.textTheme.bodyMedium?.copyWith(color: tokens.textMuted),
+                                      ),
+                                      const SizedBox(height: 14),
+                                      ...vehicleEntry.value.map((item) {
+                                        return Padding(
+                                          padding: const EdgeInsets.only(bottom: 10),
+                                          child: Row(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: <Widget>[
+                                              Icon(
+                                                item.isDone ? Icons.check_circle_rounded : Icons.cancel_outlined,
+                                                color: item.isDone ? tokens.success : tokens.danger,
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: <Widget>[
+                                                    Text(item.title, style: context.textTheme.titleMedium),
+                                                    const SizedBox(height: 4),
+                                                    Text(
+                                                      item.isDone ? 'Checklist dilakukan.' : 'Checklist belum dilakukan.',
+                                                      style: context.textTheme.bodyMedium?.copyWith(color: tokens.textMuted),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              IconButton(
+                                                onPressed: () => _showImage(item),
+                                                icon: Icon(
+                                                  item.photoFileName.isNotEmpty && item.photoFileName != 'null'
+                                                      ? Icons.image_outlined
+                                                      : Icons.broken_image_outlined,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      }),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
     );
   }
 }

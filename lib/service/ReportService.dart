@@ -1,136 +1,130 @@
-// ignore_for_file: file_names, use_build_context_synchronously, prefer_typing_uninitialized_variables, prefer_interpolation_to_compose_strings, avoid_print, non_constant_identifier_names, unused_local_variable
+import 'dart:convert';
 
-part of "../header.dart";
+import 'package:e_maintenance/core/logging/app_logger.dart';
+import 'package:e_maintenance/core/network/app_api_client.dart';
+import 'package:e_maintenance/core/utils/app_result.dart';
+import 'package:e_maintenance/helper/preference.dart';
+import 'package:e_maintenance/model/app_models.dart';
 
 class ReportService {
-  final BuildContext context;
-  final objParam;
-  ReportService({required this.context, this.objParam});
+  ReportService({
+    required AppApiClient apiClient,
+    required AppPreferences preferences,
+  })  : _apiClient = apiClient,
+        _preferences = preferences;
 
-  Future<Map> getSloc({obj}) async {
-    var ret;
-    var url = await global.getBapiManualServiceUrl("getsloc");
-    print(url);
-    print(obj);
-    await http.post(url, body: obj).then((res) {
-      var data = json.decode(res.body);
-      if (res.statusCode == 200) {
-        ret = data;
-      } else {
-        ret = {
-          "T_RET": ["Err"]
-        };
-      }
-    });
-    return ret;
-  }
+  final AppApiClient _apiClient;
+  final AppPreferences _preferences;
 
-  Future<Map> getLkend({obj}) async {
-    var ret;
-    var url = await global.getBapiManualServiceUrl("getlkend");
-    print(url);
-    print(obj);
-    await http.post(url, body: obj).then((res) {
-      var data = json.decode(res.body);
-      if (res.statusCode == 200) {
-        ret = data;
-      } else {
-        ret = {
-          "T_RET": ["Err"]
-        };
-      }
-    });
-    return ret;
-  }
-
-  Future<String> getDataKendaraan() async {
-    var ret;
-    var url = await global.getBapiManualServiceUrl("getkend");
-    print(url);
-    print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-    print(objParam);
-    print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-    await http.post(url, body: objParam).then((response) {
-      final content = json.decode(response.body);
-      print(content);
-      var MAKTX = content['MAKTX'];
-      if (MAKTX == "") {
-        global.errorResponsePop(context, content["MSG"]);
-      }
-      ret = jsonEncode(content);
-    });
-
-    return ret;
-  }
-
-  Future<List> getUserReport() async {
-    List ret = [];
-    alert.loadingAlert(context: context, text: "Mengambil data ...", isPop: false);
-    var url = await await global.getMainServiceUrl("getUserReport");
+  Future<AppResult<List<StorageLocation>>> fetchStorageLocations(UserSession session) async {
     try {
-      await http.post(url, body: objParam).then((response) {
-        final content = json.decode(response.body);
-        print(content);
-        if (content["success"] == true) {
-          Navigator.pop(context);
-          if (content["data"] != null) {
-            ret = content["data"];
-          }
-        } else {
-          global.errorResponsePop(context, "Terjadi kesalahan Service");
-          ret = [];
-        }
-      });
-    } catch (e) {
-      ret = [];
-      print(e);
-      global.errorResponse(context, "Terjadi kesalahan Aplikasi");
+      final response = await _apiClient.postManual(
+        'getsloc',
+        body: _credentialPayload(session: session, location: session.werks),
+      ).timeout(const Duration(seconds: 15));
+
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final locations = (decoded['T_SLOC'] as List<dynamic>? ?? <dynamic>[])
+          .map((item) => StorageLocation.fromJson(Map<String, dynamic>.from(item as Map)))
+          .toList(growable: false);
+
+      return AppResult<List<StorageLocation>>.success(locations);
+    } catch (error) {
+      AppLogger.error('Failed to fetch storage locations', error);
+      return const AppResult<List<StorageLocation>>.failure('Daftar lokasi aset belum berhasil dimuat.');
     }
-    return ret;
   }
 
-  Future<Map> getTransaksiReport() async {
-    Map ret = {};
-    var url = await await global.getMainServiceUrl("getReportCekKendaraan");
-    print(url.toString());
-    print(objParam);
+  Future<AppResult<List<VehicleCatalogItem>>> fetchVehicles({
+    required UserSession session,
+    required String location,
+  }) async {
     try {
-      await http.post(url, body: objParam).then((res) {
-        var content = json.decode(res.body);
-        print(content);
-        if (content['hasil'] is String) {
-          ret = {};
-          global.errorResponse(context, content['hasil']);
-        } else {
-          ret = content;
-        }
-      });
-    } catch (e) {
-      ret = {};
-      global.errorResponse(context, "Terjadi kesalahan Aplikasi");
+      final response = await _apiClient.postManual(
+        'getlkend',
+        body: _credentialPayload(session: session, location: location),
+      ).timeout(const Duration(seconds: 15));
+
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final vehicles = (decoded['T_KEND'] as List<dynamic>? ?? <dynamic>[])
+          .map((item) => VehicleCatalogItem.fromJson(Map<String, dynamic>.from(item as Map)))
+          .toList(growable: false);
+
+      return AppResult<List<VehicleCatalogItem>>.success(vehicles);
+    } catch (error) {
+      AppLogger.error('Failed to fetch vehicles by location', error);
+      return const AppResult<List<VehicleCatalogItem>>.failure('Daftar kendaraan belum berhasil dimuat.');
     }
-    return ret;
   }
 
-  Future<Map> getTransaksiReportNew() async {
-    Map ret = {};
-    var url = await await global.getMainServiceUrl("getNewReport");
-    print(url.toString());
-    print(objParam);
+  Future<AppResult<List<UserReportEntry>>> fetchUserReport(UserReportQuery query) async {
     try {
-      await http.post(url, body: objParam).then((res) {
-        var content = json.decode(res.body);
-        if (content['hasil'] is String) {
-          ret = {};
-          global.errorResponse(context, content['hasil']);
-        } else {
-          ret = content;
-        }
-      });
-    } catch (e) {
-      ret = {};
-      global.errorResponse(context, "Terjadi kesalahan Aplikasi");
+      final response = await _apiClient.postMain(
+        'getUserReport',
+        body: <String, String>{
+          'werks': query.location,
+          'tgl_awal': query.startDate,
+          'tgl_akhir': query.endDate,
+          'jenis_cek': query.inspectionKind.id,
+        },
+      ).timeout(const Duration(seconds: 15));
+
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      if (decoded['success'] != true) {
+        return const AppResult<List<UserReportEntry>>.failure('Laporan user tidak tersedia untuk filter ini.');
+      }
+
+      final items = (decoded['data'] as List<dynamic>? ?? <dynamic>[])
+          .map((item) => UserReportEntry.fromJson(Map<String, dynamic>.from(item as Map)))
+          .toList(growable: false);
+      return AppResult<List<UserReportEntry>>.success(items);
+    } catch (error) {
+      AppLogger.error('Failed to fetch user report', error);
+      return const AppResult<List<UserReportEntry>>.failure('Laporan user belum berhasil dimuat.');
     }
-    return ret;
+  }
+
+  Future<AppResult<List<TransactionReportItem>>> fetchTransactionReport(TransactionReportFilter filter) async {
+    try {
+      final response = await _apiClient.postMain(
+        'getNewReport',
+        body: <String, String>{
+          'jenis_cek': filter.inspectionKind.id,
+          'jenis_kendaraan': filter.vehicleType.id,
+          'asloc': filter.storageLocation,
+          'kendaraan': filter.vehicleSerialNumber,
+          'tgl_awal': filter.startDate,
+          'tgl_akhir': filter.endDate,
+        },
+      ).timeout(const Duration(seconds: 15));
+
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      if (decoded['hasil'] is String) {
+        return AppResult<List<TransactionReportItem>>.failure('${decoded['hasil']}');
+      }
+
+      final items = (decoded['hasil'] as List<dynamic>? ?? <dynamic>[])
+          .map((item) => TransactionReportItem.fromJson(Map<String, dynamic>.from(item as Map)))
+          .toList(growable: false);
+      return AppResult<List<TransactionReportItem>>.success(items);
+    } catch (error) {
+      AppLogger.error('Failed to fetch transaction report', error);
+      return const AppResult<List<TransactionReportItem>>.failure('Laporan transaksi belum berhasil dimuat.');
+    }
+  }
+
+  Map<String, String> _credentialPayload({
+    required UserSession session,
+    required String location,
+  }) {
+    return <String, String>{
+      'ASHOST': _preferences.getString('ashost'),
+      'CLIENT': _preferences.getString('client'),
+      'SYSNR': _preferences.getString('sysnr'),
+      'USAP': session.usap,
+      'PASS': _preferences.getString('pass'),
+      'USERID': '${session.id}',
+      'WERKS': location,
+    };
   }
 }

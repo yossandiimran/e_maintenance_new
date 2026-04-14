@@ -1,43 +1,76 @@
-// ignore_for_file: prefer_const_constructors
-part of 'main.dart';
+import 'package:flutter/material.dart';
 
-class RouteGenerator {
-  static Route<dynamic> generateRoute(RouteSettings settings) {
-    var enc = jsonEncode(settings.arguments);
-    var dec = jsonDecode(enc);
-    switch (settings.name) {
-      case '/':
-        return MaterialPageRoute(builder: (_) => SplashScreen());
-      // return MaterialPageRoute(builder: (_) => TestBtPrinter());
-      case '/login':
-        return MaterialPageRoute(builder: (_) => Login());
-      case '/home':
-        return MaterialPageRoute(builder: (_) => Home());
-      case '/lap1':
-        return MaterialPageRoute(builder: (_) => Laporan1());
-      case '/lap2':
-        return MaterialPageRoute(builder: (_) => Laporan2());
-      case '/user':
-        return MaterialPageRoute(builder: (_) => User());
-      case '/userForm':
-        return MaterialPageRoute(builder: (_) => UserForm(obj: settings.arguments));
-      case '/insert':
-        return MaterialPageRoute(builder: (_) => InsertPage(barcode: dec["qrCode"]));
-      case '/configSetting':
-        return MaterialPageRoute(builder: (_) => ConfigSettingPage());
-      case '/testBtPrinter':
-        return MaterialPageRoute(builder: (_) => TestBtPrinter());
-      default:
-        return _errorRoute();
-    }
+import 'package:e_maintenance/model/app_models.dart';
+import 'package:e_maintenance/screen/ConfigSetting.dart';
+import 'package:e_maintenance/screen/Home.dart';
+import 'package:e_maintenance/screen/Login.dart';
+import 'package:e_maintenance/screen/QrScanner.dart';
+import 'package:e_maintenance/screen/SplashScreen.dart';
+import 'package:e_maintenance/screen/cek_kendaraan/InsertPage.dart';
+import 'package:e_maintenance/screen/laporan/Laporan1.dart';
+import 'package:e_maintenance/screen/laporan/Laporan2.dart';
+import 'package:e_maintenance/screen/laporan/ListReportPage.dart';
+import 'package:e_maintenance/screen/user/User.dart';
+import 'package:e_maintenance/screen/user/UserForm.dart' as user_form_screen;
+
+class AppRouter {
+  const AppRouter._();
+
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+  static Route<void> splash() => _buildRoute(const SplashScreen(), 'splash');
+  static Route<void> login() => _buildRoute(const Login(), 'login');
+  static Route<void> home() => _buildRoute(const Home(), 'home');
+  static Route<void> settings() => _buildRoute(const ConfigSettingPage(), 'settings');
+  static Route<void> userManagement() => _buildRoute(const User(), 'user_management');
+  static Route<void> userForm(UserFormData data) =>
+      _buildRoute(user_form_screen.UserForm(initialData: data), 'user_form');
+  static Route<void> transactionReportFilter() => _buildRoute(const Laporan1(), 'transaction_report_filter');
+  static Route<void> userReport() => _buildRoute(const Laporan2(), 'user_report');
+  static Route<void> transactionReportList(TransactionReportFilter filter) =>
+      _buildRoute(ListReportPage(filter: filter), 'transaction_report_list');
+  static Route<void> inspection(String barcode) => _buildRoute(InsertPage(barcode: barcode), 'inspection');
+  static Route<String?> scanner() => _buildRoute(const QrScanner(), 'scanner');
+
+  static MaterialPageRoute<T> _buildRoute<T>(Widget page, String name) {
+    return MaterialPageRoute<T>(
+      builder: (_) => page,
+      settings: RouteSettings(name: name),
+    );
   }
 
-  static Route<dynamic> _errorRoute() {
-    return MaterialPageRoute(builder: (_) {
-      return Scaffold(
-        appBar: AppBar(title: const Text("Error")),
-        body: const Center(child: Text('Error page')),
-      );
-    });
+  static Future<void> replaceWithLogin(BuildContext context) {
+    return Navigator.of(context).pushAndRemoveUntil(login(), (route) => false);
+  }
+
+  static Future<void> replaceWithHome(BuildContext context) {
+    return Navigator.of(context).pushAndRemoveUntil(home(), (route) => false);
+  }
+
+  static void handleNotificationPayload(Map<String, dynamic> payload) {
+    final navigator = navigatorKey.currentState;
+    if (navigator == null) {
+      return;
+    }
+
+    switch ('${payload['screen'] ?? ''}') {
+      case '/home':
+        navigator.push(home());
+        break;
+      case '/lap1':
+        navigator.push(transactionReportFilter());
+        break;
+      case '/lap2':
+        navigator.push(userReport());
+        break;
+      case '/user':
+        navigator.push(userManagement());
+        break;
+      case '/configSetting':
+        navigator.push(settings());
+        break;
+      default:
+        break;
+    }
   }
 }

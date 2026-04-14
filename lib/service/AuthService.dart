@@ -1,106 +1,99 @@
-// ignore_for_file: file_names, use_build_context_synchronously, prefer_typing_uninitialized_variables, prefer_interpolation_to_compose_strings, avoid_print
+import 'dart:convert';
 
-part of "../header.dart";
+import 'package:e_maintenance/core/config/app_environment.dart';
+import 'package:e_maintenance/core/logging/app_logger.dart';
+import 'package:e_maintenance/core/network/app_api_client.dart';
+import 'package:e_maintenance/core/utils/app_result.dart';
+import 'package:e_maintenance/helper/preference.dart';
+import 'package:e_maintenance/model/app_models.dart';
 
 class AuthService {
-  final BuildContext context;
-  final objParam;
-  AuthService({required this.context, this.objParam});
+  AuthService({
+    required AppApiClient apiClient,
+    required AppPreferences preferences,
+  })  : _apiClient = apiClient,
+        _preferences = preferences;
 
-  Future login() async {
-    alert.loadingAlert(context: context, text: "Mohon Tunggu .. ", isPop: false);
+  final AppApiClient _apiClient;
+  final AppPreferences _preferences;
 
+  Future<AppResult<UserSession>> login({
+    required String username,
+    required String password,
+    String? deviceToken,
+  }) async {
     try {
-      var url = await global.getMainServiceUrl('login');
-      print(url);
-      var dvc = await FirebaseMessaging.instance.getToken();
-      var obj = {
-        "username": objParam["username"],
-        "password": objParam["password"],
-        "device_token": dvc,
-        "app_version": appVersion,
-      };
-      await http.post(url, body: obj).then((res) async {
-        var data = json.decode(res.body);
-        print(data);
-        if (res.statusCode == 200) {
-          if (data["success"] == false) {
-            return global.errorResponse(context, data["message"]);
-          } else {
-            if (data["for_session"]["app_version"] == appVersion) {
-              var checkPreference = await setUserPreference(data["for_session"], objParam["password"]);
-              if (checkPreference == 200) {
-                return global.successResponseNavigate(context, "Berhasil Login", '/home');
-              } else {
-                return global.errorResponse(context, 'Tidak dapat Login !');
-              }
-            } else {
-              print("okey2");
-              return global.errorResponse(
-                context,
-                'Tidak dapat login, silahkan update app ke versi terbaru, hubungi team EDP!',
-              );
-            }
-          }
-        } else {
-          print("okey");
-          return global.errorResponse(
-            context,
-            'Username atau password salah',
-          );
-        }
-      }).timeout(const Duration(seconds: 10), onTimeout: () {
-        return global.errorResponsePop(context, "Koneksi Timeout ...");
-      });
-    } catch (e) {
-      print(e);
-      return global.errorResponsePop(context, "Terjadi Kesalahan !");
-    }
-  }
-
-  Future setUserPreference(data, pass) async {
-    try {
-      await preference.setInt("id", (data["id"] ?? ""));
-      await preference.setString("username", (data["username"] ?? ""));
-      await preference.setString("nama", (data["nama"] ?? ""));
-      await preference.setString("usap", (data["usap"] ?? ""));
-      await preference.setString("psap", (data["psap"] ?? ""));
-      await preference.setString("werks", (data["werks"] ?? ""));
-      await preference.setString("id_jenis_user", (data["id_jenis_user"] ?? ""));
-      return 200;
-    } catch (err) {
-      print(err);
-      return 201;
-    }
-  }
-
-  Future getSetting() async {
-    try {
-      final response = await http.get(await global.getMainServiceUrl("getSetting"));
-      final data = jsonDecode(response.body);
-      if (data.length > 0) {
-        for (var i = 0; i < data.length; i++) {
-          preference.setString(data[i]["name_setting"], (data[i]["value"] ?? ""));
-        }
-      }
-    } on SocketException {
-      showDialog(
-        context: context,
-        barrierDismissible: true,
-        builder: (BuildContext context) {
-          return const AlertDialog(
-            title: Text('Info'),
-            content: SingleChildScrollView(
-              child: ListBody(
-                children: <Widget>[
-                  Text('Koneksi ke server gagal!'),
-                ],
-              ),
-            ),
-          );
+      final response = await _apiClient.postMain(
+        'login',
+        body: <String, String>{
+          'username': username.trim(),
+          'password': password,
+          'device_token': deviceToken ?? '',
+          'app_version': AppEnvironment.appVersion,
         },
-      );
-      print('No Internet connection');
+      ).timeout(const Duration(seconds: 12));
+
+      final Map<String, dynamic> data = jsonDecode(response.body) as Map<String, dynamic>;
+      AppLogger.debug('Login response', data);
+
+      if (response.statusCode != 200) {
+        return const AppResult<UserSession>.failure('Username atau password salah.');
+      }
+
+      if (data['success'] == false) {
+        return AppResult<UserSession>.failure('${data['message'] ?? 'Login gagal.'}');
+      }
+
+      final sessionPayload = Map<String, dynamic>.from(data['for_session'] as Map? ?? <String, dynamic>{});
+      final appVersion = '${sessionPayload['app_version'] ?? ''}';
+      if (appVersion.isNotEmpty && appVersion != AppEnvironment.appVersion) {
+        return const AppResult<UserSession>.failure(
+          'Versi aplikasi tidak sesuai. Silakan update ke versi terbaru terlebih dahulu.',
+        );
+      }
+
+      return AppResult<UserSession>.success(UserSession.fromLoginPayload(sessionPayload));
+    } catch (error) {
+      AppLogger.error('Login request failed', error);
+      return const AppResult<UserSession>.failure('Terjadi kesalahan saat login. Coba lagi beberapa saat lagi.');
+    }
+  }
+
+  Future<AppResult<Map<String, String>>> fetchOperationalSettings() async {
+    try {
+      final response = await _apiClient.getMain('getSetting').timeout(const Duration(seconds: 12));
+      final decoded = jsonDecode(response.body);
+      if (decoded is! List) {
+        return const AppResult<Map<String, String>>.failure('Format pengaturan server tidak dikenali.');
+      }
+
+      final values = <String, String>{};
+      for (final item in decoded.cast<Map<String, dynamic>>()) {
+        values['${item['name_setting'] ?? ''}'] = '${item['value'] ?? ''}';
+      }
+
+      return AppResult<Map<String, String>>.success(values);
+    } catch (error) {
+      AppLogger.error('Failed to fetch operational settings', error);
+      return const AppResult<Map<String, String>>.failure('Pengaturan operasional tidak berhasil dimuat.');
+    }
+  }
+
+  Future<void> cacheOperationalSettings(Map<String, String> values) {
+    return _preferences.saveRemoteSettings(values);
+  }
+
+  Future<AppResult<void>> unregisterDevice({required int userId}) async {
+    if (_preferences.manualServiceBaseUrl.isEmpty) {
+      return const AppResult<void>.success(null);
+    }
+
+    try {
+      await _apiClient.postManual('unregdes?USERID=$userId').timeout(const Duration(seconds: 10));
+      return const AppResult<void>.success(null);
+    } catch (error) {
+      AppLogger.error('Failed to unregister device token', error);
+      return const AppResult<void>.failure('Tidak dapat membersihkan token perangkat.');
     }
   }
 }

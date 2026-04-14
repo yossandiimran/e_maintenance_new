@@ -1,52 +1,76 @@
 # E-Maintenance
 
-E-Maintenance adalah aplikasi Flutter untuk inspeksi rutin kendaraan, pelaporan transaksi, pelaporan user, dan administrasi akun internal Central Springbed.
+E-Maintenance adalah aplikasi Flutter untuk inspeksi kendaraan, pelaporan transaksi, pelaporan user, dan administrasi akun internal Central Springbed.
 
-## Status Saat Ini
+## Perubahan Utama
 
-- Flutter toolchain sudah dinaikkan ke Flutter `3.41.x` dan Dart `3.11.x`.
-- `flutter analyze` lulus tanpa issue.
-- `flutter test` lulus.
-- Android debug build lulus lewat `android\\gradlew app:assembleDebug`.
-- UI utama sudah diperbarui mengikuti [DESIGN.md](./DESIGN.md) dan arahan [updateuiux.md](./updateuiux.md) dengan pendekatan Linear-inspired dark interface.
+- UI/UX diseragamkan ulang mengikuti [DESIGN.md](./DESIGN.md) dengan arah warm Mistral-inspired.
+- Aplikasi sekarang mendukung `light mode` dan `dark mode` dengan toggle di menu pengaturan.
+- Arsitektur `part of` monolitik dihapus dari app code aktif dan diganti dengan screen, service, controller, dan theme yang terpisah.
+- Global state lama dipindah ke controller typed:
+  - `AppSettingsController`
+  - `SessionController`
+- Navigasi utama sekarang typed lewat `AppRouter`.
+- Service layer tidak lagi memanggil dialog, snackbar, atau navigation secara langsung.
+- Launcher icon diganti memakai `assets/icon_new.png`.
+- Asset dan dependency yang tidak dipakai dibersihkan.
 
 ## Modul Utama
 
-- `Splash` dan `Login` untuk masuk ke aplikasi.
-- `Dashboard` untuk akses cepat ke alur inspeksi, laporan, dan pengelolaan user.
-- `QR Scanner` untuk membaca barcode/serial kendaraan.
-- `Insert Page` untuk checklist inspeksi kendaraan.
-- `Profile` dan `Config Setting` untuk akun serta pengaturan koneksi.
-- `Laporan Transaksi` dan `Laporan User` untuk kebutuhan monitoring dan ekspor.
+- `Splash` dan `Login`
+- `Home` dengan `Dashboard` dan `Profile`
+- `Config Setting` untuk host, koneksi, dan toggle theme
+- `QR Scanner`
+- `Insert Page` untuk checklist inspeksi kendaraan
+- `Laporan Transaksi`
+- `Laporan User`
+- `Manajemen User`
 
-## Stack Teknis
+## Stack
 
-- Flutter + Material
+- Flutter + Material 3
+- Provider
+- Shared Preferences
 - Firebase Core + Firebase Messaging
-- HTTP / Dio untuk komunikasi backend
-- `excel` untuk ekspor laporan
-- `image_picker` untuk foto inspeksi
-- `permission_handler` untuk permission Android
-- Plugin Zebra dan QR Scanner dipatch lokal di `third_party/` agar kompatibel dengan toolchain Android terbaru
+- HTTP
+- QR Code Scanner
+- Image Picker
+- Excel export
+- Permission Handler
 
 ## Struktur Penting
 
-- `lib/main.dart` bootstrap aplikasi dan theme global
-- `lib/header.dart` agregasi `part of` untuk screen, service, dan widget
-- `lib/screen/` layer presentasi
-- `lib/service/` integrasi backend
-- `lib/helper/` global state sederhana, preference, helper formatting
-- `third_party/flutter_zebra_sdk` patch lokal plugin Zebra
-- `third_party/qr_code_scanner` patch lokal plugin QR Scanner
-- `DESIGN.md` design system hasil generator `getdesign`
+- `lib/main.dart` bootstrap provider, theme, dan messaging
+- `lib/route.dart` router typed
+- `lib/app/app_theme.dart` design tokens dan theme light/dark
+- `lib/controllers/` state global aplikasi
+- `lib/core/` config, logging, result, dan API client
+- `lib/service/` service layer tanpa side-effect UI
+- `lib/screen/` seluruh halaman aplikasi
+- `lib/widget/` komponen visual bersama
+- `updateuiux.md` pedoman UI/UX yang sesuai implementasi terbaru
+
+## Konfigurasi
+
+Default konfigurasi operasional sekarang tersentral di `AppEnvironment` dan bisa dioverride via `dart-define`:
+
+```powershell
+flutter run `
+  --dart-define=EMAINTENANCE_API_HOST=10.0.0.2 `
+  --dart-define=EMAINTENANCE_API_BASE_PATH=/e_maintenance_v2/public/ `
+  --dart-define=EMAINTENANCE_ASSET_BASE_PATH=/e_maintenance/public/
+```
+
+Host aktif juga bisa diubah langsung dari screen pengaturan tanpa edit source code.
 
 ## Menjalankan Proyek
 
-1. Install Flutter SDK yang kompatibel dengan channel stable modern.
-2. Jalankan `flutter pub get`.
-3. Jalankan aplikasi dengan `flutter run`.
+```powershell
+flutter pub get
+flutter run
+```
 
-Untuk verifikasi lokal:
+## Verifikasi Lokal
 
 ```powershell
 flutter analyze
@@ -55,20 +79,24 @@ cd android
 .\gradlew app:assembleDebug
 ```
 
+## Status Verifikasi Terbaru
+
+- `flutter analyze` lulus
+- `flutter test` lulus
+- Widget test sudah mencakup:
+  - validasi login kosong
+  - toggle light/dark mode di settings
+
 ## Catatan Desain
 
 - Referensi visual utama ada di [DESIGN.md](./DESIGN.md).
 - Checklist implementasi UI ada di [updateuiux.md](./updateuiux.md).
-- Arah desain sekarang memakai dark surfaces, border halus, accent indigo, dan hierarchy tipografi yang lebih rapat untuk tampilan mobile yang lebih modern.
+- Implementasi sekarang memakai warm surfaces, orange-gold block identity, dan layout mobile-first yang konsisten di seluruh screen aktif.
 
 ## Catatan Arsitektur
 
-Project ini masih memakai pola `part of` monolitik lewat `lib/header.dart`. Pola ini masih berfungsi, tetapi membuat coupling tinggi antar screen, service, helper, dan widget. Untuk pengembangan jangka panjang, refactor bertahap ke struktur feature-based per file independen akan jauh lebih sehat.
-
-## Technical Debt yang Masih Penting
-
-- Banyak state global masih berada di helper/top-level variable.
-- Layer service, UI, dan navigation masih saling terikat kuat.
-- Validasi form dan error handling belum konsisten di semua screen.
-- Sebagian screen admin/laporan masih membawa pola layout lama dan perlu pass UI lanjutan agar 100% seragam.
-- Dependensi lama sudah distabilkan, tetapi masih ada patch lokal di `third_party/` yang sebaiknya diganti dengan package upstream yang lebih aktif saat memungkinkan.
+- `part of` tidak lagi dipakai di alur aplikasi aktif.
+- Routing string-based dan argument dynamic sudah diganti di flow utama.
+- Logging `print()` pada kode aplikasi aktif sudah dibersihkan.
+- Hardcoded config yang sebelumnya tersebar dipusatkan ke config dan storage.
+- Launcher icon dan asset bundle sudah dirapikan.

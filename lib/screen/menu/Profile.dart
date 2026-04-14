@@ -1,165 +1,112 @@
-// ignore_for_file: file_names, avoid_unnecessary_containers, prefer_const_constructors, prefer_const_literals_to_create_immutables
-part of "../../header.dart";
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-class Profile extends StatefulWidget {
-  const Profile({super.key});
-  @override
-  ProfileState createState() => ProfileState();
-}
+import 'package:e_maintenance/controllers/app_settings_controller.dart';
+import 'package:e_maintenance/controllers/session_controller.dart';
+import 'package:e_maintenance/route.dart';
+import 'package:e_maintenance/widget/CustomWidget.dart';
+import 'package:e_maintenance/widget/TextStyling.dart';
 
-class ProfileState extends State<Profile> {
-  @override
-  void initState() {
-    super.initState();
-  }
+class Profile extends StatelessWidget {
+  const Profile({
+    super.key,
+    required this.onOpenSettings,
+    required this.onLogout,
+  });
+
+  final VoidCallback onOpenSettings;
+  final Future<void> Function() onLogout;
 
   @override
   Widget build(BuildContext context) {
-    final ui = CustomWidget();
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return;
-        alert.alertConfirmExit(context);
-      },
-      child: Scaffold(
-        resizeToAvoidBottomInset: false,
-        backgroundColor: linearBg,
-        body: Container(
-          decoration: BoxDecoration(gradient: global.heroGradient),
-          child: SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 120),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Akun Pengguna", style: textStyling.linearDisplay(30)),
-                  const SizedBox(height: 8),
-                  Text(
-                    "Kelola informasi akun, preferensi aplikasi, dan sesi aktif Anda.",
-                    style: textStyling.linearBody(15, color: linearTextSecondary),
+    final session = context.watch<SessionController>().session;
+    final settings = context.watch<AppSettingsController>();
+    final tokens = context.tokens;
+
+    if (session == null) {
+      return const Center(child: AppLoadingView());
+    }
+
+    return ListView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+      children: <Widget>[
+        const AppBrandBlocks(),
+        const SizedBox(height: 10),
+        Text('Akun', style: context.textTheme.displayMedium),
+        const SizedBox(height: 4),
+        Text(
+          'Preferensi akun dan aplikasi.',
+          style: context.textTheme.bodyMedium?.copyWith(color: tokens.textMuted),
+        ),
+        const SizedBox(height: 12),
+        AppSurfaceCard(
+          child: Column(
+            children: <Widget>[
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  gradient: tokens.brandGradient,
+                  borderRadius: BorderRadius.circular(22),
+                ),
+                child: Icon(Icons.person_rounded, size: 36, color: tokens.pageBackground),
+              ),
+              const SizedBox(height: 12),
+              Text(session.name, style: context.textTheme.headlineMedium, textAlign: TextAlign.center),
+              const SizedBox(height: 6),
+              Text(
+                session.username,
+                style: context.textTheme.bodyMedium?.copyWith(color: tokens.textMuted),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment: WrapAlignment.center,
+                children: <Widget>[
+                  AppStatusChip(
+                    label: 'Lokasi ${session.werks}',
+                    icon: Icons.location_on_outlined,
+                    color: tokens.accent,
                   ),
-                  const SizedBox(height: 20),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(24),
-                    decoration: ui.linearHeroDecoration(),
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 108,
-                          height: 108,
-                          decoration: ui.linearCardDecoration(
-                            radius: 30,
-                            color: linearAccent.withValues(alpha: 0.14),
-                          ),
-                          child: Icon(Icons.person_rounded, size: 48, color: linearTextPrimary),
-                        ),
-                        const SizedBox(height: 18),
-                        Text(
-                          preference.getData("nama"),
-                          style: textStyling.linearTitle(22, color: linearTextPrimary, strong: true),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 10,
-                          runSpacing: 10,
-                          alignment: WrapAlignment.center,
-                          children: [
-                            ui.linearPill(icon: Icons.verified_user_rounded, label: "User aktif"),
-                            ui.linearPill(icon: Icons.terminal_rounded, label: "Version $appVersion"),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: ui.linearPanelDecoration(),
-                    child: Column(
-                      children: [
-                        _buildProfileTile(
-                          icon: Icons.lock_rounded,
-                          color: linearAccent,
-                          title: "Ganti Password",
-                          subtitle: "Segera aktifkan alur reset yang lebih aman untuk akun operator.",
-                          onTap: () {},
-                        ),
-                        const SizedBox(height: 12),
-                        _buildProfileTile(
-                          icon: Icons.settings_rounded,
-                          color: linearSuccess,
-                          title: "Pengaturan App",
-                          subtitle: "Atur koneksi backend, test host, dan preferensi app.",
-                          onTap: () => Navigator.pushNamed(context, '/configSetting'),
-                        ),
-                        const SizedBox(height: 12),
-                        _buildProfileTile(
-                          icon: Icons.logout_rounded,
-                          color: defRed,
-                          title: "Logout",
-                          subtitle: "Akhiri sesi di perangkat ini dan kembali ke halaman login.",
-                          onTap: () => alert.alertLogout(context),
-                        ),
-                      ],
-                    ),
+                  AppStatusChip(
+                    label: settings.themeMode == ThemeMode.dark ? 'Dark mode' : 'Light mode',
+                    icon: settings.themeMode == ThemeMode.dark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
+                    color: tokens.brand,
                   ),
                 ],
               ),
-            ),
+            ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildProfileTile({
-    required IconData icon,
-    required Color color,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    final ui = CustomWidget();
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: ui.linearCardDecoration(radius: 20),
-        child: Row(
-          children: [
-            Container(
-              width: 52,
-              height: 52,
-              decoration: ui.linearCardDecoration(
-                radius: 16,
-                color: color.withValues(alpha: 0.14),
-              ),
-              child: Icon(icon, color: color),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: textStyling.linearTitle(16, color: linearTextPrimary, strong: true)),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: textStyling.linearBody(13, color: linearTextTertiary, height: 1.5),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 10),
-            Icon(Icons.arrow_forward_ios_rounded, size: 16, color: linearTextQuaternary),
-          ],
+        const SizedBox(height: 12),
+        AppActionCard(
+          icon: Icons.tune_rounded,
+          title: 'Pengaturan aplikasi',
+          subtitle: 'Atur light/dark mode, host backend, tes koneksi, dan sinkronisasi setting server.',
+          onTap: onOpenSettings,
         ),
-      ),
+        const SizedBox(height: 10),
+        if (!session.isRestrictedOperator) ...<Widget>[
+          AppActionCard(
+            icon: Icons.manage_accounts_outlined,
+            title: 'Manajemen user',
+            subtitle: 'Masuk ke modul pengelolaan akun internal dan hak akses operasional.',
+            accentColor: tokens.success,
+            onTap: () => Navigator.of(context).push(AppRouter.userManagement()),
+          ),
+          const SizedBox(height: 10),
+        ],
+        AppActionCard(
+          icon: Icons.logout_rounded,
+          title: 'Logout',
+          subtitle: 'Akhiri sesi di perangkat ini dan kembali ke halaman login.',
+          accentColor: tokens.danger,
+          onTap: onLogout,
+        ),
+      ],
     );
   }
 }

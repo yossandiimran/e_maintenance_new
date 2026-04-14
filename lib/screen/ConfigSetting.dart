@@ -1,292 +1,260 @@
-// ignore_for_file: constant_identifier_names, sort_child_properties_last, avoid_print, prefer_const_constructors, use_build_context_synchronously, file_names, non_constant_identifier_names, prefer_interpolation_to_compose_strings, curly_braces_in_flow_control_structures, prefer_typing_uninitialized_variables
-part of '../header.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import 'package:e_maintenance/controllers/app_settings_controller.dart';
+import 'package:e_maintenance/controllers/session_controller.dart';
+import 'package:e_maintenance/route.dart';
+import 'package:e_maintenance/service/AuthService.dart';
+import 'package:e_maintenance/service/RestartGlassfish.dart';
+import 'package:e_maintenance/widget/Alert.dart';
+import 'package:e_maintenance/widget/CustomWidget.dart';
+import 'package:e_maintenance/widget/TextStyling.dart';
 
 class ConfigSettingPage extends StatefulWidget {
-  const ConfigSettingPage({Key? key}) : super(key: key);
+  const ConfigSettingPage({super.key});
+
   @override
-  ConfigSettingPageState createState() => ConfigSettingPageState();
+  State<ConfigSettingPage> createState() => _ConfigSettingPageState();
 }
 
-class ConfigSettingPageState extends State<ConfigSettingPage> {
-  final addressIpController = TextEditingController();
-
-  bool isRestart = false, checkConn = false, isConnect = false;
+class _ConfigSettingPageState extends State<ConfigSettingPage> {
+  final _hostController = TextEditingController();
 
   @override
-  void initState() {
-    super.initState();
-    checkConnection();
+  void dispose() {
+    _hostController.dispose();
+    super.dispose();
   }
 
-  checkConnection() async {
-    var globalIp = await preference.getData("globalIp") ?? global.baseIp;
-    var checkedIp = globalIp.split(":")[0];
-    if (!checkConn) {
-      setState(() => checkConn = true);
-      await Socket.connect(checkedIp, 80, timeout: Duration(seconds: 5)).then((socket) {
-        alert.alertSuccess(context: context, text: "IP Tersambung !");
-        socket.destroy();
-        setState(() => checkConn = false);
-        setState(() => isConnect = true);
-      }).catchError((error) {
-        alert.alertWarning(context: context, text: "IP tidak tersambung, pastikan VPN aktif !");
-        setState(() => checkConn = false);
-        setState(() => isConnect = false);
-      });
+  Future<void> _saveHost() async {
+    final settingsController = context.read<AppSettingsController>();
+    _hostController.text = settingsController.activeHost;
+
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Ubah host aktif'),
+          content: TextFormField(
+            controller: _hostController,
+            decoration: const InputDecoration(
+              labelText: 'Host / IP backend',
+              prefixIcon: Icon(Icons.dns_outlined),
+            ),
+          ),
+          actions: <Widget>[
+            OutlinedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Batal'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Simpan'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (saved != true) {
+      return;
     }
+
+    await settingsController.setHostOverride(_hostController.text);
+    if (!mounted) {
+      return;
+    }
+
+    Alert.showSuccessSnackBar(context, 'Host aktif berhasil diperbarui.');
+  }
+
+  Future<void> _testConnection() async {
+    final service = context.read<RestartGlassfishService>();
+    final host = context.read<AppSettingsController>().activeHost;
+    final result = await Alert.runWithLoading(
+      context: context,
+      message: 'Menguji koneksi host...',
+      task: () => service.checkConnection(host),
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (result.isSuccess) {
+      Alert.showSuccessSnackBar(context, 'Host aktif berhasil dijangkau.');
+      return;
+    }
+
+    Alert.showErrorSnackBar(context, result.errorMessage ?? 'Koneksi host gagal.');
+  }
+
+  Future<void> _restartConnection() async {
+    final result = await Alert.runWithLoading(
+      context: context,
+      message: 'Merestart koneksi backend...',
+      task: () => context.read<RestartGlassfishService>().restartConnection(),
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (result.isSuccess) {
+      Alert.showSuccessSnackBar(context, result.data ?? 'Restart koneksi berhasil.');
+      return;
+    }
+
+    Alert.showErrorSnackBar(context, result.errorMessage ?? 'Restart koneksi gagal.');
+  }
+
+  Future<void> _syncServerSettings() async {
+    final authService = context.read<AuthService>();
+    final settingsController = context.read<AppSettingsController>();
+    final result = await Alert.runWithLoading(
+      context: context,
+      message: 'Menyinkronkan setting server...',
+      task: () => authService.fetchOperationalSettings(),
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (!result.isSuccess || result.data == null) {
+      Alert.showErrorSnackBar(context, result.errorMessage ?? 'Sinkronisasi gagal.');
+      return;
+    }
+
+    await authService.cacheOperationalSettings(result.data!);
+    await settingsController.syncRemoteSettings(result.data!);
+    if (!mounted) {
+      return;
+    }
+
+    Alert.showSuccessSnackBar(context, 'Setting operasional berhasil disegarkan.');
   }
 
   @override
   Widget build(BuildContext context) {
-    final ui = CustomWidget();
-    return Scaffold(
-      backgroundColor: linearBg,
-      body: PopScope(
-        canPop: false,
-        onPopInvokedWithResult: (didPop, result) {
-          if (didPop) return;
-          Navigator.pop(context);
-        },
-        child: Container(
-          decoration: BoxDecoration(gradient: global.heroGradient),
-          child: SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: IconButton.styleFrom(
-                          backgroundColor: global.surfaceL1,
-                          side: BorderSide(color: global.borderSubtle),
-                        ),
-                        icon: Icon(Icons.arrow_back_ios_new_rounded, color: linearTextPrimary, size: 18),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text("Pengaturan App", style: textStyling.linearDisplay(28)),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    "Kontrol koneksi backend, restart layanan, dan akses pengelolaan user dari satu panel.",
-                    style: textStyling.linearBody(15, color: linearTextSecondary),
-                  ),
-                  const SizedBox(height: 18),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: ui.linearHeroDecoration(),
-                    child: Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: [
-                        ui.linearPill(
-                          icon: isConnect ? Icons.cloud_done_rounded : Icons.cloud_off_rounded,
-                          label: isConnect ? "Host tersambung" : "Host belum tersambung",
-                          color: (isConnect ? linearSuccess : defRed).withValues(alpha: 0.14),
-                          textColor: isConnect ? linearSuccessPill : defRed,
-                        ),
-                        ui.linearPill(
-                          icon: Icons.link_rounded,
-                          label: "Default ${global.baseIp}",
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  _buildSettingTile(
-                    icon: Icons.http_rounded,
-                    color: linearAccent,
-                    title: "Setting IP",
-                    subtitle: "Atur host API aktif untuk kebutuhan VPN atau server lokal.",
-                    trailing: Text(
-                      (preference.getData("globalIp") ?? global.baseIp).toString(),
-                      style: textStyling.linearCaption(11),
-                    ),
-                    onTap: _showHostDialog,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildSettingTile(
-                    icon: Icons.restart_alt_rounded,
-                    color: defOrange,
-                    title: "Restart Koneksi",
-                    subtitle: "Restart layanan backend jika koneksi SAP atau API mengalami timeout.",
-                    trailing: isRestart
-                        ? SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2.4, color: linearAccent),
-                          )
-                        : null,
-                    onTap: () async {
-                      if (preference.getData("groupUser").toString() != "4") {
-                        isRestart = true;
-                        setState(() {});
-                        await RestartGlassfish(context: context, obj: {}).restartConnection();
-                        isRestart = false;
-                        setState(() {});
-                      } else {
-                        alert.alertWarning(context: context, text: "Anda tidak memiliki akses !");
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  _buildSettingTile(
-                    icon: Icons.cast_connected_rounded,
-                    color: isConnect ? linearSuccess : linearAccent,
-                    title: "Test Koneksi",
-                    subtitle: "Periksa apakah host saat ini dapat dijangkau dari perangkat.",
-                    trailing: checkConn
-                        ? SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2.4, color: linearAccent),
-                          )
-                        : null,
-                    onTap: () async {
-                      checkConnection();
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  _buildSettingTile(
-                    icon: Icons.manage_accounts_rounded,
-                    color: linearBrand,
-                    title: "Setting User",
-                    subtitle: "Masuk ke modul pengelolaan akun dan hak akses.",
-                    onTap: () async {
-                      if (preference.getData("groupUser").toString() != "4") {
-                        Navigator.pushNamed(context, '/user');
-                      } else {
-                        alert.alertWarning(context: context, text: "Anda tidak memiliki akses !");
-                      }
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+    final session = context.watch<SessionController>().session;
+    final settingsController = context.watch<AppSettingsController>();
+    final tokens = context.tokens;
+    final isRestricted = session?.isRestrictedOperator ?? true;
 
-  Future<void> _showHostDialog() async {
-    var globalIp = await preference.getData("globalIp") ?? global.baseIp;
-    addressIpController.text = globalIp.toString();
-    if (!mounted) return;
-    return showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        final ui = CustomWidget();
-        return AlertDialog(
-          contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
-          content: SizedBox(
-            width: 280,
+    return AppPageScaffold(
+      title: 'Pengaturan',
+      subtitle: 'Kontrol host aktif, mode light/dark, dan utilitas operasional aplikasi.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          AppSurfaceCard(
             child: Column(
-              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Host aktif",
-                  style: textStyling.linearTitle(18, color: linearTextPrimary, strong: true),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  "Default : ${global.baseIp}",
-                  style: textStyling.linearBody(13, color: linearTextTertiary),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: addressIpController,
-                  style: textStyling.linearBody(15, color: linearTextPrimary),
-                  decoration: ui.linearInputDecoration(
-                    label: "Host / IP",
-                    hint: global.baseIp,
-                    icon: Icons.http_rounded,
-                  ),
-                ),
-                const SizedBox(height: 18),
-                Row(
-                  children: [
-                    Expanded(
-                      child: FilledButton(
-                        onPressed: () async {
-                          await preference.setString("globalIp", addressIpController.text);
-                          Navigator.pop(context);
-                          checkConnection();
-                        },
-                        style: ui.linearPrimaryButtonStyle(),
-                        child: const Text("Simpan"),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: ui.linearGhostButtonStyle(),
-                        child: const Text("Batal"),
-                      ),
-                    ),
-                  ],
+              children: <Widget>[
+                Text('Preferensi tampilan', style: context.textTheme.titleLarge),
+                const SizedBox(height: 6),
+                SwitchListTile.adaptive(
+                  value: settingsController.themeMode == ThemeMode.dark,
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Dark mode'),
+                  subtitle: const Text('Aktifkan tema gelap untuk penggunaan area kerja yang redup.'),
+                  onChanged: (value) {
+                    settingsController.setThemeMode(value ? ThemeMode.dark : ThemeMode.light);
+                  },
                 ),
               ],
             ),
           ),
-        );
-      },
-    );
-  }
+          const SizedBox(height: 12),
+          AppSurfaceCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: <Widget>[
+                    AppStatusChip(
+                      label: 'Host ${settingsController.activeHost}',
+                      icon: Icons.dns_rounded,
+                      color: tokens.accent,
+                    ),
+                    AppStatusChip(
+                      label: isRestricted ? 'Operator' : 'Admin',
+                      icon: isRestricted ? Icons.lock_outline_rounded : Icons.verified_user_outlined,
+                      color: isRestricted ? tokens.warning : tokens.success,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text('Operasional', style: context.textTheme.titleLarge),
+                const SizedBox(height: 4),
+                Text(
+                  'Kontrol penting dirapikan dalam satu panel.',
+                  style: context.textTheme.bodyMedium?.copyWith(color: tokens.textMuted),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          AppActionCard(
+            icon: Icons.dns_outlined,
+            title: 'Ganti host backend',
+            subtitle: 'Ubah IP atau host aktif tanpa harus menyentuh source code aplikasi.',
+            onTap: _saveHost,
+            accentColor: tokens.accent,
+          ),
+          const SizedBox(height: 10),
+          AppActionCard(
+            icon: Icons.wifi_tethering_outlined,
+            title: 'Tes koneksi host',
+            subtitle: 'Periksa cepat apakah backend saat ini dapat dijangkau dari perangkat.',
+            onTap: _testConnection,
+            accentColor: tokens.success,
+          ),
+          const SizedBox(height: 10),
+          AppActionCard(
+            icon: Icons.sync_rounded,
+            title: 'Sinkronkan setting server',
+            subtitle: 'Ambil ulang setting operasional seperti URL SAP, credential, dan konfigurasi runtime.',
+            onTap: _syncServerSettings,
+            accentColor: tokens.brand,
+          ),
+          const SizedBox(height: 10),
+          AppActionCard(
+            icon: Icons.restart_alt_rounded,
+            title: 'Restart koneksi backend',
+            subtitle: isRestricted
+                ? 'Aksi ini khusus admin atau supervisor.'
+                : 'Reset koneksi backend jika SAP atau integrasi operasional sedang timeout.',
+            onTap: () {
+              if (isRestricted) {
+                Alert.showErrorSnackBar(context, 'Anda tidak memiliki akses ke menu restart koneksi.');
+                return;
+              }
+              _restartConnection();
+            },
+            accentColor: tokens.warning,
+          ),
+          const SizedBox(height: 10),
+          AppActionCard(
+            icon: Icons.manage_accounts_outlined,
+            title: 'Kelola user',
+            subtitle: isRestricted
+                ? 'Aksi ini hanya tersedia untuk admin atau supervisor.'
+                : 'Masuk ke modul pengelolaan akun dan hak akses user.',
+            onTap: () {
+              if (isRestricted) {
+                Alert.showErrorSnackBar(context, 'Anda tidak memiliki akses ke manajemen user.');
+                return;
+              }
 
-  Widget _buildSettingTile({
-    required IconData icon,
-    required Color color,
-    required String title,
-    required String subtitle,
-    Widget? trailing,
-    required VoidCallback onTap,
-  }) {
-    final ui = CustomWidget();
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(22),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: ui.linearPanelDecoration(radius: 22),
-        child: Row(
-          children: [
-            Container(
-              width: 54,
-              height: 54,
-              decoration: ui.linearCardDecoration(
-                radius: 18,
-                color: color.withValues(alpha: 0.14),
-              ),
-              child: Icon(icon, color: color),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: textStyling.linearTitle(16, color: linearTextPrimary, strong: true)),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: textStyling.linearBody(13, color: linearTextTertiary, height: 1.5),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 10),
-            trailing ?? Icon(Icons.arrow_forward_ios_rounded, size: 16, color: linearTextQuaternary),
-          ],
-        ),
+              Navigator.of(context).push(AppRouter.userManagement());
+            },
+            accentColor: tokens.danger,
+          ),
+        ],
       ),
     );
   }

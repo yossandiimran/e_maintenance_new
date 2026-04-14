@@ -1,585 +1,357 @@
-// ignore_for_file: file_names, prefer_const_constructors,, prefer_interpolation_to_compose_strings
+import 'package:flutter/material.dart';
 
-part of '../header.dart';
+import 'package:e_maintenance/widget/TextStyling.dart';
 
-class CustomWidget {
-  radiusVal(radius) => Radius.circular(radius);
+class AppPageScaffold extends StatelessWidget {
+  const AppPageScaffold({
+    super.key,
+    required this.title,
+    this.subtitle,
+    required this.child,
+    this.actions = const <Widget>[],
+    this.showBackButton = true,
+    this.scrollable = true,
+    this.padding = const EdgeInsets.fromLTRB(16, 6, 16, 18),
+    this.bottomNavigationBar,
+    this.floatingActionButton,
+  });
 
-  BoxDecoration linearPanelDecoration({
-    double radius = 24,
-    Color? color,
-    bool elevated = true,
-    bool inset = false,
-  }) {
-    return BoxDecoration(
-      color: color ?? global.surfaceL1,
-      borderRadius: BorderRadius.circular(radius),
-      border: Border.all(color: global.borderStandard),
-      boxShadow: [
-        if (elevated)
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.35),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
+  final String title;
+  final String? subtitle;
+  final Widget child;
+  final List<Widget> actions;
+  final bool showBackButton;
+  final bool scrollable;
+  final EdgeInsets padding;
+  final Widget? bottomNavigationBar;
+  final Widget? floatingActionButton;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+
+    return Scaffold(
+      backgroundColor: tokens.pageBackground,
+      bottomNavigationBar: bottomNavigationBar,
+      floatingActionButton: floatingActionButton,
+      body: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: <Color>[
+              tokens.heroStart,
+              tokens.pageBackground,
+            ],
           ),
-        if (inset)
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
-            blurRadius: 14,
-            spreadRadius: -8,
+        ),
+        child: SafeArea(
+          child: Column(
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    if (showBackButton)
+                      IconButton(
+                        onPressed: () => Navigator.of(context).maybePop(),
+                        icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
+                      ),
+                    if (showBackButton) const SizedBox(width: 6),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          const AppBrandBlocks(height: 8),
+                          const SizedBox(height: 10),
+                          Text(title, style: context.textTheme.displayMedium),
+                          if (subtitle != null) ...<Widget>[
+                            const SizedBox(height: 4),
+                            Text(subtitle!, style: context.textTheme.bodyMedium),
+                          ],
+                        ],
+                      ),
+                    ),
+                    if (actions.isNotEmpty) ...<Widget>[
+                      const SizedBox(width: 12),
+                      Row(mainAxisSize: MainAxisSize.min, children: actions),
+                    ],
+                  ],
+                ),
+              ),
+              Expanded(
+                child: scrollable
+                    ? SingleChildScrollView(
+                        padding: padding,
+                        physics: const BouncingScrollPhysics(),
+                        child: child,
+                      )
+                    : Padding(
+                        padding: padding,
+                        child: child,
+                      ),
+              ),
+            ],
           ),
-      ],
-    );
-  }
-
-  BoxDecoration linearCardDecoration({
-    double radius = 20,
-    Color? color,
-  }) {
-    return BoxDecoration(
-      color: color ?? global.surfaceL1,
-      borderRadius: BorderRadius.circular(radius),
-      border: Border.all(color: global.borderSubtle),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.25),
-          blurRadius: 20,
-          offset: const Offset(0, 10),
         ),
-      ],
+      ),
     );
   }
+}
 
-  BoxDecoration linearHeroDecoration() {
-    return BoxDecoration(
-      gradient: global.heroGradient,
-      border: Border.all(color: global.borderSubtle),
-      borderRadius: BorderRadius.circular(28),
-      boxShadow: [
-        BoxShadow(
-          color: linearAccent.withValues(alpha: 0.08),
-          blurRadius: 30,
-          offset: const Offset(0, 18),
-        ),
-      ],
+class AppBrandBlocks extends StatelessWidget {
+  const AppBrandBlocks({
+    super.key,
+    this.height = 14,
+  });
+
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+
+    return Row(
+      children: tokens.blockColors
+          .map(
+            (color) => Expanded(
+              child: Container(
+                height: height,
+                margin: const EdgeInsets.only(right: 4),
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+          )
+          .toList(),
     );
   }
+}
 
-  InputDecoration linearInputDecoration({
-    required String label,
-    String? hint,
-    IconData? icon,
-    Widget? suffix,
-  }) {
-    return InputDecoration(
-      labelText: label,
-      hintText: hint,
-      prefixIcon: icon != null ? Icon(icon, color: linearTextTertiary) : null,
-      suffixIcon: suffix,
-    );
-  }
+class AppSurfaceCard extends StatelessWidget {
+  const AppSurfaceCard({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.all(14),
+    this.color,
+    this.radius = 18,
+  });
 
-  ButtonStyle linearPrimaryButtonStyle({Color? backgroundColor}) {
-    return FilledButton.styleFrom(
-      backgroundColor: backgroundColor ?? linearBrand,
-      foregroundColor: linearTextPrimary,
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      textStyle: textStyling.linearBody(15, color: linearTextPrimary, emphasis: true),
-    );
-  }
+  final Widget child;
+  final EdgeInsets padding;
+  final Color? color;
+  final double radius;
 
-  ButtonStyle linearGhostButtonStyle() {
-    return OutlinedButton.styleFrom(
-      foregroundColor: linearTextSecondary,
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-      side: BorderSide(color: global.borderStandard),
-      backgroundColor: global.surfaceL1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      textStyle: textStyling.linearBody(14, color: linearTextSecondary, emphasis: true),
-    );
-  }
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
 
-  Widget linearPill({
-    required IconData icon,
-    required String label,
-    Color? color,
-    Color? textColor,
-  }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: padding,
       decoration: BoxDecoration(
-        color: color ?? global.surfaceL1,
+        color: color ?? tokens.surface.withValues(alpha: context.isDarkMode ? 0.9 : 0.96),
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(color: tokens.borderSoft),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: tokens.shadow,
+            blurRadius: 28,
+            offset: const Offset(-8, 16),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+class AppStatusChip extends StatelessWidget {
+  const AppStatusChip({
+    super.key,
+    required this.label,
+    required this.icon,
+    this.color,
+  });
+
+  final String label;
+  final IconData icon;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final tone = color ?? tokens.brand;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: tone.withValues(alpha: context.isDarkMode ? 0.18 : 0.12),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: global.borderSubtle),
+        border: Border.all(color: tone.withValues(alpha: 0.22)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: textColor ?? linearTextSecondary),
-          const SizedBox(width: 8),
+        children: <Widget>[
+          Icon(icon, size: 13, color: tone),
+          const SizedBox(width: 6),
           Text(
             label,
-            style: textStyling.linearCaption(12, color: textColor ?? linearTextSecondary, emphasis: true),
+            style: context.textTheme.labelMedium?.copyWith(color: tone),
           ),
         ],
       ),
     );
   }
+}
 
-  appBarTitle(context, title, color) {
-    return AppBar(
-      backgroundColor: color,
-      elevation: 0,
-      automaticallyImplyLeading: false,
-      leading: Container(
-        margin: const EdgeInsets.only(left: 14, top: 8, bottom: 8),
-        decoration: linearCardDecoration(radius: 16, color: global.surfaceL1),
-        padding: const EdgeInsets.all(10),
-        child: Image.asset("assets/icon.png"),
-      ),
-      title: Text(
-        title,
-        style: textStyling.linearTitle(18, color: linearTextPrimary, strong: true),
-      ),
-      actions: [
-        IconButton(
-          onPressed: () {},
-          icon: Icon(Icons.notifications_on_rounded, color: linearAccent),
+class AppActionCard extends StatelessWidget {
+  const AppActionCard({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    this.accentColor,
+    this.trailing,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  final Color? accentColor;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final accent = accentColor ?? tokens.brand;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: onTap,
+      child: AppSurfaceCard(
+        child: Row(
+          children: <Widget>[
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, color: accent, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(title, style: context.textTheme.titleLarge),
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    style: context.textTheme.bodyMedium?.copyWith(color: tokens.textMuted),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            trailing ?? Icon(Icons.arrow_forward_ios_rounded, size: 16, color: tokens.textMuted),
+          ],
         ),
+      ),
+    );
+  }
+}
+
+class AppSummaryItem extends StatelessWidget {
+  const AppSummaryItem({
+    super.key,
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(label, style: context.textTheme.labelMedium?.copyWith(color: tokens.textMuted)),
+        const SizedBox(height: 4),
+        Text(value, style: context.textTheme.titleMedium),
       ],
     );
   }
+}
 
-  bgAppbar(context) {
-    return Positioned(
-      top: 0,
-      bottom: 0,
-      left: 0,
-      right: 0,
+class AppEmptyState extends StatelessWidget {
+  const AppEmptyState({
+    super.key,
+    required this.title,
+    required this.message,
+    required this.icon,
+    this.action,
+  });
+
+  final String title;
+  final String message;
+  final IconData icon;
+  final Widget? action;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+
+    return AppSurfaceCard(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+        children: <Widget>[
           Container(
-            padding: EdgeInsets.only(top: kToolbarHeight, left: 20, right: 20),
-            height: kToolbarHeight * 2,
+            width: 56,
+            height: 56,
             decoration: BoxDecoration(
-              gradient: global.heroGradient,
+              color: tokens.brandSoft.withValues(alpha: context.isDarkMode ? 0.35 : 0.8),
+              borderRadius: BorderRadius.circular(18),
             ),
+            child: Icon(icon, size: 26, color: tokens.brand),
           ),
+          const SizedBox(height: 12),
+          Text(title, style: context.textTheme.titleLarge, textAlign: TextAlign.center),
+          const SizedBox(height: 4),
+          Text(
+            message,
+            style: context.textTheme.bodyMedium?.copyWith(color: tokens.textMuted),
+            textAlign: TextAlign.center,
+          ),
+          if (action != null) ...<Widget>[
+            const SizedBox(height: 18),
+            action!,
+          ],
         ],
       ),
     );
   }
+}
 
-  getBottomApp({required context, required action}) {
-    return Container(
-      width: global.getWidth(context),
-      padding: EdgeInsets.only(left: 20, right: 20),
-      decoration: decorationGradient3Color(Colors.lightBlue, defBlue, 0.0, 0.0, 50.0, 50.0),
-      child: ListTile(
-        title: Text(
-          "Versi $appVersion ©2022 Central Developer",
-          textAlign: TextAlign.center,
-          style: textStyling.customColor(14, defWhite),
-        ),
-        trailing: IconButton(
-          onPressed: () {
-            if (action == 'pop') Navigator.pop(context);
-            if (action == 'logout') alert.alertLogout(context);
-          },
-          icon: action == 'pop' ? Icon(Icons.arrow_back_ios, color: defWhite) : Icon(Icons.logout, color: Colors.red),
-        ),
+class AppLoadingView extends StatelessWidget {
+  const AppLoadingView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: SizedBox(
+        width: 28,
+        height: 28,
+        child: CircularProgressIndicator(strokeWidth: 2.6),
       ),
     );
-  }
-
-  getBottomApp2({required context, required action}) {
-    return Container(
-      width: global.getWidth(context),
-      padding: EdgeInsets.only(left: 20, right: 20),
-      decoration: decorationGradient3Color(Colors.lightBlue, defBlue, 0.0, 0.0, 50.0, 0.0),
-      child: ListTile(
-        title: Text(
-          "Versi $appVersion ©2023 Central Developer",
-          textAlign: TextAlign.center,
-          style: textStyling.customColor(14, defWhite),
-        ),
-        trailing: IconButton(
-          onPressed: () {
-            if (action == 'pop') Navigator.pop(context);
-            if (action == 'logout') alert.alertLogout(context);
-          },
-          icon: action == 'pop' ? Icon(Icons.arrow_back_ios, color: defWhite) : Icon(Icons.logout, color: Colors.red),
-        ),
-      ),
-    );
-  }
-
-  getWidgetMenu2({required context, routeName, title, color, icon, colorIcon, menuCode, image}) {
-    return GestureDetector(
-      onTap: () {
-        if (routeName == 'back') {
-          Navigator.pop(context);
-        } else {
-          Navigator.pushNamed(context, routeName);
-        }
-      },
-      child: Container(
-        decoration: decCont(defWhite, 20, 20, 20, 20),
-        margin: EdgeInsets.only(left: 15, right: 15, top: 8, bottom: 5),
-        height: kToolbarHeight + 30,
-        width: global.getWidth(context),
-        child: Row(
-          children: [
-            Container(
-              height: kToolbarHeight + 30,
-              width: 70,
-              decoration: BoxDecoration(
-                image: DecorationImage(image: image, fit: BoxFit.contain, scale: 0.5),
-                color: color,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  bottomLeft: Radius.circular(20),
-                ),
-              ),
-            ),
-            Spacer(),
-            Text(title, textAlign: TextAlign.center, style: textStyling.nunitoBold(16, colorIcon)),
-            Spacer(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  getWidgetMenu3({required context, routeName, title, color, icon, colorIcon, menuCode}) {
-    return GestureDetector(
-      onTap: () {
-        if (routeName == 'back') {
-          Navigator.pop(context);
-        } else {
-          Navigator.pushNamed(context, routeName);
-        }
-      },
-      child: Container(
-        decoration: decCont(defWhite, 20, 20, 20, 20),
-        margin: EdgeInsets.only(left: 15, right: 15, top: 8, bottom: 5),
-        height: kToolbarHeight + 30,
-        width: global.getWidth(context),
-        child: Row(
-          children: [
-            Container(
-              height: kToolbarHeight + 30,
-              width: 70,
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  bottomLeft: Radius.circular(20),
-                ),
-              ),
-              child: Icon(icon, color: defWhite, size: 30),
-            ),
-            Spacer(),
-            Text(title, textAlign: TextAlign.center, style: textStyling.nunitoBold(16, colorIcon)),
-            Spacer(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  decorationContainer1(color, radius) {
-    return BoxDecoration(
-      color: color,
-      borderRadius: BorderRadius.all(radiusVal(radius)),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.grey.withValues(alpha: 0.3),
-          spreadRadius: 2,
-          blurRadius: 7,
-          offset: const Offset(0, 3),
-        ),
-      ],
-    );
-  }
-
-  decorationContainer2(color, radius) {
-    return BoxDecoration(
-      color: color,
-      borderRadius: BorderRadius.all(radiusVal(radius)),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.grey.withValues(alpha: 0.3),
-          spreadRadius: 5,
-          blurRadius: 7,
-          offset: const Offset(0, 3),
-        ),
-      ],
-    );
-  }
-
-  decorationContainerGradient(color1, color2, radius) {
-    return BoxDecoration(
-      gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [color1, color2]),
-      borderRadius: BorderRadius.all(radiusVal(radius)),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.grey.withValues(alpha: 0.3),
-          spreadRadius: 2,
-          blurRadius: 7,
-          offset: const Offset(0, 3),
-        ),
-      ],
-    );
-  }
-
-  decorationGradient3Color(color1, color2, bl, br, tl, tr) {
-    return BoxDecoration(
-      gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [color1, color2]),
-      borderRadius: BorderRadius.only(
-        bottomLeft: radiusVal(bl),
-        topLeft: radiusVal(tl),
-        topRight: radiusVal(tr),
-        bottomRight: radiusVal(br),
-      ),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.grey.withValues(alpha: 0.3),
-          spreadRadius: 2,
-          blurRadius: 7,
-          offset: const Offset(0, 3),
-        ),
-      ],
-    );
-  }
-
-  decorationGradient4Color(color1, color2, color3, bl, br, tl, tr) {
-    return BoxDecoration(
-      gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [color1, color2, color3]),
-      borderRadius: BorderRadius.only(
-        bottomLeft: radiusVal(bl),
-        topLeft: radiusVal(tl),
-        topRight: radiusVal(tr),
-        bottomRight: radiusVal(br),
-      ),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.grey.withValues(alpha: 0.3),
-          spreadRadius: 2,
-          blurRadius: 7,
-          offset: const Offset(0, 3),
-        ),
-      ],
-    );
-  }
-
-  decCont(color, double radiusBl, double radiusBr, double radiusTl, double radiusTr) {
-    return BoxDecoration(
-      color: color,
-      borderRadius: BorderRadius.only(
-        bottomLeft: radiusVal(radiusBl),
-        bottomRight: radiusVal(radiusBr),
-        topLeft: radiusVal(radiusTl),
-        topRight: radiusVal(radiusTr),
-      ),
-    );
-  }
-
-  decCont2(color, double radiusBl, double radiusBr, double radiusTl, double radiusTr) {
-    return BoxDecoration(
-      color: color,
-      borderRadius: BorderRadius.only(
-        bottomLeft: radiusVal(radiusBl),
-        bottomRight: radiusVal(radiusBr),
-        topLeft: radiusVal(radiusTl),
-        topRight: radiusVal(radiusTr),
-      ),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.grey.withValues(alpha: 0.3),
-          spreadRadius: 5,
-          blurRadius: 7,
-          offset: const Offset(0, 3),
-        ),
-      ],
-    );
-  }
-
-  decCont3(color, double radiusBl, double radiusBr, double radiusTl, double radiusTr) {
-    return BoxDecoration(
-      color: color,
-      borderRadius: BorderRadius.only(
-        bottomLeft: radiusVal(radiusBl),
-        bottomRight: radiusVal(radiusBr),
-        topLeft: radiusVal(radiusTl),
-        topRight: radiusVal(radiusTr),
-      ),
-      boxShadow: const [
-        BoxShadow(
-          color: Colors.black,
-          spreadRadius: 1,
-          blurRadius: 2,
-          offset: Offset(0, 3),
-        ),
-      ],
-    );
-  }
-
-  textInputDecoration(name, icon, colors) {
-    return InputDecoration(
-      prefixIcon: icon != null ? Icon(icon, color: colors) : null,
-      labelText: name,
-      labelStyle: TextStyle(color: defBlue),
-      enabledBorder: UnderlineInputBorder(borderSide: BorderSide.none),
-    );
-  }
-
-  textInputDecoration2(name, icon, colors) {
-    return InputDecoration(
-      prefixIcon: icon != null ? Icon(icon, color: colors) : null,
-      hintText: name,
-      labelStyle: TextStyle(color: defBlue),
-      enabledBorder: UnderlineInputBorder(borderSide: BorderSide.none),
-    );
-  }
-
-  getChoicePopUp(context) {
-    return {'Logout'}.map((String choice) {
-      return PopupMenuItem<String>(
-        value: choice,
-        child: Row(
-          children: [
-            Icon(
-              choice == "Logout" ? Icons.logout : Icons.settings,
-              color: choice == "Logout" ? defRed : defBlue,
-            ),
-            Text("  $choice")
-          ],
-        ),
-      );
-    }).toList();
-  }
-
-  getImageBgSugar(context) {
-    return Positioned(
-      top: kToolbarHeight * 2,
-      bottom: 0,
-      left: 0,
-      right: 0,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Container(
-            margin: EdgeInsets.only(left: global.getWidth(context) / 2),
-            height: kToolbarHeight * 4,
-            decoration: BoxDecoration(
-              image: DecorationImage(image: AssetImage("assets/ic1bg.png")),
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
-  getItemsDropdown(selection, data) {
-    List<DropdownMenuItem<String>> widget = [];
-    if (selection == "server") {
-      widget.add(DropdownMenuItem(value: "0", child: Text("Server", style: textStyling.defaultBlack(13))));
-      if (data != null) {
-        for (var i = 0; i < data.length; i++) {
-          widget.add(
-            DropdownMenuItem(
-              value: (i + 1).toString(),
-              child: Text(data[i]["description"], style: textStyling.defaultBlack(13)),
-            ),
-          );
-        }
-      }
-    } else if (selection == "jenisVendor") {
-      widget.add(DropdownMenuItem(value: "0", child: Text("Jenis Vendor", style: textStyling.defaultBlack(13))));
-      if (data != null) {
-        for (var i = 0; i < data.length; i++) {
-          widget.add(
-            DropdownMenuItem(
-              value: (i + 1).toString(),
-              child: Text(data[i]["jenis_vendor"], style: textStyling.defaultBlack(13)),
-            ),
-          );
-        }
-      }
-    } else if (selection == "compCode") {
-      widget.add(DropdownMenuItem(value: "0", child: Text("Company Code", style: textStyling.defaultBlack(13))));
-      if (data != null) {
-        for (var i = 0; i < data.length; i++) {
-          widget.add(
-            DropdownMenuItem(
-              value: (i + 1).toString(),
-              child: Text(data[i]["deskripsi"], style: textStyling.defaultBlack(13)),
-            ),
-          );
-        }
-      }
-    } else if (selection == "purchOrg") {
-      widget.add(DropdownMenuItem(value: "0", child: Text("Purch Org", style: textStyling.defaultBlack(13))));
-      if (data != null) {
-        for (var i = 0; i < data.length; i++) {
-          widget.add(
-            DropdownMenuItem(
-              value: (i + 1).toString(),
-              child: Text(data[i]["deskripsi"], style: textStyling.defaultBlack(13)),
-            ),
-          );
-        }
-      }
-    } else if (selection == "kodeNegara") {
-      widget.add(DropdownMenuItem(value: "0", child: Text("Kode Negara", style: textStyling.defaultBlack(13))));
-      if (data != null) {
-        for (var i = 0; i < data.length; i++) {
-          widget.add(
-            DropdownMenuItem(
-              value: (i + 1).toString(),
-              child: Text(data[i]["name"], style: textStyling.defaultBlack(13)),
-            ),
-          );
-        }
-      }
-    } else if (selection == "kodeBank") {
-      widget.add(DropdownMenuItem(value: "0", child: Text("Kode Bank", style: textStyling.defaultBlack(13))));
-      if (data != null) {
-        for (var i = 0; i < data.length; i++) {
-          widget.add(
-            DropdownMenuItem(
-              value: (i + 1).toString(),
-              child: Text(data[i]["deskripsi"], style: textStyling.defaultBlack(13)),
-            ),
-          );
-        }
-      }
-    } else if (selection == "lamaPembayaran") {
-      widget.add(DropdownMenuItem(value: "0", child: Text("Lama Pembyayaran", style: textStyling.defaultBlack(13))));
-      if (data != null) {
-        for (var i = 0; i < data.length; i++) {
-          widget.add(
-            DropdownMenuItem(
-              value: (i + 1).toString(),
-              child: Text(data[i]["deskripsi"], style: textStyling.defaultBlack(13)),
-            ),
-          );
-        }
-      }
-    } else if (selection == "mataUang") {
-      widget.add(DropdownMenuItem(value: "0", child: Text("Mata Uang", style: textStyling.defaultBlack(13))));
-      widget.add(DropdownMenuItem(value: "USD", child: Text("USD - US Dollar", style: textStyling.defaultBlack(13))));
-      widget.add(DropdownMenuItem(value: "RP", child: Text("Rp - IDR Rupiah", style: textStyling.defaultBlack(13))));
-      widget.add(DropdownMenuItem(value: "YEN", child: Text("¥ - Yen Japan", style: textStyling.defaultBlack(13))));
-      widget
-          .add(DropdownMenuItem(value: "YUAN", child: Text("YUAN - Yuan China", style: textStyling.defaultBlack(13))));
-      widget.add(
-        DropdownMenuItem(value: "MYR", child: Text("MYR - Malaysia Ringgit", style: textStyling.defaultBlack(13))),
-      );
-    }
-    return widget;
   }
 }

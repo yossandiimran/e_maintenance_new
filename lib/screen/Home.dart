@@ -1,80 +1,170 @@
-// ignore_for_file: file_names, prefer_const_constructors, prefer_const_literals_to_create_immutables, prefer_typing_uninitialized_variables, use_key_in_widget_constructors, no_logic_in_create_state, avoid_print, avoid_unnecessary_containers, unnecessary_null_comparison, invalid_use_of_visible_for_testing_member
-part of '../../header.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import 'package:e_maintenance/controllers/app_settings_controller.dart';
+import 'package:e_maintenance/controllers/session_controller.dart';
+import 'package:e_maintenance/route.dart';
+import 'package:e_maintenance/screen/Dashboard.dart';
+import 'package:e_maintenance/screen/menu/Profile.dart';
+import 'package:e_maintenance/service/AuthService.dart';
+import 'package:e_maintenance/widget/Alert.dart';
+import 'package:e_maintenance/widget/TextStyling.dart';
 
 class Home extends StatefulWidget {
+  const Home({super.key});
+
   @override
-  HomeState createState() => HomeState();
+  State<Home> createState() => _HomeState();
 }
 
-class HomeState extends State<Home> {
+class _HomeState extends State<Home> {
+  int _selectedIndex = 0;
+
   @override
   void initState() {
     super.initState();
-    AuthService(context: context).getSetting();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkSessionExpiry();
+      _syncOperationalSettings();
+    });
+  }
+
+  Future<void> _checkSessionExpiry() async {
+    final sessionController = context.read<SessionController>();
+    final session = sessionController.session;
+    if (session != null && session.isSessionExpired) {
+      await sessionController.logout();
+      if (!mounted) return;
+      Alert.showErrorSnackBar(context, 'Sesi login sudah kedaluwarsa (6 jam). Silakan login kembali.');
+      await AppRouter.replaceWithLogin(context);
+    }
+  }
+
+  Future<void> _syncOperationalSettings() async {
+    final authService = context.read<AuthService>();
+    final settingsController = context.read<AppSettingsController>();
+    final result = await authService.fetchOperationalSettings();
+    if (!result.isSuccess || result.data == null) {
+      return;
+    }
+
+    await authService.cacheOperationalSettings(result.data!);
+    await settingsController.syncRemoteSettings(result.data!);
+  }
+
+  Future<void> _logout() async {
+    final confirmed = await Alert.confirm(
+      context: context,
+      title: 'Logout sekarang?',
+      message: 'Sesi akun akan diakhiri di perangkat ini.',
+      confirmLabel: 'Logout',
+      destructive: true,
+    );
+
+    if (!confirmed || !mounted) {
+      return;
+    }
+
+    final sessionController = context.read<SessionController>();
+    final authService = context.read<AuthService>();
+    final currentSession = sessionController.session;
+
+    await Alert.runWithLoading(
+      context: context,
+      message: 'Menutup sesi...',
+      task: () async {
+        if (currentSession != null) {
+          await authService.unregisterDevice(userId: currentSession.id);
+        }
+        await sessionController.logout();
+      },
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    await AppRouter.replaceWithLogin(context);
   }
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final pages = <Widget>[
+      Dashboard(
+        onOpenSettings: () => Navigator.of(context).push(AppRouter.settings()),
+        onLogout: _logout,
+      ),
+      Profile(
+        onOpenSettings: () => Navigator.of(context).push(AppRouter.settings()),
+        onLogout: _logout,
+      ),
+    ];
+
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return;
-        alert.alertConfirmExit(context);
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          Alert.confirmExit(context);
+        }
       },
       child: Scaffold(
-        resizeToAvoidBottomInset: false,
-        backgroundColor: linearBg,
-        extendBodyBehindAppBar: true,
-        bottomNavigationBar: navBarApp(),
-        body: getMenuWidget(),
-      ),
-    );
-  }
-
-  getMenuWidget() {
-    switch (isMenuActive) {
-      case 0:
-        return Dashboard();
-      case 1:
-        return Profile();
-    }
-  }
-
-  navBarApp() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      padding: const EdgeInsets.all(8),
-      decoration: CustomWidget().linearPanelDecoration(
-        radius: 24,
-        color: linearPanel,
-      ),
-      child: GNav(
-        color: linearTextTertiary,
-        haptic: true,
-        tabBorderRadius: 18,
-        curve: Curves.easeOutCubic,
-        duration: const Duration(milliseconds: 180),
-        gap: 8,
-        activeColor: linearTextPrimary,
-        iconSize: 22,
-        backgroundColor: Colors.transparent,
-        tabBackgroundColor: linearBrand.withValues(alpha: 0.18),
-        tabMargin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-        onTabChange: (value) {
-          isMenuActive = value;
-          setState(() {});
-        },
-        tabs: const [
-          GButton(
-            icon: Icons.dashboard_rounded,
-            text: 'Workspace',
+        backgroundColor: tokens.pageBackground,
+        body: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: <Color>[
+                tokens.heroEnd.withValues(alpha: context.isDarkMode ? 0.35 : 0.16),
+                tokens.pageBackground,
+              ],
+            ),
           ),
-          GButton(
-            icon: Icons.person_rounded,
-            text: 'Akun',
-          )
-        ],
+          child: SafeArea(
+            child: IndexedStack(
+              index: _selectedIndex,
+              children: pages,
+            ),
+          ),
+        ),
+        bottomNavigationBar: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: tokens.surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: tokens.borderSoft),
+                boxShadow: <BoxShadow>[
+                  BoxShadow(
+                    color: tokens.shadow,
+                    blurRadius: 16,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: NavigationBar(
+                selectedIndex: _selectedIndex,
+                backgroundColor: Colors.transparent,
+                onDestinationSelected: (value) => setState(() => _selectedIndex = value),
+                destinations: const <NavigationDestination>[
+                  NavigationDestination(
+                    icon: Icon(Icons.grid_view_rounded),
+                    selectedIcon: Icon(Icons.grid_view_rounded),
+                    label: 'Workspace',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(Icons.person_outline_rounded),
+                    selectedIcon: Icon(Icons.person_rounded),
+                    label: 'Akun',
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
