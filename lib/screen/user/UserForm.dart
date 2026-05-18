@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'package:e_maintenance/app/app_theme.dart';
+import 'package:e_maintenance/controllers/session_controller.dart';
 import 'package:e_maintenance/helper/global.dart';
 import 'package:e_maintenance/model/app_models.dart';
 import 'package:e_maintenance/service/UserService.dart';
@@ -27,7 +28,7 @@ class _UserFormState extends State<UserForm>
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _usernameController;
   late final TextEditingController _locationController;
-  late String _roleId;
+  static const String _usersRoleId = '4';
 
   late final AnimationController _animCtrl;
   late final Animation<double> _fadeAnim;
@@ -35,9 +36,14 @@ class _UserFormState extends State<UserForm>
   @override
   void initState() {
     super.initState();
-    _usernameController = TextEditingController(text: widget.initialData.username);
-    _locationController = TextEditingController(text: widget.initialData.location);
-    _roleId = widget.initialData.roleId;
+    _usernameController =
+        TextEditingController(text: widget.initialData.username);
+    final sessionLocation =
+        context.read<SessionController>().session?.werks ?? '';
+    final defaultLocation = sessionLocation.trim().isNotEmpty
+        ? sessionLocation
+        : widget.initialData.location;
+    _locationController = TextEditingController(text: defaultLocation);
 
     _animCtrl = AnimationController(vsync: this, duration: AppMotion.slow);
     _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: AppMotion.standard);
@@ -57,10 +63,19 @@ class _UserFormState extends State<UserForm>
       return;
     }
 
+    final location = _locationController.text.trim();
+    if (location.isEmpty) {
+      Alert.showErrorSnackBar(
+        context,
+        'Lokasi user login tidak tersedia. Silakan login ulang.',
+      );
+      return;
+    }
+
     final draft = widget.initialData.copyWith(
       username: _usernameController.text.trim(),
-      location: _locationController.text.trim(),
-      roleId: _roleId,
+      location: location,
+      roleId: _usersRoleId,
     );
 
     final result = await Alert.runWithLoading(
@@ -74,7 +89,8 @@ class _UserFormState extends State<UserForm>
     }
 
     if (!result.isSuccess) {
-      Alert.showErrorSnackBar(context, result.errorMessage ?? 'User gagal disimpan.');
+      Alert.showErrorSnackBar(
+          context, result.errorMessage ?? 'User gagal disimpan.');
       return;
     }
 
@@ -89,7 +105,8 @@ class _UserFormState extends State<UserForm>
 
     return AppPageScaffold(
       title: isEditing ? 'Edit user' : 'Tambah user',
-      subtitle: 'Form akun dibuat lebih ringkas, jelas, dan tanpa password default yang di-hardcode di UI.',
+      subtitle:
+          'Form akun dibuat lebih ringkas, jelas, dan tanpa password default.',
       child: FadeTransition(
         opacity: _fadeAnim,
         child: Form(
@@ -115,7 +132,9 @@ class _UserFormState extends State<UserForm>
                     children: <Widget>[
                       TextFormField(
                         controller: _usernameController,
-                        inputFormatters: <TextInputFormatter>[LowerCaseTextFormatter()],
+                        inputFormatters: <TextInputFormatter>[
+                          LowerCaseTextFormatter()
+                        ],
                         decoration: const InputDecoration(
                           labelText: 'Username',
                           prefixIcon: Icon(Icons.person_outline_rounded),
@@ -130,9 +149,9 @@ class _UserFormState extends State<UserForm>
                       const SizedBox(height: 16),
                       TextFormField(
                         controller: _locationController,
-                        inputFormatters: <TextInputFormatter>[UpperCaseTextFormatter()],
+                        readOnly: true,
                         decoration: const InputDecoration(
-                          labelText: 'Lokasi / Werks',
+                          labelText: 'Lokasi',
                           prefixIcon: Icon(Icons.location_on_outlined),
                         ),
                         validator: (value) {
@@ -143,23 +162,13 @@ class _UserFormState extends State<UserForm>
                         },
                       ),
                       const SizedBox(height: 16),
-                      DropdownButtonFormField<String>(
-                        value: _roleId,
+                      TextFormField(
+                        initialValue: 'Users',
+                        readOnly: true,
                         decoration: const InputDecoration(
                           labelText: 'Hak akses',
                           prefixIcon: Icon(Icons.shield_outlined),
                         ),
-                        items: const <DropdownMenuItem<String>>[
-                          DropdownMenuItem(value: '1', child: Text('Admin')),
-                          DropdownMenuItem(value: '2', child: Text('Pimpinan')),
-                          DropdownMenuItem(value: '3', child: Text('Kabag')),
-                          DropdownMenuItem(value: '4', child: Text('Operator')),
-                        ],
-                        onChanged: (value) {
-                          if (value != null) {
-                            setState(() => _roleId = value);
-                          }
-                        },
                       ),
                     ],
                   ),
@@ -176,16 +185,19 @@ class _UserFormState extends State<UserForm>
                       width: 28,
                       height: 28,
                       decoration: BoxDecoration(
-                        color: tokens.brand.withValues(alpha: context.isDarkMode ? 0.22 : 0.10),
+                        color: tokens.brand.withValues(
+                            alpha: context.isDarkMode ? 0.22 : 0.10),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Icon(Icons.info_outline_rounded, size: 16, color: tokens.brand),
+                      child: Icon(Icons.info_outline_rounded,
+                          size: 16, color: tokens.brand),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Password default mengikuti konfigurasi backend.',
-                        style: context.textTheme.bodySmall?.copyWith(color: tokens.textMuted),
+                        'Password default mengikuti konfigurasi.',
+                        style: context.textTheme.bodySmall
+                            ?.copyWith(color: tokens.textMuted),
                       ),
                     ),
                   ],
@@ -201,7 +213,9 @@ class _UserFormState extends State<UserForm>
                   height: 48,
                   child: FilledButton.icon(
                     onPressed: _save,
-                    icon: Icon(isEditing ? Icons.save_outlined : Icons.person_add_alt_1_outlined),
+                    icon: Icon(isEditing
+                        ? Icons.save_outlined
+                        : Icons.person_add_alt_1_outlined),
                     label: Text(isEditing ? 'Simpan perubahan' : 'Tambah user'),
                   ),
                 ),

@@ -1,5 +1,8 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+
 import 'package:e_maintenance/core/config/app_environment.dart';
 import 'package:e_maintenance/core/logging/app_logger.dart';
 import 'package:e_maintenance/core/network/app_api_client.dart';
@@ -20,7 +23,6 @@ class AuthService {
   Future<AppResult<UserSession>> login({
     required String username,
     required String password,
-    String? deviceToken,
   }) async {
     try {
       final response = await _apiClient.postMain(
@@ -28,23 +30,27 @@ class AuthService {
         body: <String, String>{
           'username': username.trim(),
           'password': password,
-          'device_token': deviceToken ?? '',
+          'device_token': '',
           'app_version': AppEnvironment.appVersion,
         },
       ).timeout(const Duration(seconds: 12));
 
-      final Map<String, dynamic> data = jsonDecode(response.body) as Map<String, dynamic>;
+      final Map<String, dynamic> data =
+          jsonDecode(response.body) as Map<String, dynamic>;
       AppLogger.debug('Login response', data);
 
       if (response.statusCode != 200) {
-        return const AppResult<UserSession>.failure('Username atau password salah.');
+        return const AppResult<UserSession>.failure(
+            'Username atau password salah.');
       }
 
       if (data['success'] == false) {
-        return AppResult<UserSession>.failure('${data['message'] ?? 'Login gagal.'}');
+        return AppResult<UserSession>.failure(
+            '${data['message'] ?? 'Login gagal.'}');
       }
 
-      final sessionPayload = Map<String, dynamic>.from(data['for_session'] as Map? ?? <String, dynamic>{});
+      final sessionPayload = Map<String, dynamic>.from(
+          data['for_session'] as Map? ?? <String, dynamic>{});
       final appVersion = '${sessionPayload['app_version'] ?? ''}';
       if (appVersion.isNotEmpty && appVersion != AppEnvironment.appVersion) {
         return const AppResult<UserSession>.failure(
@@ -52,19 +58,27 @@ class AuthService {
         );
       }
 
-      return AppResult<UserSession>.success(UserSession.fromLoginPayload(sessionPayload));
+      return AppResult<UserSession>.success(
+          UserSession.fromLoginPayload(sessionPayload));
+    } on http.ClientException catch (error) {
+      AppLogger.error('Login request failed', error);
+      return AppResult<UserSession>.failure(_networkFailureMessage());
     } catch (error) {
       AppLogger.error('Login request failed', error);
-      return const AppResult<UserSession>.failure('Terjadi kesalahan saat login. Coba lagi beberapa saat lagi.');
+      return const AppResult<UserSession>.failure(
+          'Terjadi kesalahan saat login. Coba lagi beberapa saat lagi.');
     }
   }
 
   Future<AppResult<Map<String, String>>> fetchOperationalSettings() async {
     try {
-      final response = await _apiClient.getMain('getSetting').timeout(const Duration(seconds: 12));
+      final response = await _apiClient
+          .getMain('getSetting')
+          .timeout(const Duration(seconds: 12));
       final decoded = jsonDecode(response.body);
       if (decoded is! List) {
-        return const AppResult<Map<String, String>>.failure('Format pengaturan server tidak dikenali.');
+        return const AppResult<Map<String, String>>.failure(
+            'Format pengaturan server tidak dikenali.');
       }
 
       final values = <String, String>{};
@@ -75,7 +89,8 @@ class AuthService {
       return AppResult<Map<String, String>>.success(values);
     } catch (error) {
       AppLogger.error('Failed to fetch operational settings', error);
-      return const AppResult<Map<String, String>>.failure('Pengaturan operasional tidak berhasil dimuat.');
+      return const AppResult<Map<String, String>>.failure(
+          'Pengaturan operasional tidak berhasil dimuat.');
     }
   }
 
@@ -89,11 +104,22 @@ class AuthService {
     }
 
     try {
-      await _apiClient.postManual('unregdes?USERID=$userId').timeout(const Duration(seconds: 10));
+      await _apiClient
+          .postManual('unregdes?USERID=$userId')
+          .timeout(const Duration(seconds: 10));
       return const AppResult<void>.success(null);
     } catch (error) {
       AppLogger.error('Failed to unregister device token', error);
-      return const AppResult<void>.failure('Tidak dapat membersihkan token perangkat.');
+      return const AppResult<void>.failure(
+          'Tidak dapat membersihkan token perangkat.');
     }
+  }
+
+  String _networkFailureMessage() {
+    if (kIsWeb) {
+      return 'Browser memblokir koneksi ke backend. Untuk Web, aktifkan CORS di server atau jalankan mode development tanpa web security.';
+    }
+
+    return 'Koneksi ke backend gagal. Pastikan jaringan atau host aktif sudah benar.';
   }
 }

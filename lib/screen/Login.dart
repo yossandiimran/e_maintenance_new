@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:e_maintenance/controllers/app_settings_controller.dart';
 import 'package:e_maintenance/controllers/session_controller.dart';
 import 'package:e_maintenance/core/config/app_environment.dart';
-import 'package:e_maintenance/helper/firebaseMessagingHelper.dart';
 import 'package:e_maintenance/route.dart';
 import 'package:e_maintenance/service/AuthService.dart';
 import 'package:e_maintenance/widget/Alert.dart';
@@ -31,7 +30,8 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _animCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
+    _animCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 600));
     _fadeIn = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutCubic);
     _animCtrl.forward();
   }
@@ -49,7 +49,6 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
     if (!_formKey.currentState!.validate()) return;
 
     final authService = context.read<AuthService>();
-    final messagingHelper = context.read<FirebaseMessagingHelper>();
     final sessionController = context.read<SessionController>();
     final settingsController = context.read<AppSettingsController>();
 
@@ -57,13 +56,13 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
       context: context,
       message: 'Memverifikasi akun…',
       task: () async {
-        final deviceToken = await messagingHelper.getDeviceToken();
         final loginResult = await authService.login(
           username: _usernameController.text,
           password: _passwordController.text,
-          deviceToken: deviceToken,
         );
-        if (!loginResult.isSuccess || loginResult.data == null) return loginResult;
+        if (!loginResult.isSuccess || loginResult.data == null) {
+          return loginResult;
+        }
 
         await sessionController.setSession(loginResult.data!);
 
@@ -103,7 +102,9 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
 
             return Padding(
               padding: EdgeInsets.fromLTRB(
-                20, 14, 20,
+                20,
+                14,
+                20,
                 16 + MediaQuery.of(sheetContext).viewInsets.bottom,
               ),
               child: Column(
@@ -121,7 +122,8 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
                   Text('Pengaturan', style: sheetContext.textTheme.titleLarge),
                   const SizedBox(height: 16),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                     decoration: BoxDecoration(
                       color: tokens.surfaceMuted,
                       borderRadius: BorderRadius.circular(14),
@@ -130,7 +132,9 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
                     child: Row(
                       children: <Widget>[
                         Icon(
-                          isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                          isDark
+                              ? Icons.dark_mode_rounded
+                              : Icons.light_mode_rounded,
                           size: 18,
                           color: tokens.brand,
                         ),
@@ -145,7 +149,8 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
                           value: isDark,
                           activeColor: tokens.brand,
                           onChanged: (value) async {
-                            final newMode = value ? ThemeMode.dark : ThemeMode.light;
+                            final newMode =
+                                value ? ThemeMode.dark : ThemeMode.light;
                             await settingsController.setThemeMode(newMode);
                             setSheetState(() {});
                           },
@@ -167,10 +172,12 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
                     width: double.infinity,
                     child: FilledButton.icon(
                       onPressed: () async {
-                        await settingsController.setHostOverride(_hostController.text);
+                        await settingsController
+                            .setHostOverride(_hostController.text);
                         if (!mounted) return;
                         Navigator.of(sheetContext).pop();
-                        Alert.showSuccessSnackBar(context, 'Pengaturan disimpan.');
+                        Alert.showSuccessSnackBar(
+                            context, 'Pengaturan disimpan.');
                       },
                       icon: const Icon(Icons.save_rounded, size: 18),
                       label: const Text('Simpan Host'),
@@ -206,7 +213,8 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
               begin: Alignment.topCenter,
               end: const Alignment(0, 0.4),
               colors: <Color>[
-                tokens.heroEnd.withValues(alpha: context.isDarkMode ? 0.45 : 0.2),
+                tokens.heroEnd
+                    .withValues(alpha: context.isDarkMode ? 0.45 : 0.2),
                 tokens.pageBackground,
               ],
             ),
@@ -216,7 +224,8 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
               opacity: _fadeIn,
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(18, 12, 18, 24),
-                physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics()),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
@@ -239,7 +248,8 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(color: tokens.borderSoft),
                               ),
-                              child: Icon(Icons.settings_outlined, size: 18, color: tokens.textSecondary),
+                              child: Icon(Icons.settings_outlined,
+                                  size: 18, color: tokens.textSecondary),
                             ),
                           ),
                         ),
@@ -255,7 +265,9 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
                           height: 52,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: tokens.brand.withValues(alpha: 0.14), width: 1.5),
+                            border: Border.all(
+                                color: tokens.brand.withValues(alpha: 0.14),
+                                width: 1.5),
                             boxShadow: <BoxShadow>[
                               BoxShadow(
                                 color: tokens.brand.withValues(alpha: 0.14),
@@ -266,7 +278,8 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(14),
-                            child: Image.asset('assets/icon.png', width: 52, height: 52, fit: BoxFit.cover),
+                            child: Image.asset('assets/icon.png',
+                                width: 52, height: 52, fit: BoxFit.cover),
                           ),
                         ),
                         const SizedBox(width: 14),
@@ -274,11 +287,13 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
-                              Text('Masuk ke workspace', style: context.textTheme.displayMedium),
+                              Text('Masuk ke workspace',
+                                  style: context.textTheme.displayMedium),
                               const SizedBox(height: 3),
                               Text(
                                 'Scan, inspeksi, dan laporan dalam satu tempat.',
-                                style: context.textTheme.bodySmall?.copyWith(color: tokens.textMuted),
+                                style: context.textTheme.bodySmall
+                                    ?.copyWith(color: tokens.textMuted),
                               ),
                             ],
                           ),
@@ -286,20 +301,25 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: <Widget>[
-                        AppStatusChip(
-                          label: host,
-                          icon: Icons.dns_rounded,
-                          color: tokens.accent,
-                        ),
-                        AppStatusChip(
-                          label: isDark ? 'Gelap' : 'Terang',
-                          icon: isDark ? Icons.dark_mode_rounded : Icons.light_mode_outlined,
-                        ),
-                      ],
+                    Padding(
+                      padding: const EdgeInsets.only(left: 66),
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: <Widget>[
+                          AppStatusChip(
+                            label: host,
+                            icon: Icons.dns_rounded,
+                            color: tokens.accent,
+                          ),
+                          AppStatusChip(
+                            label: isDark ? 'Gelap' : 'Terang',
+                            icon: isDark
+                                ? Icons.dark_mode_rounded
+                                : Icons.light_mode_outlined,
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 16),
 
@@ -310,11 +330,13 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
-                            Text('Login akun', style: context.textTheme.titleLarge),
+                            Text('Login akun',
+                                style: context.textTheme.titleLarge),
                             const SizedBox(height: 3),
                             Text(
                               'Gunakan username dan password dari administrator.',
-                              style: context.textTheme.bodySmall?.copyWith(color: tokens.textMuted),
+                              style: context.textTheme.bodySmall
+                                  ?.copyWith(color: tokens.textMuted),
                             ),
                             const SizedBox(height: 14),
                             TextFormField(
@@ -326,7 +348,9 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
                                 prefixIcon: Icon(Icons.person_outline_rounded),
                               ),
                               validator: (value) {
-                                if (value == null || value.trim().isEmpty) return 'Username wajib diisi.';
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Username wajib diisi.';
+                                }
                                 return null;
                               },
                             ),
@@ -338,18 +362,24 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
                               decoration: InputDecoration(
                                 labelText: 'Password',
                                 hintText: 'Masukkan password',
-                                prefixIcon: const Icon(Icons.lock_outline_rounded),
+                                prefixIcon:
+                                    const Icon(Icons.lock_outline_rounded),
                                 suffixIcon: IconButton(
-                                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                                  onPressed: () => setState(() =>
+                                      _obscurePassword = !_obscurePassword),
                                   icon: Icon(
-                                    _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                                    _obscurePassword
+                                        ? Icons.visibility_outlined
+                                        : Icons.visibility_off_outlined,
                                     size: 20,
                                   ),
                                 ),
                               ),
                               onFieldSubmitted: (_) => _login(),
                               validator: (value) {
-                                if (value == null || value.isEmpty) return 'Password wajib diisi.';
+                                if (value == null || value.isEmpty) {
+                                  return 'Password wajib diisi.';
+                                }
                                 return null;
                               },
                             ),
@@ -368,7 +398,8 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
                               children: <Widget>[
                                 Text(
                                   'v${AppEnvironment.appVersion}',
-                                  style: context.textTheme.labelSmall?.copyWith(color: tokens.textMuted),
+                                  style: context.textTheme.labelSmall
+                                      ?.copyWith(color: tokens.textMuted),
                                 ),
                                 const Spacer(),
                                 TextButton(
@@ -376,7 +407,8 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
                                     Alert.showMessage(
                                       context: context,
                                       title: 'Butuh bantuan?',
-                                      message: 'Silakan hubungi admin internal untuk reset password akun.',
+                                      message:
+                                          'Silakan hubungi admin internal untuk reset password akun.',
                                     );
                                   },
                                   child: const Text('Lupa password?'),

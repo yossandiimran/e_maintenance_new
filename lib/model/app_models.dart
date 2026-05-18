@@ -59,7 +59,8 @@ class UserSession {
 
   bool get isSessionExpired {
     if (loginTimestamp == null) return true;
-    return DateTime.now().millisecondsSinceEpoch - loginTimestamp! > sessionDurationMs;
+    return DateTime.now().millisecondsSinceEpoch - loginTimestamp! >
+        sessionDurationMs;
   }
 
   bool get isRestrictedOperator => roleId == '4';
@@ -86,7 +87,8 @@ class UserSession {
       'psap': psap,
       'werks': werks,
       'id_jenis_user': roleId,
-      'login_timestamp': loginTimestamp ?? DateTime.now().millisecondsSinceEpoch,
+      'login_timestamp':
+          loginTimestamp ?? DateTime.now().millisecondsSinceEpoch,
     };
   }
 }
@@ -115,7 +117,7 @@ class AppUser {
       case '3':
         return 'Kabag';
       case '4':
-        return 'Operator';
+        return 'Users';
       default:
         return 'Tidak diketahui';
     }
@@ -183,11 +185,15 @@ class VehicleInfo {
 
   bool get isForklift => flag == 'X';
 
-  bool get hasError => message.toUpperCase().contains('DATA TIDAK DITEMUKAN') || message.toUpperCase().contains('RFC_LOGON_FAILURE');
+  bool get hasError =>
+      message.toUpperCase().contains('DATA TIDAK DITEMUKAN') ||
+      message.toUpperCase().contains('RFC_LOGON_FAILURE');
 
   factory VehicleInfo.fromJson(Map<String, dynamic> json) {
     // Try multiple case variants the backend might return
-    final werksValue = '${json['WERKS'] ?? json['Werks'] ?? json['werks'] ?? json['PLANT'] ?? json['plant'] ?? ''}'.trim();
+    final werksValue =
+        '${json['WERKS'] ?? json['Werks'] ?? json['werks'] ?? json['PLANT'] ?? json['plant'] ?? ''}'
+            .trim();
     return VehicleInfo(
       materialDescription: '${json['MAKTX'] ?? ''}',
       flag: '${json['FLAG'] ?? ''}',
@@ -287,7 +293,9 @@ class TransactionReportItem {
       vehicleName: '${json['kendaraan'] ?? '-'}',
       serialNumber: '${json['sn_kendaraan'] ?? ''}',
       title: '${json['title'] ?? ''}',
-      isDone: json['_is_done'] == true || json['_is_done'] == 1 || '${json['_is_done']}'.toLowerCase() == 'true',
+      isDone: json['_is_done'] == true ||
+          json['_is_done'] == 1 ||
+          '${json['_is_done']}'.toLowerCase() == 'true',
       photoFileName: '${json['photo'] ?? ''}',
     );
   }

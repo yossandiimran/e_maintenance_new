@@ -58,14 +58,16 @@ class _UserState extends State<User> with SingleTickerProviderStateMixin {
       return;
     }
 
-    final result = await context.read<UserService>().fetchUsers(location: session.werks);
+    final result =
+        await context.read<UserService>().fetchUsers(location: session.werks);
     if (!mounted) {
       return;
     }
 
     if (!result.isSuccess || result.data == null) {
       setState(() => _loading = false);
-      Alert.showErrorSnackBar(context, result.errorMessage ?? 'Daftar user gagal dimuat.');
+      Alert.showErrorSnackBar(
+          context, result.errorMessage ?? 'Daftar user gagal dimuat.');
       return;
     }
 
@@ -82,6 +84,14 @@ class _UserState extends State<User> with SingleTickerProviderStateMixin {
       return;
     }
     await _loadUsers();
+  }
+
+  UserFormData _newUserData() {
+    final session = context.read<SessionController>().session;
+    return UserFormData(
+      location: session?.werks ?? '',
+      roleId: '4',
+    );
   }
 
   Future<void> _deleteUser(AppUser user) async {
@@ -109,7 +119,8 @@ class _UserState extends State<User> with SingleTickerProviderStateMixin {
     }
 
     if (!result.isSuccess) {
-      Alert.showErrorSnackBar(context, result.errorMessage ?? 'User gagal dihapus.');
+      Alert.showErrorSnackBar(
+          context, result.errorMessage ?? 'User gagal dihapus.');
       return;
     }
 
@@ -124,9 +135,10 @@ class _UserState extends State<User> with SingleTickerProviderStateMixin {
 
     return AppPageScaffold(
       title: 'Manajemen user',
-      subtitle: 'Kelola akun operasional dengan layout yang ringkas dan tindakan yang lebih aman.',
+      subtitle:
+          'Kelola akun operasional dengan layout yang ringkas dan tindakan yang lebih aman.',
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openForm(const UserFormData()),
+        onPressed: () => _openForm(_newUserData()),
         icon: const Icon(Icons.person_add_alt_1_outlined),
         label: const Text('Tambah user'),
       ),
@@ -135,10 +147,11 @@ class _UserState extends State<User> with SingleTickerProviderStateMixin {
           : _users.isEmpty
               ? AppEmptyState(
                   title: 'Belum ada user',
-                  message: 'Belum ada data user yang tersedia untuk lokasi saat ini.',
+                  message:
+                      'Belum ada data user yang tersedia untuk lokasi saat ini.',
                   icon: Icons.group_outlined,
                   action: FilledButton.icon(
-                    onPressed: () => _openForm(const UserFormData()),
+                    onPressed: () => _openForm(_newUserData()),
                     icon: const Icon(Icons.person_add_alt_1_outlined),
                     label: const Text('Tambah user'),
                   ),
@@ -146,196 +159,259 @@ class _UserState extends State<User> with SingleTickerProviderStateMixin {
               : FadeTransition(
                   opacity: _fadeAnim,
                   child: Column(
-                  children: <Widget>[
-                    // ── search bar ──
-                    AppStaggeredItem(
-                      index: 0,
-                      child: TextFormField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: 'Cari nama, username, atau role...',
-                        prefixIcon: const Icon(Icons.search_rounded, size: 20),
-                        suffixIcon: _searchQuery.isNotEmpty
-                            ? IconButton(
-                                onPressed: () {
-                                  _searchController.clear();
-                                  setState(() => _searchQuery = '');
-                                },
-                                icon: const Icon(Icons.close_rounded, size: 18),
-                              )
-                            : null,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      ),
-                      onChanged: (value) => setState(() => _searchQuery = value.trim()),
-                    ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    if (displayUsers.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 32),
-                        child: Column(
-                          children: <Widget>[
-                            Icon(Icons.search_off_rounded, size: 36, color: tokens.textMuted),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Tidak ada user yang cocok dengan "$_searchQuery"',
-                              style: context.textTheme.bodyMedium?.copyWith(color: tokens.textMuted),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      )
-                    else
+                    children: <Widget>[
+                      // ── search bar ──
                       AppStaggeredItem(
-                        index: 1,
-                        child: AppSurfaceCard(
-                        padding: EdgeInsets.zero,
-                        child: Column(
-                          children: <Widget>[
-                            // ── table header ──
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                              decoration: BoxDecoration(
-                                color: tokens.brand.withValues(alpha: context.isDarkMode ? 0.14 : 0.06),
-                                borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+                        index: 0,
+                        child: TextFormField(
+                          controller: _searchController,
+                          decoration: InputDecoration(
+                            hintText: 'Cari nama, username, atau role...',
+                            prefixIcon:
+                                const Icon(Icons.search_rounded, size: 20),
+                            suffixIcon: _searchQuery.isNotEmpty
+                                ? IconButton(
+                                    onPressed: () {
+                                      _searchController.clear();
+                                      setState(() => _searchQuery = '');
+                                    },
+                                    icon: const Icon(Icons.close_rounded,
+                                        size: 18),
+                                  )
+                                : null,
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 10),
+                          ),
+                          onChanged: (value) =>
+                              setState(() => _searchQuery = value.trim()),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      if (displayUsers.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 32),
+                          child: Column(
+                            children: <Widget>[
+                              Icon(Icons.search_off_rounded,
+                                  size: 36, color: tokens.textMuted),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Tidak ada user yang cocok dengan "$_searchQuery"',
+                                style: context.textTheme.bodyMedium
+                                    ?.copyWith(color: tokens.textMuted),
+                                textAlign: TextAlign.center,
                               ),
-                              child: Row(
-                                children: <Widget>[
-                                  Expanded(
-                                    child: Text(
-                                      _searchQuery.isEmpty
-                                          ? '${displayUsers.length} user terdaftar'
-                                          : '${displayUsers.length} dari ${_users.length} user',
-                                      style: context.textTheme.labelMedium?.copyWith(
-                                        color: tokens.brand,
-                                        fontWeight: FontWeight.w700,
+                            ],
+                          ),
+                        )
+                      else
+                        AppStaggeredItem(
+                          index: 1,
+                          child: AppSurfaceCard(
+                            padding: EdgeInsets.zero,
+                            child: Column(
+                              children: <Widget>[
+                                // ── table header ──
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 14, vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: tokens.brand.withValues(
+                                        alpha:
+                                            context.isDarkMode ? 0.14 : 0.06),
+                                    borderRadius: const BorderRadius.vertical(
+                                        top: Radius.circular(18)),
+                                  ),
+                                  child: Row(
+                                    children: <Widget>[
+                                      Expanded(
+                                        child: Text(
+                                          _searchQuery.isEmpty
+                                              ? '${displayUsers.length} user terdaftar'
+                                              : '${displayUsers.length} dari ${_users.length} user',
+                                          style: context.textTheme.labelMedium
+                                              ?.copyWith(
+                                            color: tokens.brand,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
                                       ),
-                                    ),
+                                      Text(
+                                        'Aksi',
+                                        style: context.textTheme.labelMedium
+                                            ?.copyWith(
+                                          color: tokens.textMuted,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  Text(
-                                    'Aksi',
-                                    style: context.textTheme.labelMedium?.copyWith(
-                                      color: tokens.textMuted,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Divider(height: 1, color: tokens.borderSoft),
+                                ),
+                                Divider(height: 1, color: tokens.borderSoft),
 
-                            // ── rows ──
-                            ...List.generate(displayUsers.length, (index) {
-                              final user = displayUsers[index];
-                              final isAdmin = user.roleId == '1';
+                                // ── rows ──
+                                ...List.generate(displayUsers.length, (index) {
+                                  final user = displayUsers[index];
+                                  final isAdmin = user.roleId == '1';
 
-                              return AppStaggeredItem(
-                                index: index + 2,
-                                child: Column(
-                                children: <Widget>[
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                                    child: Row(
+                                  return AppStaggeredItem(
+                                    index: index + 2,
+                                    child: Column(
                                       children: <Widget>[
-                                        // ── avatar ──
-                                        Container(
-                                          width: 36,
-                                          height: 36,
-                                          alignment: Alignment.center,
-                                          decoration: BoxDecoration(
-                                            gradient: isAdmin ? tokens.brandGradient : null,
-                                            color: isAdmin ? null : tokens.surfaceMuted,
-                                            borderRadius: BorderRadius.circular(10),
-                                            boxShadow: isAdmin
-                                                ? <BoxShadow>[
-                                                    BoxShadow(
-                                                      color: tokens.brand.withValues(alpha: 0.18),
-                                                      blurRadius: 6,
-                                                      offset: const Offset(0, 2),
-                                                    ),
-                                                  ]
-                                                : null,
-                                          ),
-                                          child: Text(
-                                            user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
-                                            style: context.textTheme.labelLarge?.copyWith(
-                                              color: isAdmin ? Colors.white : tokens.textSecondary,
-                                              fontWeight: FontWeight.w700,
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-
-                                        // ── name, username, role ──
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: <Widget>[
-                                              Text(
-                                                user.name,
-                                                style: context.textTheme.titleMedium,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              Row(
-                                                children: <Widget>[
-                                                  Flexible(
-                                                    child: Text(
-                                                      '@${user.username}',
-                                                      overflow: TextOverflow.ellipsis,
-                                                      style: context.textTheme.labelSmall?.copyWith(color: tokens.textMuted),
-                                                    ),
-                                                  ),
-                                                  Padding(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                                                    child: Text('•', style: context.textTheme.labelSmall?.copyWith(color: tokens.textMuted)),
-                                                  ),
-                                                  _RoleBadge(label: user.roleLabel, tokens: tokens, isAdmin: isAdmin),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        const SizedBox(width: 4),
-
-                                        // ── action icons ──
-                                        SizedBox(
-                                          width: 72,
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 14, vertical: 8),
                                           child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.end,
                                             children: <Widget>[
-                                              _ActionIcon(
-                                                icon: Icons.edit_outlined,
-                                                color: tokens.brand,
-                                                onTap: () => _openForm(UserFormData.fromUser(user)),
+                                              // ── avatar ──
+                                              Container(
+                                                width: 36,
+                                                height: 36,
+                                                alignment: Alignment.center,
+                                                decoration: BoxDecoration(
+                                                  gradient: isAdmin
+                                                      ? tokens.brandGradient
+                                                      : null,
+                                                  color: isAdmin
+                                                      ? null
+                                                      : tokens.surfaceMuted,
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                  boxShadow: isAdmin
+                                                      ? <BoxShadow>[
+                                                          BoxShadow(
+                                                            color: tokens.brand
+                                                                .withValues(
+                                                                    alpha:
+                                                                        0.18),
+                                                            blurRadius: 6,
+                                                            offset:
+                                                                const Offset(
+                                                                    0, 2),
+                                                          ),
+                                                        ]
+                                                      : null,
+                                                ),
+                                                child: Text(
+                                                  user.name.isNotEmpty
+                                                      ? user.name[0]
+                                                          .toUpperCase()
+                                                      : '?',
+                                                  style: context
+                                                      .textTheme.labelLarge
+                                                      ?.copyWith(
+                                                    color: isAdmin
+                                                        ? Colors.white
+                                                        : tokens.textSecondary,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 10),
+
+                                              // ── name, username, role ──
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: <Widget>[
+                                                    Text(
+                                                      user.name,
+                                                      style: context.textTheme
+                                                          .titleMedium,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                    Row(
+                                                      children: <Widget>[
+                                                        Flexible(
+                                                          child: Text(
+                                                            'user name : ${user.username}',
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                            style: context
+                                                                .textTheme
+                                                                .labelSmall
+                                                                ?.copyWith(
+                                                                    color: tokens
+                                                                        .textMuted),
+                                                          ),
+                                                        ),
+                                                        Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .symmetric(
+                                                                  horizontal:
+                                                                      4),
+                                                          child: Text('•',
+                                                              style: context
+                                                                  .textTheme
+                                                                  .labelSmall
+                                                                  ?.copyWith(
+                                                                      color: tokens
+                                                                          .textMuted)),
+                                                        ),
+                                                        _RoleBadge(
+                                                            label:
+                                                                user.roleLabel,
+                                                            tokens: tokens,
+                                                            isAdmin: isAdmin),
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
                                               const SizedBox(width: 4),
-                                              _ActionIcon(
-                                                icon: Icons.delete_outline_rounded,
-                                                color: tokens.danger,
-                                                onTap: () => _deleteUser(user),
+
+                                              // ── action icons ──
+                                              SizedBox(
+                                                width: 72,
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.end,
+                                                  children: <Widget>[
+                                                    _ActionIcon(
+                                                      icon: Icons.edit_outlined,
+                                                      color: tokens.brand,
+                                                      onTap: () => _openForm(
+                                                          UserFormData.fromUser(
+                                                              user)),
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    _ActionIcon(
+                                                      icon: Icons
+                                                          .delete_outline_rounded,
+                                                      color: tokens.danger,
+                                                      onTap: () =>
+                                                          _deleteUser(user),
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
                                             ],
                                           ),
                                         ),
+                                        if (index < displayUsers.length - 1)
+                                          Divider(
+                                              height: 1,
+                                              indent: 58,
+                                              endIndent: 14,
+                                              color: tokens.borderSoft),
                                       ],
                                     ),
-                                  ),
-                                  if (index < displayUsers.length - 1)
-                                    Divider(height: 1, indent: 58, endIndent: 14, color: tokens.borderSoft),
-                                ],
-                              ),
-                              );
-                            }),
+                                  );
+                                }),
 
-                            // ── bottom padding ──
-                            const SizedBox(height: 4),
-                          ],
+                                // ── bottom padding ──
+                                const SizedBox(height: 4),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
-                      ),
-                  ],
-                ),
+                    ],
+                  ),
                 ),
     );
   }

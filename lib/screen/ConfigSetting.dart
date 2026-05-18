@@ -41,7 +41,8 @@ class _ConfigSettingPageState extends State<ConfigSettingPage> {
               color: context.tokens.accent.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(Icons.dns_rounded, color: context.tokens.accent, size: 22),
+            child:
+                Icon(Icons.dns_rounded, color: context.tokens.accent, size: 22),
           ),
           title: const Text('Ubah host aktif'),
           content: TextFormField(
@@ -97,7 +98,8 @@ class _ConfigSettingPageState extends State<ConfigSettingPage> {
       Alert.showSuccessSnackBar(context, 'Host aktif berhasil dijangkau.');
       return;
     }
-    Alert.showErrorSnackBar(context, result.errorMessage ?? 'Koneksi host gagal.');
+    Alert.showErrorSnackBar(
+        context, result.errorMessage ?? 'Koneksi host gagal.');
   }
 
   Future<void> _restartConnection() async {
@@ -110,10 +112,12 @@ class _ConfigSettingPageState extends State<ConfigSettingPage> {
     if (!mounted) return;
 
     if (result.isSuccess) {
-      Alert.showSuccessSnackBar(context, result.data ?? 'Restart koneksi berhasil.');
+      Alert.showSuccessSnackBar(
+          context, result.data ?? 'Restart koneksi berhasil.');
       return;
     }
-    Alert.showErrorSnackBar(context, result.errorMessage ?? 'Restart koneksi gagal.');
+    Alert.showErrorSnackBar(
+        context, result.errorMessage ?? 'Restart koneksi gagal.');
   }
 
   Future<void> _syncServerSettings() async {
@@ -128,14 +132,16 @@ class _ConfigSettingPageState extends State<ConfigSettingPage> {
     if (!mounted) return;
 
     if (!result.isSuccess || result.data == null) {
-      Alert.showErrorSnackBar(context, result.errorMessage ?? 'Sinkronisasi gagal.');
+      Alert.showErrorSnackBar(
+          context, result.errorMessage ?? 'Sinkronisasi gagal.');
       return;
     }
 
     await authService.cacheOperationalSettings(result.data!);
     await settingsController.syncRemoteSettings(result.data!);
     if (!mounted) return;
-    Alert.showSuccessSnackBar(context, 'Setting operasional berhasil disegarkan.');
+    Alert.showSuccessSnackBar(
+        context, 'Setting operasional berhasil disegarkan.');
   }
 
   @override
@@ -154,7 +160,8 @@ class _ConfigSettingPageState extends State<ConfigSettingPage> {
           color: tokens.surface.withValues(alpha: 0.7),
           borderRadius: BorderRadius.circular(12),
           child: InkWell(
-            onTap: () => settingsController.setThemeMode(isDark ? ThemeMode.light : ThemeMode.dark),
+            onTap: () => settingsController
+                .setThemeMode(isDark ? ThemeMode.light : ThemeMode.dark),
             borderRadius: BorderRadius.circular(12),
             child: Container(
               width: 38,
@@ -190,18 +197,21 @@ class _ConfigSettingPageState extends State<ConfigSettingPage> {
                         color: tokens.brand.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Icon(Icons.settings_suggest_rounded, size: 18, color: tokens.brand),
+                      child: Icon(Icons.settings_suggest_rounded,
+                          size: 18, color: tokens.brand),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          Text('Status operasional', style: context.textTheme.titleMedium),
+                          Text('Status operasional',
+                              style: context.textTheme.titleMedium),
                           const SizedBox(height: 2),
                           Text(
                             'Kontrol penting dalam satu panel.',
-                            style: context.textTheme.bodySmall?.copyWith(color: tokens.textMuted),
+                            style: context.textTheme.bodySmall
+                                ?.copyWith(color: tokens.textMuted),
                           ),
                         ],
                       ),
@@ -209,25 +219,32 @@ class _ConfigSettingPageState extends State<ConfigSettingPage> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: <Widget>[
-                    AppStatusChip(
-                      label: settingsController.activeHost,
-                      icon: Icons.dns_rounded,
-                      color: tokens.accent,
-                    ),
-                    AppStatusChip(
-                      label: isRestricted ? 'Operator' : 'Admin',
-                      icon: isRestricted ? Icons.lock_outline_rounded : Icons.verified_user_outlined,
-                      color: isRestricted ? tokens.warning : tokens.success,
-                    ),
-                    AppStatusChip(
-                      label: isDark ? 'Gelap' : 'Terang',
-                      icon: isDark ? Icons.dark_mode_rounded : Icons.light_mode_outlined,
-                    ),
-                  ],
+                Padding(
+                  padding: const EdgeInsets.only(left: 50),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: <Widget>[
+                      AppStatusChip(
+                        label: settingsController.activeHost,
+                        icon: Icons.dns_rounded,
+                        color: tokens.accent,
+                      ),
+                      AppStatusChip(
+                        label: isRestricted ? 'Operator' : 'Admin',
+                        icon: isRestricted
+                            ? Icons.lock_outline_rounded
+                            : Icons.verified_user_outlined,
+                        color: isRestricted ? tokens.warning : tokens.success,
+                      ),
+                      AppStatusChip(
+                        label: isDark ? 'Gelap' : 'Terang',
+                        icon: isDark
+                            ? Icons.dark_mode_rounded
+                            : Icons.light_mode_outlined,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -287,7 +304,8 @@ class _ConfigSettingPageState extends State<ConfigSettingPage> {
                 icon: Icons.manage_accounts_outlined,
                 title: 'Kelola user',
                 subtitle: 'Pengelolaan akun dan hak akses.',
-                onTap: () => Navigator.of(context).push(AppRouter.userManagement()),
+                onTap: () =>
+                    Navigator.of(context).push(AppRouter.userManagement()),
                 accentColor: tokens.danger,
               ),
             ),

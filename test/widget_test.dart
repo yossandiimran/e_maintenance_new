@@ -2,7 +2,6 @@ import 'package:e_maintenance/app/app_theme.dart';
 import 'package:e_maintenance/controllers/app_settings_controller.dart';
 import 'package:e_maintenance/controllers/session_controller.dart';
 import 'package:e_maintenance/core/network/app_api_client.dart';
-import 'package:e_maintenance/helper/firebaseMessagingHelper.dart';
 import 'package:e_maintenance/helper/preference.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -46,15 +45,17 @@ Future<Widget> _buildTestApp(
     providers: [
       Provider<AppPreferences>.value(value: preferences),
       Provider<AppApiClient>.value(value: apiClient),
-      Provider<FirebaseMessagingHelper>.value(value: FirebaseMessagingHelper()),
       Provider<AuthService>(
-        create: (_) => AuthService(apiClient: apiClient, preferences: preferences),
+        create: (_) =>
+            AuthService(apiClient: apiClient, preferences: preferences),
       ),
       Provider<InputService>(
-        create: (_) => InputService(apiClient: apiClient, preferences: preferences),
+        create: (_) =>
+            InputService(apiClient: apiClient, preferences: preferences),
       ),
       Provider<ReportService>(
-        create: (_) => ReportService(apiClient: apiClient, preferences: preferences),
+        create: (_) =>
+            ReportService(apiClient: apiClient, preferences: preferences),
       ),
       Provider<UserService>(
         create: (_) => UserService(apiClient: apiClient),
@@ -62,7 +63,8 @@ Future<Widget> _buildTestApp(
       Provider<RestartGlassfishService>(
         create: (_) => const RestartGlassfishService(),
       ),
-      ChangeNotifierProvider<AppSettingsController>.value(value: settingsController),
+      ChangeNotifierProvider<AppSettingsController>.value(
+          value: settingsController),
       ChangeNotifierProvider<SessionController>.value(value: sessionController),
     ],
     child: Consumer<AppSettingsController>(
@@ -111,17 +113,19 @@ void main() {
     expect(todo.dueDate, '2026-04-14');
   });
 
-  testWidgets('Login screen validates required username and password', (tester) async {
+  testWidgets('Login screen validates required username with default password',
+      (tester) async {
     await tester.pumpWidget(await _buildTestApp(const Login()));
 
-    await tester.tap(find.text('Masuk aplikasi'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Masuk'));
     await tester.pumpAndSettle();
 
     expect(find.text('Username wajib diisi.'), findsOneWidget);
-    expect(find.text('Password wajib diisi.'), findsOneWidget);
+    expect(find.text('Password wajib diisi.'), findsNothing);
   });
 
-  testWidgets('Settings page toggles dark mode through the settings controller', (tester) async {
+  testWidgets('Settings page toggles dark mode through the settings controller',
+      (tester) async {
     final session = UserSession(
       id: 1,
       username: 'admin',
@@ -140,16 +144,15 @@ void main() {
       ),
     );
 
-    expect(find.text('Dark mode'), findsOneWidget);
+    final themeToggle = find.byIcon(Icons.dark_mode_rounded);
+    expect(themeToggle, findsOneWidget);
 
-    final switchFinder = find.byType(Switch);
-    expect(switchFinder, findsOneWidget);
-
-    await tester.tap(switchFinder);
+    await tester.tap(themeToggle);
     await tester.pumpAndSettle();
 
     final context = tester.element(find.byType(ConfigSettingPage));
-    final controller = Provider.of<AppSettingsController>(context, listen: false);
+    final controller =
+        Provider.of<AppSettingsController>(context, listen: false);
     expect(controller.themeMode, ThemeMode.dark);
   });
 }

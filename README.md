@@ -29,7 +29,6 @@
 | **Manajemen User** | CRUD akun internal dengan role badge dan aksi kompak |
 | **Pengaturan** | Ganti host backend, tes koneksi, dark/light mode, sync setting server |
 | **Ekspor Excel** | Unduh laporan transaksi dan user ke file `.xlsx` |
-| **Push Notification** | Firebase Cloud Messaging (opsional, graceful fallback di web) |
 
 ## Screenshot
 
@@ -134,7 +133,6 @@ lib/
 | State Management | Provider |
 | Persistence | Shared Preferences |
 | Networking | HTTP |
-| Push Notification | Firebase Core + Firebase Messaging |
 | Scanner | QR Code Scanner |
 | Camera | Image Picker |
 | Export | Excel (syncfusion / dart) |
@@ -160,7 +158,6 @@ cd android && ./gradlew app:assembleDebug
 - **Typed routing** via `AppRouter` — tanpa string-based route atau dynamic arguments.
 - **Design tokens** (`AppTokens`) untuk konsistensi visual di seluruh screen.
 - **Session expiry** otomatis setelah 6 jam.
-- **Firebase Messaging** bersifat opsional dan non-blocking (graceful fallback jika gagal init).
 
 ## Lisensi
 

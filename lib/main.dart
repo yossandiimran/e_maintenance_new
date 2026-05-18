@@ -1,11 +1,8 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:e_maintenance/controllers/app_settings_controller.dart';
 import 'package:e_maintenance/controllers/session_controller.dart';
-import 'package:e_maintenance/firebase_options.dart';
-import 'package:e_maintenance/helper/firebaseMessagingHelper.dart';
 import 'package:e_maintenance/helper/preference.dart';
 import 'package:e_maintenance/route.dart';
 import 'package:e_maintenance/screen/SplashScreen.dart';
@@ -21,17 +18,6 @@ import 'package:e_maintenance/core/network/app_api_client.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-  } catch (e) {
-    // On web with invalid/placeholder appId, Firebase init may fail.
-    // Allow the app to continue — push notifications won't work but
-    // the rest of the app remains functional.
-    debugPrint('[e-maintenance] Firebase init error (non-fatal): $e');
-  }
-
   final preferences = await AppPreferences.create();
   final settingsController = AppSettingsController(preferences);
   await settingsController.load();
@@ -40,28 +26,23 @@ Future<void> main() async {
   await sessionController.load();
 
   final apiClient = AppApiClient(preferences: preferences);
-  final messagingHelper = FirebaseMessagingHelper();
-
-  try {
-    await messagingHelper.initialize(onPayloadOpen: AppRouter.handleNotificationPayload);
-  } catch (e) {
-    debugPrint('[e-maintenance] Messaging init error (non-fatal): $e');
-  }
 
   runApp(
     MultiProvider(
       providers: [
         Provider<AppPreferences>.value(value: preferences),
         Provider<AppApiClient>.value(value: apiClient),
-        Provider<FirebaseMessagingHelper>.value(value: messagingHelper),
         Provider<AuthService>(
-          create: (_) => AuthService(apiClient: apiClient, preferences: preferences),
+          create: (_) =>
+              AuthService(apiClient: apiClient, preferences: preferences),
         ),
         Provider<InputService>(
-          create: (_) => InputService(apiClient: apiClient, preferences: preferences),
+          create: (_) =>
+              InputService(apiClient: apiClient, preferences: preferences),
         ),
         Provider<ReportService>(
-          create: (_) => ReportService(apiClient: apiClient, preferences: preferences),
+          create: (_) =>
+              ReportService(apiClient: apiClient, preferences: preferences),
         ),
         Provider<UserService>(
           create: (_) => UserService(apiClient: apiClient),
@@ -69,8 +50,10 @@ Future<void> main() async {
         Provider<RestartGlassfishService>(
           create: (_) => const RestartGlassfishService(),
         ),
-        ChangeNotifierProvider<AppSettingsController>.value(value: settingsController),
-        ChangeNotifierProvider<SessionController>.value(value: sessionController),
+        ChangeNotifierProvider<AppSettingsController>.value(
+            value: settingsController),
+        ChangeNotifierProvider<SessionController>.value(
+            value: sessionController),
       ],
       child: const App(),
     ),
