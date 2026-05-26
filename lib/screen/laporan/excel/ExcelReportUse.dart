@@ -2,20 +2,22 @@ import 'dart:io';
 
 import 'package:excel/excel.dart' as xl;
 import 'package:path/path.dart' as path;
-import 'package:permission_handler/permission_handler.dart';
 
 import 'package:e_maintenance/core/utils/app_result.dart';
 import 'package:e_maintenance/helper/global.dart';
 import 'package:e_maintenance/model/app_models.dart';
+import 'package:e_maintenance/screen/laporan/excel/ExcelStoragePermission.dart';
 
 class ExcelReportUser {
   Future<AppResult<String>> exportUserReport({
     required List<UserReportEntry> data,
     required UserReportQuery query,
   }) async {
-    final status = await Permission.storage.request();
-    if (!status.isGranted) {
-      return const AppResult<String>.failure('Izin penyimpanan dibutuhkan untuk mengekspor file.');
+    final hasStoragePermission = await ExcelStoragePermission.ensureGranted();
+    if (!hasStoragePermission) {
+      return const AppResult<String>.failure(
+        'Aktifkan izin akses file dari pengaturan aplikasi, lalu coba ekspor ulang.',
+      );
     }
 
     final excel = xl.Excel.createExcel();

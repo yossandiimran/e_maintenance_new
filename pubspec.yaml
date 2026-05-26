@@ -3,7 +3,7 @@ description: E-Maintenance mobile app for vehicle inspection and reporting.
 
 publish_to: 'none'
 
-version: 3.0.0+12
+version: 3.0.0+14
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
