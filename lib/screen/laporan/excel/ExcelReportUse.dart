@@ -1,11 +1,9 @@
-import 'dart:io';
-
 import 'package:excel/excel.dart' as xl;
-import 'package:path/path.dart' as path;
 
 import 'package:e_maintenance/core/utils/app_result.dart';
 import 'package:e_maintenance/helper/global.dart';
 import 'package:e_maintenance/model/app_models.dart';
+import 'package:e_maintenance/screen/laporan/excel/ExcelDownloadSaver.dart';
 import 'package:e_maintenance/screen/laporan/excel/ExcelStoragePermission.dart';
 
 class ExcelReportUser {
@@ -32,7 +30,8 @@ class ExcelReportUser {
 
     excel.appendRow('Sheet1', _row(<dynamic>['Laporan User']));
     excel.appendRow('Sheet1', _row(<dynamic>['']));
-    excel.appendRow('Sheet1', _row(<dynamic>['Jenis Cek : ${query.inspectionKind.label}']));
+    excel.appendRow(
+        'Sheet1', _row(<dynamic>['Jenis Cek : ${query.inspectionKind.label}']));
     excel.appendRow(
       'Sheet1',
       _row(<dynamic>[
@@ -40,7 +39,8 @@ class ExcelReportUser {
       ]),
     );
 
-    final dateRange = AppDateUtils.buildDateRange(query.startDate, query.endDate);
+    final dateRange =
+        AppDateUtils.buildDateRange(query.startDate, query.endDate);
     excel.appendRow(
       'Sheet1',
       _row(<dynamic>[
@@ -57,20 +57,30 @@ class ExcelReportUser {
       excel.appendRow('Sheet1', _buildDataRow(data[index], index, dateRange));
     }
 
-    final outputFile = '/storage/emulated/0/Download/Report(${query.startDate}-${query.endDate})User.xlsx';
+    final fileName = 'Report(${query.startDate}-${query.endDate})User.xlsx';
     final fileBytes = excel.save();
     if (fileBytes == null) {
-      return const AppResult<String>.failure('File Excel tidak berhasil dibuat.');
+      return const AppResult<String>.failure(
+          'File Excel tidak berhasil dibuat.');
     }
 
-    File(path.join(outputFile))
-      ..createSync(recursive: true)
-      ..writeAsBytesSync(fileBytes);
+    final String outputFile;
+    try {
+      outputFile = await ExcelDownloadSaver.save(
+        fileName: fileName,
+        bytes: fileBytes,
+      );
+    } catch (_) {
+      return const AppResult<String>.failure(
+        'File Excel tidak berhasil disimpan ke folder Download.',
+      );
+    }
 
     return AppResult<String>.success(outputFile);
   }
 
-  List<xl.CellValue?> _buildDataRow(UserReportEntry entry, int index, List<String> dateRange) {
+  List<xl.CellValue?> _buildDataRow(
+      UserReportEntry entry, int index, List<String> dateRange) {
     final values = <dynamic>[
       index + 1,
       entry.name,

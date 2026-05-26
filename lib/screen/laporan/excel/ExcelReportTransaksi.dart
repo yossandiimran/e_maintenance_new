@@ -1,11 +1,9 @@
-import 'dart:io';
-
 import 'package:excel/excel.dart' as xl;
-import 'package:path/path.dart' as path;
 
 import 'package:e_maintenance/core/utils/app_result.dart';
 import 'package:e_maintenance/helper/global.dart';
 import 'package:e_maintenance/model/app_models.dart';
+import 'package:e_maintenance/screen/laporan/excel/ExcelDownloadSaver.dart';
 import 'package:e_maintenance/screen/laporan/excel/ExcelStoragePermission.dart';
 
 class ExcelReportTransaksi {
@@ -32,7 +30,8 @@ class ExcelReportTransaksi {
 
     excel.appendRow('Sheet1', _row(<dynamic>['Laporan Cek Kendaraan']));
     excel.appendRow('Sheet1', _row(<dynamic>['']));
-    excel.appendRow('Sheet1', _row(<dynamic>['Jenis Cek : ${filter.inspectionKind.label}']));
+    excel.appendRow('Sheet1',
+        _row(<dynamic>['Jenis Cek : ${filter.inspectionKind.label}']));
     excel.appendRow(
       'Sheet1',
       _row(<dynamic>[
@@ -68,16 +67,25 @@ class ExcelReportTransaksi {
       );
     }
 
-    final outputFile =
-        '/storage/emulated/0/Download/Report(${filter.startDate}-${filter.endDate})CekKendaraan.xlsx';
+    final fileName =
+        'Report(${filter.startDate}-${filter.endDate})CekKendaraan.xlsx';
     final fileBytes = excel.save();
     if (fileBytes == null) {
-      return const AppResult<String>.failure('File Excel tidak berhasil dibuat.');
+      return const AppResult<String>.failure(
+          'File Excel tidak berhasil dibuat.');
     }
 
-    File(path.join(outputFile))
-      ..createSync(recursive: true)
-      ..writeAsBytesSync(fileBytes);
+    final String outputFile;
+    try {
+      outputFile = await ExcelDownloadSaver.save(
+        fileName: fileName,
+        bytes: fileBytes,
+      );
+    } catch (_) {
+      return const AppResult<String>.failure(
+        'File Excel tidak berhasil disimpan ke folder Download.',
+      );
+    }
 
     return AppResult<String>.success(outputFile);
   }

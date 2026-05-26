@@ -2,7 +2,7 @@ class AppEnvironment {
   const AppEnvironment._();
 
   static const String appName = 'E-Maintenance';
-  static const String appVersion = '3.0.0';
+  static const String appVersion = '3.0.1';
 
   static const String defaultApiHost = String.fromEnvironment(
     'EMAINTENANCE_API_HOST',

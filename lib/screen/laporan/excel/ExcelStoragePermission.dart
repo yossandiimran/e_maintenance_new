@@ -1,23 +1,21 @@
 import 'dart:io';
 
+import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class ExcelStoragePermission {
   const ExcelStoragePermission._();
+
+  static const MethodChannel _channel =
+      MethodChannel('e_maintenance/downloads');
 
   static Future<bool> ensureGranted() async {
     if (!Platform.isAndroid) {
       return true;
     }
 
-    final manageStatus = await Permission.manageExternalStorage.status;
-    if (manageStatus.isGranted) {
-      return true;
-    }
-
-    final requestedManageStatus =
-        await Permission.manageExternalStorage.request();
-    if (requestedManageStatus.isGranted) {
+    final sdkInt = await _channel.invokeMethod<int>('getAndroidSdkInt') ?? 0;
+    if (sdkInt >= 29) {
       return true;
     }
 
